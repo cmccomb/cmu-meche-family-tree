@@ -1,24 +1,39 @@
 #!/usr/bin/env python3
 """
-Generate an advisor/advisee family tree from a CSV file.
+Command‑line utility for generating an advisor/advisee family tree from a
+publicly available CSV file.  The resulting graph is rendered using the
+Graphviz package.  See the accompanying README for usage details.
 
-This is intentionally kept very close to the original Colab notebook so the
-Graphviz output looks the same. The main changes are:
+The input CSV is expected to contain the following columns (case and
+whitespace are ignored):
 
-1. Read data from a public CSV URL or local CSV file instead of gspread/Colab.
-2. Expose the input/output paths as command-line arguments.
-3. Save PNG and DOT files without trying to display them in a notebook.
-
-Expected CSV columns, after lowercasing and whitespace normalization:
-
+```
 generation, advisee, advisor, title, year
+```
 
-Important data convention from the original notebook:
-- generation == 0 / false is highlighted as CMU MechE faculty.
-- generation == 1 / true is treated as non-faculty.
-- blank or unrecognized generation values follow the original notebook behavior
-  and evaluate as false, which means they may be highlighted as CMU faculty.
-  For best results, use explicit 0/1 values in every row.
+Each row defines an advisee, their advisor(s), an optional title, and
+the year the advisee received their Ph.D. or equivalent.  The
+``generation`` column is used to flag current CMU Mechanical
+Engineering faculty.  A value of 0/False indicates a CMU faculty
+member and will be highlighted differently in the output.  A value of
+1/True or a blank means the person is not a CMU MechE faculty member.
+
+Advisors can be listed as a single name or as multiple names separated
+by semicolons, commas or line breaks.  Two special advisor tokens are
+recognized (case–insensitive): ``None`` and ``ILL Request``.  If
+``None`` appears in the advisor column, the advisee will be drawn in
+light pink to indicate that no advisor is recorded.  If ``ILL
+Request`` appears, the advisee will be drawn in orange to indicate
+that an interlibrary loan request may be necessary.
+
+The script writes three files: ``<basename>.dot`` containing the DOT
+source used to build the graph, ``<basename>.png`` containing a raster
+render, and ``<basename>.svg`` containing a vector render.  You must
+have Graphviz installed on your system to perform the rendering.  See
+the Graphviz documentation for installation instructions【891944500095481†L6-L21】.
+
+``pandas.read_csv`` accepts a URL as a file path, so a published
+Google Sheet in CSV format can be loaded directly【870401253321505†L138-L145】.
 """
 
 from __future__ import annotations
@@ -26,14 +41,16 @@ from __future__ import annotations
 import argparse
 import math
 import re
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import pandas as pd
 from graphviz import Digraph
 
 
-# --- Config: kept intentionally close to the original notebook ---
-INCLUDE_ONLY_CONNECTED_TO_CMU = False  # reserved for future use; original notebook left this unused
-DEFAULT_OUTPUT_BASENAME = "cmu_meche_family_tree"
+# -----------------------------------------------------------------------------
+# Configuration: node and edge styling.  These values control the appearance
+# of nodes and edges in the generated diagram.  Users can modify these
+# dictionaries to customise colours and fonts.  Colour values are hex codes.
 
 NODE_STYLE = {
     "shape": "box",
@@ -41,31 +58,55 @@ NODE_STYLE = {
     "fontname": "Helvetica",
     "fontsize": "10",
     "color": "black",
-    "fillcolor_faculty": "#c6e2ff",          # light blue for CMU MechE faculty
-    "fillcolor_nonfaculty": "#f5f5f5",
-    "fillcolor_explicit_none": "#ffd6d6",   # light pink when advisor cell explicitly "None"
-    "fillcolor_unknown_ancestor": "#c8f7c5",# light green when no known ancestor and not explicit None
-    "fillcolor_ill_request": "#FFA500",     # ORANGE when advisor cell contains "ILL Request"
+    "fillcolor_faculty": "#c6e2ff",        # light blue for CMU MechE faculty
+    "fillcolor_nonfaculty": "#f5f5f5",      # light grey for non‑faculty
+    "fillcolor_explicit_none": "#ffd6d6",  # light pink when advisor is "None"
+    "fillcolor_unknown_ancestor": "#c8f7c5",  # light green for unknown ancestors
+    "fillcolor_ill_request": "#FFA500",    # orange when advisor contains "ILL Request"
 }
+
 EDGE_STYLE = {
     "color": "#555555",
     "arrowsize": "0.6",
     "penwidth": "1.2",
 }
-TIMELINE_STYLE = {
-    "fontname": "Helvetica",
-    "fontsize": "10",
-    "color": "#333333",
-}
 
 
-def norm(s):
+def norm(s: str) -> str:
+    """Normalise column names by stripping whitespace and replacing spaces with
+    underscores.  All characters are converted to lower case.
+
+    Parameters
+    ----------
+    s : str
+        Raw column name.
+
+    Returns
+    -------
+    str
+        Normalised column name.
+    """
     return re.sub(r"\s+", "_", str(s).strip().lower())
 
 
-# Map generation to boolean, matching the original notebook.
-# Important: downstream code treats generation == 0/False as CMU faculty.
-def to_bool(x):
+def to_bool(x: object) -> bool:
+    """Interpret a variety of representations as booleans.
+
+    Strings such as ``"1"``, ``"true"``, ``"t"``, ``"yes"`` are treated as
+    ``True``; ``"0"``, ``"false"``, ``"f"``, ``"no"``, ``"n"`` and blank
+    strings are treated as ``False``.  Numbers are cast using standard
+    Python truthiness.
+
+    Parameters
+    ----------
+    x : object
+        Input value to convert.
+
+    Returns
+    -------
+    bool
+        Resulting boolean.
+    """
     s = str(x).strip().lower()
     if s in {"1", "true", "t", "yes", "y"}:
         return True
@@ -74,11 +115,23 @@ def to_bool(x):
     try:
         return bool(int(float(s)))
     except Exception:
-        return False
+        # fall back to Python truthiness for other cases
+        return bool(x)
 
 
-# Coerce year to int or None, matching the original notebook.
-def to_int_or_none(x):
+def to_int_or_none(x: object) -> Optional[int]:
+    """Convert a value to an integer if possible, otherwise return ``None``.
+
+    Parameters
+    ----------
+    x : object
+        The value to convert.
+
+    Returns
+    -------
+    Optional[int]
+        Integer representation or ``None`` if conversion fails.
+    """
     try:
         if str(x).strip() == "":
             return None
@@ -87,18 +140,50 @@ def to_int_or_none(x):
         return None
 
 
-def clean_name(s):
+def clean_name(s: object) -> str:
+    """Normalise names by collapsing consecutive whitespace and stripping.
+
+    Advises are passed around in their cleaned form to ensure consistent
+    dictionary keys.
+
+    Parameters
+    ----------
+    s : object
+        Input string.
+
+    Returns
+    -------
+    str
+        Cleaned name.
+    """
     return re.sub(r"\s+", " ", str(s).strip())
 
 
-PLACEHOLDER_TOKENS = {"n/a", "na", "null", "unknown", "-"}
+PLACEHOLDER_TOKENS: Set[str] = {"n/a", "na", "null", "unknown", "-"}
 
 
-def split_advisors_with_flags(val):
-    """
-    Split advisor cell into tokens; return (advisors_list, has_explicit_none, has_ill_request).
-    'None' and 'ILL Request' (case-insensitive) are treated as special flags and NOT returned as advisors.
-    Blank cells => advisors_list=[], flags False.
+def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
+    """Split the advisor cell into individual advisor names and detect flags.
+
+    The advisor field may contain multiple names separated by semicolons,
+    commas or newlines.  Two special tokens are recognised: ``None`` and
+    ``ILL Request``.  Those tokens are case‑insensitive and are used to
+    control node colouring; they are not returned in the list of advisor
+    names.
+
+    Parameters
+    ----------
+    val : object
+        Raw cell value from the ``advisor`` column.
+
+    Returns
+    -------
+    tuple
+        A tuple ``(advisors, has_none_flag, has_ill_flag)`` where
+
+        * ``advisors`` is a list of cleaned advisor names;
+        * ``has_none_flag`` is ``True`` if the cell contained ``None``;
+        * ``has_ill_flag`` is ``True`` if the cell contained ``ILL Request``.
     """
     if val is None:
         return [], False, False
@@ -106,60 +191,68 @@ def split_advisors_with_flags(val):
     if raw == "":
         return [], False, False
 
+    # split by semicolons, commas or newline characters
     parts = [clean_name(a) for a in re.split(r"[;,\n]+", raw) if a is not None and a.strip() != ""]
     parts_l = [p.lower() for p in parts]
     has_none = any(p == "none" for p in parts_l)
     has_ill = any(p == "ill request" for p in parts_l)
 
     tokens_exclude = PLACEHOLDER_TOKENS | {"none", "ill request"}
-    advisors = [p for p in parts if p.lower() not in tokens_exclude]
+    advisors: List[str] = [p for p in parts if p.lower() not in tokens_exclude]
     return advisors, has_none, has_ill
 
 
-def load_csv(csv_path):
-    # keep_default_na=False is the key CSV-only adjustment:
-    # it preserves literal advisor values like "None", "n/a", and blanks instead
-    # of converting them into NaN before the original notebook logic can see them.
-    df = pd.read_csv(csv_path, dtype=str, keep_default_na=False)
+def build_graph(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Optional[object]]], List[Tuple[str, str]], Set[str], Set[str]]:
+    """Construct dictionaries describing people and advisor/advisee relationships.
 
-    # ---------- NORMALIZE COLUMNS ----------
-    df.columns = [norm(c) for c in df.columns]
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Normalised input data.  Column names must include
+        ``generation``, ``advisee``, ``advisor``, ``title`` and ``year``.
 
-    required = {"generation", "advisee", "advisor", "title", "year"}
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(f"Missing required columns: {missing}. Found columns: {list(df.columns)}")
+    Returns
+    -------
+    tuple
+        A tuple ``(people, edges, explicit_none, explicit_ill_request)`` where
 
-    df["generation"] = df["generation"].map(to_bool)
-    df["year"] = df["year"].map(to_int_or_none)
-    return df
+        * ``people`` maps a person's name to a dict with keys ``year``,
+          ``cmu`` and ``title``;
+        * ``edges`` is a list of ``(advisor, advisee)`` pairs;
+        * ``explicit_none`` is a set of advisees whose advisor column contained
+          ``None``;
+        * ``explicit_ill_request`` is a set of advisees whose advisor column
+          contained ``ILL Request``.
+    """
+    people: Dict[str, Dict[str, Optional[object]]] = {}
+    edges: List[Tuple[str, str]] = []
+    explicit_none: Set[str] = set()
+    explicit_ill_request: Set[str] = set()
 
-
-def build_graph_data(df):
-    # ---------- BUILD GRAPH DATA ----------
-    people = {}                  # name -> {"year": int|None, "cmu": bool, "title": str|None}
-    edges = []                   # (advisor, advisee)
-    explicit_none = set()        # advisees where the advisor cell is exactly "None" (case-insensitive)
-    explicit_ill_request = set() # advisees where advisor cell contains "ILL Request" (case-insensitive)
-
-    # First pass: collect people, edges, special flags
+    # First pass: build people dictionary and detect special flags
     for _, r in df.iterrows():
         advisee = clean_name(r["advisee"])
         advisors, has_none_flag, has_ill_flag = split_advisors_with_flags(r.get("advisor", ""))
 
-        year = r.get("year", None)
-        cmu = bool(r.get("generation", False) == 0)  # kept exactly as in the original notebook
-        title = None if pd.isna(r.get("title", None)) else str(r.get("title", None))
+        year: Optional[int] = r.get("year", None)
+        # generation is stored as bool; CMU faculty are those with generation == False
+        cmu: bool = bool(r.get("generation", False) == 0)
+        title: Optional[str] = None if pd.isna(r.get("title", None)) else str(r.get("title", None))
 
+        # record the advisee in the people dict
         if advisee not in people:
             people[advisee] = {"year": year, "cmu": cmu, "title": title}
         else:
+            # merge year information if new row has a valid year
             if people[advisee]["year"] is None and year is not None:
                 people[advisee]["year"] = year
+            # OR the CMU flag across rows
             people[advisee]["cmu"] = people[advisee]["cmu"] or cmu
+            # update title if not already present
             if not people[advisee]["title"] and title:
                 people[advisee]["title"] = title
 
+        # ensure advisor names are also present in the people dict
         for adv in advisors:
             if adv not in people:
                 people[adv] = {"year": None, "cmu": False, "title": None}
@@ -170,44 +263,91 @@ def build_graph_data(df):
         if has_ill_flag:
             explicit_ill_request.add(advisee)
 
-    # ---------- REBUILD EDGES CLEANLY (skip placeholders again) ----------
-    # This duplicate pass is intentionally retained from the notebook so the
-    # resulting edge order and de-duplication behavior stay as close as possible.
-    edges = []
-    for _, r in df.iterrows():
-        advisee = clean_name(r["advisee"])
-        advs, _, _ = split_advisors_with_flags(r.get("advisor", ""))
-        for adv in advs:
-            edges.append((adv, advisee))
-    edges = list(dict.fromkeys(edges))  # de-duplicate, preserving insertion order
+    # De‑duplicate edges: multiple rows may specify the same advisor/advisee
+    edges = list(dict.fromkeys(edges))
+    return people, edges, explicit_none, explicit_ill_request
 
-    # ---------- IMPUTE/FLAG YEARS FOR LABELING ----------
-    IMPUTED_YEAR = -1
-    for _, attrs in people.items():
+
+def impute_years(people: Dict[str, Dict[str, Optional[object]]], placeholder: int = -1) -> None:
+    """Replace missing years with a placeholder value.
+
+    This function updates the input ``people`` dictionary in place.  Missing
+    years (``None`` or NaN) are replaced with the integer ``placeholder``.
+
+    Parameters
+    ----------
+    people : dict
+        Mapping from person name to attribute dict.
+    placeholder : int, optional
+        Value to use when a year is missing.  Defaults to ``-1``.
+    """
+    for attrs in people.values():
         y = attrs.get("year", None)
         if y is None or (isinstance(y, float) and math.isnan(y)):
-            attrs["year"] = IMPUTED_YEAR
-
-    # ---------- IDENTIFY NODES WITH NO KNOWN ANCESTOR (no incoming edges) ----------
-    nodes_with_incoming = {v for (_, v) in edges}
-    all_nodes = set(people.keys())
-    roots_no_incoming = all_nodes - nodes_with_incoming             # structural roots
-    roots_no_incoming = roots_no_incoming - explicit_none           # exclude explicit "None" cases (pink)
-    roots_no_incoming = roots_no_incoming - explicit_ill_request    # exclude ILL Request cases (orange)
-
-    return people, edges, explicit_none, explicit_ill_request, roots_no_incoming
+            attrs["year"] = placeholder
 
 
-def render_graph(people, edges, explicit_none, explicit_ill_request, roots_no_incoming, output_basename):
-    # ---------- LAYOUT & RENDER (DOT, TB tree) ----------
+def find_roots(people: Dict[str, Dict[str, Optional[object]]], edges: Iterable[Tuple[str, str]],
+               explicit_none: Set[str], explicit_ill: Set[str]) -> Set[str]:
+    """Identify nodes with no incoming edges and not marked by special flags.
+
+    These nodes are considered structural roots.  Nodes that appear in
+    ``explicit_none`` or ``explicit_ill`` are excluded from the root set.
+
+    Parameters
+    ----------
+    people : dict
+        Mapping of all person names.
+    edges : iterable of (str, str)
+        Advisor → advisee relationships.
+    explicit_none : set of str
+        Names of advisees whose advisor field contained ``None``.
+    explicit_ill : set of str
+        Names of advisees whose advisor field contained ``ILL Request``.
+
+    Returns
+    -------
+    set of str
+        Names of nodes with no incoming edges and not in ``explicit_none`` or
+        ``explicit_ill``.
+    """
+    nodes_with_incoming: Set[str] = {v for (_, v) in edges}
+    all_nodes: Set[str] = set(people.keys())
+    roots: Set[str] = all_nodes - nodes_with_incoming
+    return roots - explicit_none - explicit_ill
+
+
+def render_graph(people: Dict[str, Dict[str, Optional[object]]], edges: Iterable[Tuple[str, str]],
+                 explicit_none: Set[str], explicit_ill: Set[str],
+                 output_basename: str) -> None:
+    """Render the advisor/advisee graph to PNG, SVG and DOT files.
+
+    Parameters
+    ----------
+    people : dict
+        Mapping from person names to attribute dicts.
+    edges : iterable
+        Collection of (advisor, advisee) pairs.
+    explicit_none : set
+        Names of nodes whose advisor column was explicitly ``None``.
+    explicit_ill : set
+        Names of nodes whose advisor column contained ``ILL Request``.
+    output_basename : str
+        Base filename for output files.  ``<basename>.dot`` and
+        ``<basename>.png`` and ``<basename>.svg`` will be written.
+    """
+    roots_no_incoming = find_roots(people, edges, explicit_none, explicit_ill)
+
+    # Build the Digraph
     dot = Digraph(
         "family_tree_dot",
-        format="png",
+        format="svg",
         graph_attr={
             "rankdir": "TB",
             "splines": "spline",
             "overlap": "false",
             "concentrate": "false",
+            # tune layout performance for large graphs
             "search_size": "100000",
             "nslimit": "100000",
             "nslimit1": "100000",
@@ -227,88 +367,100 @@ def render_graph(people, edges, explicit_none, explicit_ill_request, roots_no_in
         },
     )
 
-    # Nodes: explicit 'None' => light pink; 'ILL Request' => orange; no known ancestor => green; CMU (blue); otherwise gray.
-    for n, attrs in people.items():
-        if n in explicit_none:
+    # Define node colours based on flags
+    for name, attrs in people.items():
+        if name in explicit_none:
             fill = NODE_STYLE["fillcolor_explicit_none"]
-        elif n in explicit_ill_request:
+        elif name in explicit_ill:
             fill = NODE_STYLE["fillcolor_ill_request"]
-        elif n in roots_no_incoming:
+        elif name in roots_no_incoming:
             fill = NODE_STYLE["fillcolor_unknown_ancestor"]
         else:
             fill = NODE_STYLE["fillcolor_faculty"] if attrs.get("cmu", False) else NODE_STYLE["fillcolor_nonfaculty"]
 
         y = attrs.get("year", None)
-        ytxt = "unknown" if (y is None or (isinstance(y, (int, float)) and int(y) < 0)) else str(int(y))
-        label = f"{n}\n({ytxt})"
-        dot.node(n, label=label, fillcolor=fill)
+        if y is None or (isinstance(y, int) and y < 0):
+            year_text = "unknown"
+        else:
+            year_text = str(int(y))
+        label = f"{name}\n({year_text})"
+        dot.node(name, label=label, fillcolor=fill)
 
-    # ---------- separate source rank (top) for all 'ILL Request' nodes ----------
-    # ill_nodes = set(explicit_ill_request)
-    # if ill_nodes:
-    #     with dot.subgraph(name="cluster_ill_request") as s:
-    #         s.attr(label="ILL Request", style="dashed", color="#FFA500", fontname=NODE_STYLE["fontname"])
-    #         s.attr(rank="source")  # top row in TB layout
-    #         for n in sorted(ill_nodes):
-    #             s.node(n)
-
-    # ---------- single sink rank for all current faculty ----------
+    # Place CMU faculty at the sink (bottom) rank
     faculty = {n for n, a in people.items() if a.get("cmu", False)}
     if faculty:
-        with dot.subgraph(name="rank_sink_faculty") as s:
-            s.attr(rank="sink")
+        with dot.subgraph(name="rank_sink_faculty") as sub:
+            sub.attr(rank="sink")
             for n in sorted(faculty):
-                s.node(n)
+                sub.node(n)
 
-    # Edges (advisor -> advisee)
+    # Add edges
     for u, v in edges:
         if u in people and v in people:
             dot.edge(u, v)
 
-    # Render & save. Order matches the notebook: render PNG, then save PNG and DOT.
-    png_bytes = dot.pipe(format="png")
-    with open(output_basename + ".png", "wb") as f:
-        f.write(png_bytes)
-    with open(output_basename + ".dot", "w", encoding="utf-8") as f:
+    # Write files
+    dot_source_path = f"{output_basename}.dot"
+    png_path = f"{output_basename}.png"
+    svg_path = f"{output_basename}.svg"
+    with open(dot_source_path, "w", encoding="utf-8") as f:
         f.write(dot.source)
+    # Graphviz's pipe() method returns binary output of the requested format.
+    png_bytes = dot.pipe(format="png")
+    svg_bytes = dot.pipe(format="svg")
+    with open(png_path, "wb") as f:
+        f.write(png_bytes)
+    with open(svg_path, "wb") as f:
+        f.write(svg_bytes)
 
-    print(
-        f"Saved: {output_basename}.png and {output_basename}.dot "
-        f"(no-known-ancestor nodes in green; explicit 'None' in pink; 'ILL Request' in orange; "
-        f"CMU faculty forced to sink rank; ILL Request grouped at top)."
-    )
+    print(f"Saved: {png_path}, {svg_path}, and {dot_source_path}")
 
 
-def main(argv=None):
+def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Generate an advisor/advisee family tree from a public CSV or local CSV file.",
+        description="Generate an advisor/advisee family tree from a CSV file.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--csv",
         dest="csv_path",
         required=True,
-        help="Path or URL to the published CSV file.",
+        help=(
+            "Path or URL to a CSV file containing columns generation, advisee,"
+            " advisor, title and year.  URLs are supported via pandas.read_csv"
+        ),
     )
     parser.add_argument(
         "--output-basename",
         dest="output_basename",
-        default=DEFAULT_OUTPUT_BASENAME,
-        help="Base name for output files, without extension.",
+        default="family_tree",
+        help="Base name for output files (without extension)",
     )
     args = parser.parse_args(argv)
 
-    df = load_csv(args.csv_path)
-    people, edges, explicit_none, explicit_ill_request, roots_no_incoming = build_graph_data(df)
-    render_graph(
-        people=people,
-        edges=edges,
-        explicit_none=explicit_none,
-        explicit_ill_request=explicit_ill_request,
-        roots_no_incoming=roots_no_incoming,
-        output_basename=args.output_basename,
-    )
+    # Load data.  pandas.read_csv can accept local file paths and URLs【870401253321505†L138-L145】.
+    df = pd.read_csv(args.csv_path)
+    # Normalise column names
+    df.columns = [norm(c) for c in df.columns]
+
+    required_cols = {"generation", "advisee", "advisor", "title", "year"}
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"Missing required columns: {missing}. Found columns: {list(df.columns)}"
+        )
+
+    # Convert data types
+    df["generation"] = df["generation"].map(to_bool)
+    df["year"] = df["year"].map(to_int_or_none)
+
+    # Build graph data structures
+    people, edges, explicit_none, explicit_ill = build_graph(df)
+    # Fill missing years
+    impute_years(people, placeholder=-1)
+    # Render graph
+    render_graph(people, edges, explicit_none, explicit_ill, args.output_basename)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
