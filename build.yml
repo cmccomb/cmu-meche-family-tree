@@ -1,0 +1,71 @@
+name: Build and Deploy
+
+# This workflow installs dependencies, generates the family tree from the
+# configured CSV, and deploys the result to the `gh-pages` branch so it
+# can be served by GitHub Pages.  The workflow expects a repository
+# secret named `CSV_URL` containing the URL of the published CSV (e.g.
+# `https://docs.google.com/spreadsheets/d/…/export?format=csv`).
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # rebuild every day at 02:00 UTC
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate family tree
+        env:
+          CSV_URL: ${{ secrets.CSV_URL }}
+        run: |
+          mkdir -p docs
+          python make_graph.py --csv "$CSV_URL" --output-basename docs/cmu_meche_family_tree
+
+      - name: Create index.html
+        run: |
+          cat > docs/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>CMU MechE Family Tree</title>
+            <style>
+              body { font-family: sans-serif; margin: 2rem; }
+              img { max-width: 100%; height: auto; }
+            </style>
+          </head>
+          <body>
+            <h1>CMU Mechanical Engineering Academic Family Tree</h1>
+            <p>This graph is generated automatically from a publicly shared CSV.  It shows advisor–advisee relationships among Mechanical Engineering scholars at Carnegie Mellon University.</p>
+            <figure>
+              <img src="cmu_meche_family_tree.png" alt="CMU MechE Family Tree">
+            </figure>
+            <p>For more details on how this graph is built, see the <a href="../README.md">README</a> on the main branch.</p>
+          </body>
+          </html>
+          HTML
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          # Deploy to the default gh-pages branch
