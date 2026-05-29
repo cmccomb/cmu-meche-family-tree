@@ -1,161 +1,78 @@
-# Builds the CMU MechE family tree from a published CSV and deploys it to GitHub Pages.
-name: Deploy family tree to Pages
+name: Build and Deploy
+
+# This workflow installs dependencies, generates the family tree from the
+# configured CSV, and deploys the result to the `gh-pages` branch so it
+# can be served by GitHub Pages.  The workflow expects a repository
+# secret named `CSV_URL` containing the URL of the published CSV (e.g.
+# `https://docs.google.com/spreadsheets/d/…/export?format=csv`).
 
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab.
-  # Optional: paste a CSV URL here to test a one-off data source.
+    branches: [ main ]
   workflow_dispatch:
-    inputs:
-      csv_url:
-        description: "Optional CSV URL override"
-        required: false
-        type: string
-
-  # Rebuilds periodically so published Google Sheet changes appear on the site
-  # even when the repository itself has not changed.
   schedule:
-    - cron: "17 7 * * *"
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-env:
-  OUTPUT_DIR: _site
-  OUTPUT_BASENAME: cmu_meche_family_tree
-  # Recommended: create a repository variable named CSV_URL because the sheet URL is public.
-  # Also supports a repository secret named CSV_URL, matching the earlier version of this repo.
-  CSV_URL: ${{ github.event.inputs.csv_url || vars.CSV_URL || secrets.CSV_URL }}
+    - cron: '0 2 * * *'  # rebuild every day at 02:00 UTC
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
-          cache: "pip"
+          python-version: '3.x'
 
-      - name: Install Graphviz
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y graphviz
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y graphviz
 
       - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate family tree
+        env:
+          CSV_URL: ${{ secrets.CSV_URL }}
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          mkdir -p docs
+          python make_graph.py --csv "$CSV_URL" --output-basename docs/cmu_meche_family_tree
 
-      - name: Build family tree site
-        shell: bash
+      - name: Create index.html
         run: |
-          set -euo pipefail
-
-          if [ -z "${CSV_URL:-}" ]; then
-            echo "::error::CSV_URL is not set. Add a repository variable or secret named CSV_URL, or provide csv_url when manually dispatching this workflow."
-            exit 1
-          fi
-
-          rm -rf "$OUTPUT_DIR"
-          mkdir -p "$OUTPUT_DIR"
-
-          python make_graph.py \
-            --csv "$CSV_URL" \
-            --output-basename "$OUTPUT_DIR/$OUTPUT_BASENAME"
-
-          cat > "$OUTPUT_DIR/index.html" <<HTML
+          cat > docs/index.html <<'HTML'
           <!doctype html>
           <html lang="en">
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>CMU MechE Academic Family Tree</title>
+            <title>CMU MechE Family Tree</title>
             <style>
-              :root {
-                color-scheme: light dark;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-              }
-              body {
-                margin: 0;
-                padding: 2rem;
-                line-height: 1.5;
-              }
-              main {
-                max-width: none;
-                margin: 0;
-              }
-              .graph-frame {
-                overflow: auto;
-                border: 1px solid #ccc;
-                border-radius: 0.75rem;
-                padding: 1rem;
-                background: #fff;
-              }
-              .graph-frame img {
-                max-width: none;
-                width: auto;
-                height: auto;
-                display: block;
-              }
-              code {
-                font-size: 0.95em;
-              }
-              .meta {
-                color: #666;
-                font-size: 0.95rem;
-              }
-              @media (prefers-color-scheme: dark) {
-                .graph-frame { background: #fff; }
-                .meta { color: #aaa; }
-              }
+              body { font-family: sans-serif; margin: 2rem; }
+              img { max-width: 100%; height: auto; }
             </style>
           </head>
           <body>
-            <main>
-              <p>
-                <a href="${OUTPUT_BASENAME}.png">Open PNG</a> ·
-                <a href="${OUTPUT_BASENAME}.dot">Open DOT source</a> ·
-                <a href="https://github.com/${GITHUB_REPOSITORY}">View repository</a>
-              </p>
-              <div class="graph-frame">
-                <img src="${OUTPUT_BASENAME}.png" alt="CMU Mechanical Engineering academic family tree" style="max-width:100%">
-              </div>
-            </main>
+            <h1>CMU Mechanical Engineering Academic Family Tree</h1>
+            <p>This graph is generated automatically from a publicly shared CSV.  It shows advisor–advisee relationships among Mechanical Engineering scholars at Carnegie Mellon University.</p>
+            <figure>
+              <object data="cmu_meche_family_tree.svg" type="image/svg+xml" aria-label="CMU MechE Family Tree">
+                <img src="cmu_meche_family_tree.png" alt="CMU MechE Family Tree">
+              </object>
+            </figure>
+            <p>
+              Download:
+              <a href="cmu_meche_family_tree.svg">SVG</a> ·
+              <a href="cmu_meche_family_tree.png">PNG</a>
+            </p>
+            <p>For more details on how this graph is built, see the <a href="../README.md">README</a> on the main branch.</p>
           </body>
           </html>
           HTML
 
-          # Disable Jekyll processing; this is a plain static site.
-          touch "$OUTPUT_DIR/.nojekyll"
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: ${{ env.OUTPUT_DIR }}
-
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          # Deploy to the default gh-pages branch
