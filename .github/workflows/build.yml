@@ -138,7 +138,7 @@ jobs:
                 <a href="https://github.com/${GITHUB_REPOSITORY}">View repository</a>
               </p>
               <div class="graph-frame">
-                <img src="${OUTPUT_BASENAME}.png" alt="CMU Mechanical Engineering academic family tree">
+                <img src="${OUTPUT_BASENAME}.png" alt="CMU Mechanical Engineering academic family tree" style="max-width:100%">
               </div>
             </main>
           </body>
