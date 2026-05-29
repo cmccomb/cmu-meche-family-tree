@@ -1,5 +1,8 @@
 name: Build and Deploy
 
+permissions:
+  contents: write
+
 # This workflow installs dependencies, generates the family tree from the
 # configured CSV, and deploys the result to the `gh-pages` branch so it
 # can be served by GitHub Pages.  The workflow expects a repository
