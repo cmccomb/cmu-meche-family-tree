@@ -16,7 +16,8 @@ be a URL – valid schemes include HTTP, FTP and others【870401253321505†L138
 ## Contents
 
 - **`make_graph.py`** – command‑line tool that reads a CSV file and
-  writes a Graphviz DOT file and a PNG image showing the family tree.
+  writes a Graphviz DOT file and both PNG and SVG images showing the
+  family tree.
 - **`requirements.txt`** – lists the Python packages used by the script.
 - **`.gitignore`** – ignores common transient files such as `__pycache__`.
 
@@ -77,11 +78,16 @@ python make_graph.py --csv "https://docs.google.com/spreadsheets/d/…/export?fo
                      --output-basename cmu_meche_family_tree
 ```
 
-This command will create two files in the working directory:
+This command will create three files in the working directory:
 
 - **`cmu_meche_family_tree.dot`** – the Graphviz description of the
   advisor/advisee network.
 - **`cmu_meche_family_tree.png`** – a rendered PNG image of the graph.
+- **`cmu_meche_family_tree.svg`** – a rendered SVG vector image of the
+  graph.
+
+The site prefers loading `cmu_meche_family_tree.svg`, with PNG still
+available for download.
 
 ## Interpreting the graph
 
@@ -112,7 +118,7 @@ On every push to the `main` branch (or on the nightly schedule), the workflow wi
 
 1. Install the Python dependencies and Graphviz.
 2. Run `make_graph.py` against the CSV URL defined in the `CSV_URL` secret.
-3. Generate the `.png` and `.dot` files in the `docs/` directory.
+3. Generate the `.png`, `.svg`, and `.dot` files in the `docs/` directory.
 4. Write a simple `index.html` that embeds the image.
 5. Deploy the `docs/` directory to the `gh-pages` branch using the `peaceiris/actions-gh-pages` action.
 
