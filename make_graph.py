@@ -68,7 +68,7 @@ NODE_STYLE = {
 EDGE_STYLE = {
     "color": "#555555",
     "arrowsize": "0.6",
-    "penwidth": "1.2",
+    "penwidth": "1.25",
 }
 
 
