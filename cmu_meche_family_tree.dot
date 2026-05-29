@@ -1,0 +1,2574 @@
+digraph family_tree_dot {
+	graph [concentrate=false mclimit=1000.0 nslimit=100000 nslimit1=100000 overlap=false rankdir=TB search_size=100000 splines=spline]
+	node [color=black fontname=Helvetica fontsize=10 shape=box style="filled,rounded"]
+	edge [arrowsize=0.6 color="#555555" penwidth=1.2]
+	"Yves Pomeau" [label="Yves Pomeau
+(unknown)" fillcolor="#f5f5f5"]
+	nan [label="nan
+(unknown)" fillcolor="#c8f7c5"]
+	"Minoru Hamada" [label="Minoru Hamada
+(unknown)" fillcolor="#f5f5f5"]
+	"Gaetano Crocco" [label="Gaetano Crocco
+(unknown)" fillcolor="#f5f5f5"]
+	"Zenzaburo Sawai" [label="Zenzaburo Sawai
+(unknown)" fillcolor="#f5f5f5"]
+	"Robert N. Scott" [label="Robert N. Scott
+(unknown)" fillcolor="#f5f5f5"]
+	"Siegmund Müller" [label="Siegmund Müller
+(unknown)" fillcolor="#f5f5f5"]
+	"Carrington Bonsor Williams" [label="Carrington Bonsor Williams
+(unknown)" fillcolor="#f5f5f5"]
+	"Georg Christoph Mehrtens" [label="Georg Christoph Mehrtens
+(unknown)" fillcolor="#f5f5f5"]
+	"James Holt" [label="James Holt
+(unknown)" fillcolor="#f5f5f5"]
+	"Charles Franklin Dunbar" [label="Charles Franklin Dunbar
+(unknown)" fillcolor="#f5f5f5"]
+	"Edwin Cannan" [label="Edwin Cannan
+(unknown)" fillcolor="#f5f5f5"]
+	"Helmut H. Korst" [label="Helmut H. Korst
+(1947)" fillcolor="#f5f5f5"]
+	"René Just Haüy" [label="René Just Haüy
+(unknown)" fillcolor="#f5f5f5"]
+	"Nikolaus Boda Poda von Neuhaus" [label="Nikolaus Boda Poda von Neuhaus
+(unknown)" fillcolor="#f5f5f5"]
+	"Johann Daniel Arcularius" [label="Johann Daniel Arcularius
+(unknown)" fillcolor="#f5f5f5"]
+	"Samuel Stryk" [label="Samuel Stryk
+(unknown)" fillcolor="#f5f5f5"]
+	"Johann Hoffmann" [label="Johann Hoffmann
+(unknown)" fillcolor="#f5f5f5"]
+	Pelope [label="Pelope
+(unknown)" fillcolor="#f5f5f5"]
+	"Ernestus Hettenbach" [label="Ernestus Hettenbach
+(unknown)" fillcolor="#f5f5f5"]
+	"Luca Pacioli" [label="Luca Pacioli
+(unknown)" fillcolor="#f5f5f5"]
+	"Matthias Hafenreffer" [label="Matthias Hafenreffer
+(unknown)" fillcolor="#f5f5f5"]
+	"Elissaeus Judaeus" [label="Elissaeus Judaeus
+(unknown)" fillcolor="#f5f5f5"]
+	"Nicole Oresme" [label="Nicole Oresme
+(unknown)" fillcolor="#f5f5f5"]
+	"Johann von Dalberg" [label="Johann von Dalberg
+(unknown)" fillcolor="#f5f5f5"]
+	"Sharaf al-Dīn al-Ṭūsī" [label="Sharaf al-Dīn al-Ṭūsī
+(unknown)" fillcolor="#f5f5f5"]
+	"Florens (Florentius Radwyn) Radewyns" [label="Florens (Florentius Radwyn) Radewyns
+(1378)" fillcolor="#f5f5f5"]
+	"Abu Abdallah Al-Husayn ibn Ibrahim al-Natili" [label="Abu Abdallah Al-Husayn ibn Ibrahim al-Natili
+(unknown)" fillcolor="#f5f5f5"]
+	"Abu Sahl 'Isa ibn Yahya al-Masihi" [label="Abu Sahl 'Isa ibn Yahya al-Masihi
+(unknown)" fillcolor="#f5f5f5"]
+	"Abu Mansur al-Hasan ibn Nuh al-Qumri" [label="Abu Mansur al-Hasan ibn Nuh al-Qumri
+(unknown)" fillcolor="#f5f5f5"]
+	"Heinrich Müller-Breslau" [label="Heinrich Müller-Breslau
+(1921)" fillcolor="#f5f5f5"]
+	"Basrur Sanjiva Rao" [label="Basrur Sanjiva Rao
+(unknown)" fillcolor="#f5f5f5"]
+	"Francis Lawry Usher" [label="Francis Lawry Usher
+(1872)" fillcolor="#f5f5f5"]
+	"Peter Gustav Lejeune Dirichlet" [label="Peter Gustav Lejeune Dirichlet
+(unknown)" fillcolor="#f5f5f5"]
+	"Siméon Denis Poisson" [label="Siméon Denis Poisson
+(1800)" fillcolor="#f5f5f5"]
+	"Jean-Baptiste Joseph Fourier" [label="Jean-Baptiste Joseph Fourier
+(unknown)" fillcolor="#f5f5f5"]
+	"Augustus Edward Hough Love" [label="Augustus Edward Hough Love
+(1886)" fillcolor="#f5f5f5"]
+	"Frederic Poole Gorham" [label="Frederic Poole Gorham
+(1894)" fillcolor="#f5f5f5"]
+	"Nathaniel Bowditch" [label="Nathaniel Bowditch
+(unknown)" fillcolor="#f5f5f5"]
+	"W. W. Rouse Ball" [label="W. W. Rouse Ball
+(1874)" fillcolor="#f5f5f5"]
+	"Wilhelm Roscher" [label="Wilhelm Roscher
+(1840)" fillcolor="#f5f5f5"]
+	"Adam Sedgwick" [label="Adam Sedgwick
+(unknown)" fillcolor="#f5f5f5"]
+	"Thomas Jones" [label="Thomas Jones
+(1782)" fillcolor="#f5f5f5"]
+	"John Dawson" [label="John Dawson
+(unknown)" fillcolor="#f5f5f5"]
+	"John Gough" [label="John Gough
+(unknown)" fillcolor="#f5f5f5"]
+	"John Slee" [label="John Slee
+(unknown)" fillcolor="#c8f7c5"]
+	"George Bewley" [label="George Bewley
+(unknown)" fillcolor="#c8f7c5"]
+	"Rudolf Lipschitz" [label="Rudolf Lipschitz
+(unknown)" fillcolor="#f5f5f5"]
+	"Martin Ohm" [label="Martin Ohm
+(1811)" fillcolor="#f5f5f5"]
+	"William Whewell" [label="William Whewell
+(unknown)" fillcolor="#f5f5f5"]
+	"Edward Waring" [label="Edward Waring
+(1760)" fillcolor="#f5f5f5"]
+	"Henry Bracken" [label="Henry Bracken
+(unknown)" fillcolor="#f5f5f5"]
+	"John Cranke" [label="John Cranke
+(1774)" fillcolor="#f5f5f5"]
+	"Giovanni Battista Morgagni" [label="Giovanni Battista Morgagni
+(unknown)" fillcolor="#f5f5f5"]
+	"Antonio Maria Valsalva" [label="Antonio Maria Valsalva
+(unknown)" fillcolor="#f5f5f5"]
+	"Farrokh Mistree" [label="Farrokh Mistree
+(1974)" fillcolor="#f5f5f5"]
+	"Bengt Jakobsson" [label="Bengt Jakobsson
+(1947)" fillcolor="#f5f5f5"]
+	"Justus (Joost Lips) Lipsius" [label="Justus (Joost Lips) Lipsius
+(1569)" fillcolor="#f5f5f5"]
+	"Richard Ruggles" [label="Richard Ruggles
+(1942)" fillcolor="#f5f5f5"]
+	"J. W. McNaul" [label="J. W. McNaul
+(1921)" fillcolor="#f5f5f5"]
+	"Henry Bruton" [label="Henry Bruton
+(1952)" fillcolor="#f5f5f5"]
+	"Ludolph van Ceulen" [label="Ludolph van Ceulen
+(unknown)" fillcolor="#f5f5f5"]
+	"Lionel Simeon Marks" [label="Lionel Simeon Marks
+(1894)" fillcolor="#f5f5f5"]
+	"Charles Harold Berry" [label="Charles Harold Berry
+(1916)" fillcolor="#f5f5f5"]
+	"Henri Fehr" [label="Henri Fehr
+(1899)" fillcolor="#f5f5f5"]
+	"Thomas Cranmer" [label="Thomas Cranmer
+(1526)" fillcolor="#f5f5f5"]
+	"Valentin Alberti" [label="Valentin Alberti
+(1678)" fillcolor="#f5f5f5"]
+	"Karl Wolfgang Christoph Schütz" [label="Karl Wolfgang Christoph Schütz
+(1835)" fillcolor="#f5f5f5"]
+	"Wilhelm von Bezold" [label="Wilhelm von Bezold
+(1860)" fillcolor="#f5f5f5"]
+	"Leonhard von Dobschütz" [label="Leonhard von Dobschütz
+(1489)" fillcolor="#f5f5f5"]
+	"Bonifazius Erasmi" [label="Bonifazius Erasmi
+(1509)" fillcolor="#f5f5f5"]
+	"Francois Dubois" [label="Francois Dubois
+(1516)" fillcolor="#f5f5f5"]
+	"Jean Tagault" [label="Jean Tagault
+(1524)" fillcolor="#f5f5f5"]
+	"Jan Standonck" [label="Jan Standonck
+(1490)" fillcolor="#f5f5f5"]
+	"Johannes Stöffler" [label="Johannes Stöffler
+(1476)" fillcolor="#f5f5f5"]
+	"Reinhard Bachoff von Echt" [label="Reinhard Bachoff von Echt
+(1598)" fillcolor="#f5f5f5"]
+	"Gasparino da Barzizza" [label="Gasparino da Barzizza
+(1413)" fillcolor="#f5f5f5"]
+	"Giovanni Conversini" [label="Giovanni Conversini
+(1363)" fillcolor="#f5f5f5"]
+	"Christian August Brandis" [label="Christian August Brandis
+(1812)" fillcolor="#f5f5f5"]
+	"Friedrich Leibniz" [label="Friedrich Leibniz
+(1622)" fillcolor="#f5f5f5"]
+	"Sigismondo Polcastro" [label="Sigismondo Polcastro
+(1424)" fillcolor="#f5f5f5"]
+	"Paolo (Nicoletti) da Venezia" [label="Paolo (Nicoletti) da Venezia
+(1405)" fillcolor="#f5f5f5"]
+	"Marin Mersenne" [label="Marin Mersenne
+(1611)" fillcolor="#f5f5f5"]
+	"Ulrich Zasius" [label="Ulrich Zasius
+(1501)" fillcolor="#f5f5f5"]
+	"Geert (Gerardus Magnus) Groote" [label="Geert (Gerardus Magnus) Groote
+(1358)" fillcolor="#f5f5f5"]
+	"Frediano V. Bracco" [label="Frediano V. Bracco
+(1970)" fillcolor="#f5f5f5"]
+	"Luigi Crocco" [label="Luigi Crocco
+(1936)" fillcolor="#f5f5f5"]
+	"Janet Allen" [label="Janet Allen
+(1973)" fillcolor="#f5f5f5"]
+	"Alan J. Bearden" [label="Alan J. Bearden
+(1958)" fillcolor="#f5f5f5"]
+	"Leonard Meirovitch" [label="Leonard Meirovitch
+(unknown)" fillcolor="#f5f5f5"]
+	"Joseph Pierre LaSalle" [label="Joseph Pierre LaSalle
+(1941)" fillcolor="#f5f5f5"]
+	"Thomas W. Kenny" [label="Thomas W. Kenny
+(1989)" fillcolor="#f5f5f5"]
+	"Paul L. Richards" [label="Paul L. Richards
+(1960)" fillcolor="#f5f5f5"]
+	"Frederick George Keyes" [label="Frederick George Keyes
+(1909)" fillcolor="#f5f5f5"]
+	"John Emery Bucher" [label="John Emery Bucher
+(1895)" fillcolor="#f5f5f5"]
+	"Benjamin Peirce" [label="Benjamin Peirce
+(unknown)" fillcolor="#f5f5f5"]
+	"Hans Thirring" [label="Hans Thirring
+(unknown)" fillcolor="#f5f5f5"]
+	"Friedrich Hasenöhrl" [label="Friedrich Hasenöhrl
+(1896)" fillcolor="#f5f5f5"]
+	"George Howard Darwin" [label="George Howard Darwin
+(unknown)" fillcolor="#f5f5f5"]
+	"Edward John Routh" [label="Edward John Routh
+(1857)" fillcolor="#f5f5f5"]
+	"Joseph Louis Lagrange" [label="Joseph Louis Lagrange
+(1754)" fillcolor="#f5f5f5"]
+	"Wilhelm Rudolph Fittig" [label="Wilhelm Rudolph Fittig
+(unknown)" fillcolor="#f5f5f5"]
+	"Heinrich Limpricht" [label="Heinrich Limpricht
+(1850)" fillcolor="#f5f5f5"]
+	"Friedrich Wöhler" [label="Friedrich Wöhler
+(1823)" fillcolor="#f5f5f5"]
+	"William Hopkins" [label="William Hopkins
+(1830)" fillcolor="#f5f5f5"]
+	"Isaac Todhunter" [label="Isaac Todhunter
+(1848)" fillcolor="#f5f5f5"]
+	"August De Morgan" [label="August De Morgan
+(1826)" fillcolor="#f5f5f5"]
+	"Ferdinand von Lindemann" [label="Ferdinand von Lindemann
+(unknown)" fillcolor="#f5f5f5"]
+	"C. Felix Klein" [label="C. Felix Klein
+(unknown)" fillcolor="#f5f5f5"]
+	"Arthur Edwin Kennelly" [label="Arthur Edwin Kennelly
+(unknown)" fillcolor="#f5f5f5"]
+	"Julius Plücker" [label="Julius Plücker
+(1823)" fillcolor="#f5f5f5"]
+	"Bruno Hildebrand" [label="Bruno Hildebrand
+(unknown)" fillcolor="#f5f5f5"]
+	"Maximilian Wolfgang Duncker" [label="Maximilian Wolfgang Duncker
+(1834)" fillcolor="#f5f5f5"]
+	"Karl Knies" [label="Karl Knies
+(unknown)" fillcolor="#f5f5f5"]
+	"George Peacock" [label="George Peacock
+(1816)" fillcolor="#f5f5f5"]
+	"John Hudson" [label="John Hudson
+(1800)" fillcolor="#f5f5f5"]
+	"Andreas von Ettingshausen" [label="Andreas von Ettingshausen
+(unknown)" fillcolor="#f5f5f5"]
+	"Ignaz Lindner" [label="Ignaz Lindner
+(unknown)" fillcolor="#f5f5f5"]
+	"Johann Lukas Schönlein" [label="Johann Lukas Schönlein
+(unknown)" fillcolor="#f5f5f5"]
+	"Ignaz Döllinger" [label="Ignaz Döllinger
+(1794)" fillcolor="#f5f5f5"]
+	"Georg Jurij Bartolomej Veha von Vega" [label="Georg Jurij Bartolomej Veha von Vega
+(1775)" fillcolor="#f5f5f5"]
+	"Herman Boerhaave" [label="Herman Boerhaave
+(unknown)" fillcolor="#c8f7c5"]
+	"Walter Taylor" [label="Walter Taylor
+(1723)" fillcolor="#f5f5f5"]
+	"Robert Smith" [label="Robert Smith
+(1715)" fillcolor="#f5f5f5"]
+	"Marcello Malpighi" [label="Marcello Malpighi
+(unknown)" fillcolor="#f5f5f5"]
+	"Friedrich Wolfgang Reiz" [label="Friedrich Wolfgang Reiz
+(1766)" fillcolor="#f5f5f5"]
+	"Johann Friedrich Christ" [label="Johann Friedrich Christ
+(1727)" fillcolor="#f5f5f5"]
+	"Johann August Ernesti" [label="Johann August Ernesti
+(1730)" fillcolor="#f5f5f5"]
+	"Giovanni Alfonso Borelli" [label="Giovanni Alfonso Borelli
+(unknown)" fillcolor="#f5f5f5"]
+	"Erhard Weigel" [label="Erhard Weigel
+(unknown)" fillcolor="#f5f5f5"]
+	"Philipp Müller" [label="Philipp Müller
+(1604)" fillcolor="#f5f5f5"]
+	"Benedetto Castelli" [label="Benedetto Castelli
+(1610)" fillcolor="#f5f5f5"]
+	"Galileo Galilei" [label="Galileo Galilei
+(unknown)" fillcolor="#f5f5f5"]
+	"Ostilio Ricci" [label="Ostilio Ricci
+(1570)" fillcolor="#f5f5f5"]
+	"Christoph Meurer" [label="Christoph Meurer
+(1582)" fillcolor="#f5f5f5"]
+	"Moritz Valentin Steinmetz" [label="Moritz Valentin Steinmetz
+(1567)" fillcolor="#f5f5f5"]
+	"Valentine Naibod" [label="Valentine Naibod
+(unknown)" fillcolor="#f5f5f5"]
+	"Erasmus Reinhold" [label="Erasmus Reinhold
+(1535)" fillcolor="#f5f5f5"]
+	"Vittore Trincavelli" [label="Vittore Trincavelli
+(unknown)" fillcolor="#f5f5f5"]
+	"Pietro Pomponazzi" [label="Pietro Pomponazzi
+(1487)" fillcolor="#f5f5f5"]
+	"Josias Christoph Neander" [label="Josias Christoph Neander
+(unknown)" fillcolor="#f5f5f5"]
+	"Abraham Heinecke" [label="Abraham Heinecke
+(unknown)" fillcolor="#f5f5f5"]
+	"Petrus Otto" [label="Petrus Otto
+(unknown)" fillcolor="#f5f5f5"]
+	"Paolo da Pergola" [label="Paolo da Pergola
+(unknown)" fillcolor="#f5f5f5"]
+	"Johannes Müller Regiomontanus" [label="Johannes Müller Regiomontanus
+(1457)" fillcolor="#f5f5f5"]
+	"Georg von Peuerbach" [label="Georg von Peuerbach
+(1440)" fillcolor="#f5f5f5"]
+	"Basilios Bessarion" [label="Basilios Bessarion
+(1436)" fillcolor="#f5f5f5"]
+	"Cristoforo Landino" [label="Cristoforo Landino
+(unknown)" fillcolor="#f5f5f5"]
+	"George of Trebizond" [label="George of Trebizond
+(unknown)" fillcolor="#f5f5f5"]
+	"Demetrios Kydones" [label="Demetrios Kydones
+(unknown)" fillcolor="#f5f5f5"]
+	"NIlos Kabasilas" [label="NIlos Kabasilas
+(1363)" fillcolor="#f5f5f5"]
+	"Herbert A. Simon" [label="Herbert A. Simon
+(1943)" fillcolor="#f5f5f5"]
+	"Henry Schultz" [label="Henry Schultz
+(1925)" fillcolor="#f5f5f5"]
+	"John C. Chato" [label="John C. Chato
+(1960)" fillcolor="#f5f5f5"]
+	"Warren M. Rohsenow" [label="Warren M. Rohsenow
+(1943)" fillcolor="#f5f5f5"]
+	"Richard E. DeVor" [label="Richard E. DeVor
+(1971)" fillcolor="#f5f5f5"]
+	"Shien-Ming Wu" [label="Shien-Ming Wu
+(1962)" fillcolor="#f5f5f5"]
+	"Masayoshi Tomizuka" [label="Masayoshi Tomizuka
+(1974)" fillcolor="#f5f5f5"]
+	"Daniel E. Whitney" [label="Daniel E. Whitney
+(1968)" fillcolor="#f5f5f5"]
+	"Randall Davis" [label="Randall Davis
+(1976)" fillcolor="#f5f5f5"]
+	"John McCarthy" [label="John McCarthy
+(1951)" fillcolor="#f5f5f5"]
+	"James E. Hubbard" [label="James E. Hubbard
+(1981)" fillcolor="#f5f5f5"]
+	"Wesley L. Harris" [label="Wesley L. Harris
+(1968)" fillcolor="#f5f5f5"]
+	"Roberto Horowitz" [label="Roberto Horowitz
+(1983)" fillcolor="#f5f5f5"]
+	"Victor Zackay" [label="Victor Zackay
+(1952)" fillcolor="#f5f5f5"]
+	"Earl R. Parker" [label="Earl R. Parker
+(1935)" fillcolor="#f5f5f5"]
+	"Georg (Collimitus) Tanstetter" [label="Georg (Collimitus) Tanstetter
+(unknown)" fillcolor="#f5f5f5"]
+	"Conrad Celtes (Celtis)" [label="Conrad Celtes (Celtis)
+(unknown)" fillcolor="#f5f5f5"]
+	"Vittorino da Feltre" [label="Vittorino da Feltre
+(1416)" fillcolor="#f5f5f5"]
+	"Manuel Chrysoloras" [label="Manuel Chrysoloras
+(unknown)" fillcolor="#f5f5f5"]
+	"William Craig Reynolds" [label="William Craig Reynolds
+(1957)" fillcolor="#f5f5f5"]
+	"William M. Kays" [label="William M. Kays
+(1950)" fillcolor="#f5f5f5"]
+	"Stephen J. Kline" [label="Stephen J. Kline
+(1952)" fillcolor="#f5f5f5"]
+	"Richard S. Muller" [label="Richard S. Muller
+(1962)" fillcolor="#f5f5f5"]
+	"David Middlebrook" [label="David Middlebrook
+(1942)" fillcolor="#f5f5f5"]
+	"Bernard S. Hudgins" [label="Bernard S. Hudgins
+(1991)" fillcolor="#f5f5f5"]
+	"Philip A. Parker" [label="Philip A. Parker
+(1987)" fillcolor="#f5f5f5"]
+	"Rodolphus Agricola" [label="Rodolphus Agricola
+(1477)" fillcolor="#f5f5f5"]
+	"Gaetano da Thiene" [label="Gaetano da Thiene
+(unknown)" fillcolor="#f5f5f5"]
+	"Hugh Turrittin" [label="Hugh Turrittin
+(1933)" fillcolor="#f5f5f5"]
+	"Rudolph Ernest Langer" [label="Rudolph Ernest Langer
+(1922)" fillcolor="#f5f5f5"]
+	"Walter W. Soroka" [label="Walter W. Soroka
+(1945)" fillcolor="#f5f5f5"]
+	"Guy Orcutt" [label="Guy Orcutt
+(1944)" fillcolor="#f5f5f5"]
+	"Arthur Smithies" [label="Arthur Smithies
+(1934)" fillcolor="#f5f5f5"]
+	"Shams al‐Dīn al‐Bukhārī" [label="Shams al‐Dīn al‐Bukhārī
+(unknown)" fillcolor="#f5f5f5"]
+	"Nasir al-Dīn al-Ṭūsī" [label="Nasir al-Dīn al-Ṭūsī
+(unknown)" fillcolor="#f5f5f5"]
+	"Kamāl al-Dīn Ibn Yūnus" [label="Kamāl al-Dīn Ibn Yūnus
+(unknown)" fillcolor="#f5f5f5"]
+	"Athīr al-Dīn al-Mufaḍḍal al-Abharī" [label="Athīr al-Dīn al-Mufaḍḍal al-Abharī
+(1264)" fillcolor="#f5f5f5"]
+	"Saraf al-Dīn Muhammad al-Masʿūdī al-Marwazī" [label="Saraf al-Dīn Muhammad al-Masʿūdī al-Marwazī
+(unknown)" fillcolor="#f5f5f5"]
+	"Ghiyāth al-Dīn Abū al-Fatḥ ʿUmar ibn Ibrāhīm al-Khayyām al-Nīsābūrī" [label="Ghiyāth al-Dīn Abū al-Fatḥ ʿUmar ibn Ibrāhīm al-Khayyām al-Nīsābūrī
+(1068)" fillcolor="#f5f5f5"]
+	"Rudolf Karl Georg Friedrich Leuckart" [label="Rudolf Karl Georg Friedrich Leuckart
+(1845)" fillcolor="#f5f5f5"]
+	"Rudolf Wagner" [label="Rudolf Wagner
+(1826)" fillcolor="#f5f5f5"]
+	"Fakhr al-Dīn Muhammad al-Rēzī" [label="Fakhr al-Dīn Muhammad al-Rēzī
+(unknown)" fillcolor="#f5f5f5"]
+	"Bahmanyār ibn al-Marzubān" [label="Bahmanyār ibn al-Marzubān
+(unknown)" fillcolor="#f5f5f5"]
+	"Abu ʿAli al-Husayn (Avicenna) ibn Sina" [label="Abu ʿAli al-Husayn (Avicenna) ibn Sina
+(unknown)" fillcolor="#f5f5f5"]
+	"Heinrich Gustav Magnus" [label="Heinrich Gustav Magnus
+(1827)" fillcolor="#f5f5f5"]
+	"Eilhard Mitscherlich" [label="Eilhard Mitscherlich
+(1814)" fillcolor="#f5f5f5"]
+	"Bernhard Friedrich Thibaut" [label="Bernhard Friedrich Thibaut
+(1796)" fillcolor="#f5f5f5"]
+	"Abraham Gotthelf Kästner" [label="Abraham Gotthelf Kästner
+(1739)" fillcolor="#f5f5f5"]
+	"Georg Christoph Lichtenberg" [label="Georg Christoph Lichtenberg
+(1765)" fillcolor="#f5f5f5"]
+	"Albert Clampius" [label="Albert Clampius
+(unknown)" fillcolor="#f5f5f5"]
+	"Fracis Ogoke" [label="Fracis Ogoke
+(2024)" fillcolor="#c6e2ff"]
+	"Amir Barati Farimani" [label="Amir Barati Farimani
+(2015)" fillcolor="#c6e2ff"]
+	"Ryan F. Johnson" [label="Ryan F. Johnson
+(2014)" fillcolor="#c6e2ff"]
+	"Harsha K. Chelliah" [label="Harsha K. Chelliah
+(1989)" fillcolor="#f5f5f5"]
+	"William Gerberich" [label="William Gerberich
+(1969)" fillcolor="#f5f5f5"]
+	"Hans Conrad" [label="Hans Conrad
+(1956)" fillcolor="#f5f5f5"]
+	"Arumugam Manthiram" [label="Arumugam Manthiram
+(1981)" fillcolor="#f5f5f5"]
+	"J. (Jagannatha) Gopalakrishnan" [label="J. (Jagannatha) Gopalakrishnan
+(1968)" fillcolor="#f5f5f5"]
+	"Chandrajit L. Bajaj" [label="Chandrajit L. Bajaj
+(1984)" fillcolor="#f5f5f5"]
+	"John Edward Hopcroft" [label="John Edward Hopcroft
+(1964)" fillcolor="#f5f5f5"]
+	"Kimberly A. Prather" [label="Kimberly A. Prather
+(1990)" fillcolor="#f5f5f5"]
+	"Robert N. Rosenfeld" [label="Robert N. Rosenfeld
+(1979)" fillcolor="#f5f5f5"]
+	"Forman A. Williams" [label="Forman A. Williams
+(1958)" fillcolor="#f5f5f5"]
+	"Aristides S. Veletsos" [label="Aristides S. Veletsos
+(1953)" fillcolor="#f5f5f5"]
+	"Nathan M. Newmark" [label="Nathan M. Newmark
+(1934)" fillcolor="#f5f5f5"]
+	"Ronald G. Prinn" [label="Ronald G. Prinn
+(1971)" fillcolor="#f5f5f5"]
+	"John S. Lewis" [label="John S. Lewis
+(1968)" fillcolor="#f5f5f5"]
+	"William Donald Robertson" [label="William Donald Robertson
+(1948)" fillcolor="#f5f5f5"]
+	"Edward J. Kramer" [label="Edward J. Kramer
+(1966)" fillcolor="#f5f5f5"]
+	"Charles Lloyd Bauer" [label="Charles Lloyd Bauer
+(1961)" fillcolor="#f5f5f5"]
+	"Chunibhai Chhotabhai Patel" [label="Chunibhai Chhotabhai Patel
+(1950)" fillcolor="#f5f5f5"]
+	"Jeffrey Perloff" [label="Jeffrey Perloff
+(1976)" fillcolor="#f5f5f5"]
+	"Robert Ernest Hall" [label="Robert Ernest Hall
+(1967)" fillcolor="#f5f5f5"]
+	"Franklin Fisher" [label="Franklin Fisher
+(1960)" fillcolor="#f5f5f5"]
+	"Robert N. Wiedenmann" [label="Robert N. Wiedenmann
+(1990)" fillcolor="#f5f5f5"]
+	"Robert J. O'Neil" [label="Robert J. O'Neil
+(1984)" fillcolor="#f5f5f5"]
+	"S. L. Soo" [label="S. L. Soo
+(1951)" fillcolor="#f5f5f5"]
+	"Howard Wilson Emmons" [label="Howard Wilson Emmons
+(1938)" fillcolor="#f5f5f5"]
+	"George Bienkowski" [label="George Bienkowski
+(1962)" fillcolor="#f5f5f5"]
+	"Ronald S. Rivlin" [label="Ronald S. Rivlin
+(1937)" fillcolor="#f5f5f5"]
+	"Sydney Goldstein" [label="Sydney Goldstein
+(1928)" fillcolor="#f5f5f5"]
+	"Egon Orowan" [label="Egon Orowan
+(1932)" fillcolor="#f5f5f5"]
+	"Richard Becker" [label="Richard Becker
+(1906)" fillcolor="#f5f5f5"]
+	"Aristotle Demetrius Michal" [label="Aristotle Demetrius Michal
+(1924)" fillcolor="#f5f5f5"]
+	"Mandikal Ramanna Aswathanarayana Rao" [label="Mandikal Ramanna Aswathanarayana Rao
+(1941)" fillcolor="#f5f5f5"]
+	"Michael Tinkham" [label="Michael Tinkham
+(1954)" fillcolor="#f5f5f5"]
+	"Richard L. Schmalensee" [label="Richard L. Schmalensee
+(1960)" fillcolor="#f5f5f5"]
+	"Robert Boyd Gordon" [label="Robert Boyd Gordon
+(1955)" fillcolor="#f5f5f5"]
+	"Robert M. Solow" [label="Robert M. Solow
+(1950)" fillcolor="#f5f5f5"]
+	"Harold Urey" [label="Harold Urey
+(1923)" fillcolor="#f5f5f5"]
+	"Robert L. Piziali" [label="Robert L. Piziali
+(1970)" fillcolor="#f5f5f5"]
+	"James M. Kelly" [label="James M. Kelly
+(1962)" fillcolor="#f5f5f5"]
+	"Robert F. Steidel" [label="Robert F. Steidel
+(1955)" fillcolor="#f5f5f5"]
+	"Frank Richter" [label="Frank Richter
+(1972)" fillcolor="#f5f5f5"]
+	"Joseph Pedlosky" [label="Joseph Pedlosky
+(1963)" fillcolor="#f5f5f5"]
+	"Henry L. Moore" [label="Henry L. Moore
+(1896)" fillcolor="#f5f5f5"]
+	"Simon Newcomb" [label="Simon Newcomb
+(1858)" fillcolor="#f5f5f5"]
+	"John Bates Clark" [label="John Bates Clark
+(1875)" fillcolor="#f5f5f5"]
+	"Wilhelm Schlink" [label="Wilhelm Schlink
+(1902)" fillcolor="#f5f5f5"]
+	"Gustav Bauer" [label="Gustav Bauer
+(1842)" fillcolor="#f5f5f5"]
+	"August Weismann" [label="August Weismann
+(1857)" fillcolor="#f5f5f5"]
+	"Henry W. Newson" [label="Henry W. Newson
+(1934)" fillcolor="#f5f5f5"]
+	"William Draper Harkins" [label="William Draper Harkins
+(1907)" fillcolor="#f5f5f5"]
+	"Hardy Cross" [label="Hardy Cross
+(1911)" fillcolor="#f5f5f5"]
+	"Gilbert N. Lewis" [label="Gilbert N. Lewis
+(1899)" fillcolor="#f5f5f5"]
+	"Griffith C. Evans" [label="Griffith C. Evans
+(1910)" fillcolor="#f5f5f5"]
+	"Herbert Henry Uhlig" [label="Herbert Henry Uhlig
+(1932)" fillcolor="#f5f5f5"]
+	"John Gamble Kirkwood" [label="John Gamble Kirkwood
+(1929)" fillcolor="#f5f5f5"]
+	"Ralph A. Seban" [label="Ralph A. Seban
+(1940)" fillcolor="#f5f5f5"]
+	"Llewellyn MIchael Kraus Boelter" [label="Llewellyn MIchael Kraus Boelter
+(1918)" fillcolor="#f5f5f5"]
+	"Joseph M Pettit" [label="Joseph M Pettit
+(1942)" fillcolor="#f5f5f5"]
+	"Wassily W. Leontief" [label="Wassily W. Leontief
+(1928)" fillcolor="#f5f5f5"]
+	"M. W. P. Strandberg" [label="M. W. P. Strandberg
+(1948)" fillcolor="#f5f5f5"]
+	"Arthur Stanley Nowick" [label="Arthur Stanley Nowick
+(1950)" fillcolor="#f5f5f5"]
+	"Thomas B. Sheridan" [label="Thomas B. Sheridan
+(1959)" fillcolor="#f5f5f5"]
+	"Henry Paynter" [label="Henry Paynter
+(1951)" fillcolor="#f5f5f5"]
+	"Farrington Daniels" [label="Farrington Daniels
+(1914)" fillcolor="#f5f5f5"]
+	"Theodore William Richards" [label="Theodore William Richards
+(1888)" fillcolor="#f5f5f5"]
+	"Godfrey Harold Hardy" [label="Godfrey Harold Hardy
+(1903)" fillcolor="#f5f5f5"]
+	"E. T. Whittaker" [label="E. T. Whittaker
+(1895)" fillcolor="#f5f5f5"]
+	"Arthur Newell Talbot" [label="Arthur Newell Talbot
+(1881)" fillcolor="#f5f5f5"]
+	"John Finnie Downie Smith" [label="John Finnie Downie Smith
+(1933)" fillcolor="#f5f5f5"]
+	"Frederick E Terman" [label="Frederick E Terman
+(1924)" fillcolor="#f5f5f5"]
+	"Harold Jeffreys" [label="Harold Jeffreys
+(1917)" fillcolor="#f5f5f5"]
+	"Henry Frederick Baker" [label="Henry Frederick Baker
+(1895)" fillcolor="#f5f5f5"]
+	"Maxime Bôcher" [label="Maxime Bôcher
+(1891)" fillcolor="#f5f5f5"]
+	"John Edensor Littlewood" [label="John Edensor Littlewood
+(1910)" fillcolor="#f5f5f5"]
+	"Ernest Barnes" [label="Ernest Barnes
+(1907)" fillcolor="#f5f5f5"]
+	"Wilhelm Flugge" [label="Wilhelm Flugge
+(1927)" fillcolor="#f5f5f5"]
+	"Kurt Beyer" [label="Kurt Beyer
+(1905)" fillcolor="#f5f5f5"]
+	"Alexander Louis London" [label="Alexander Louis London
+(1938)" fillcolor="#f5f5f5"]
+	"Ascher Herman Shapiro" [label="Ascher Herman Shapiro
+(1946)" fillcolor="#f5f5f5"]
+	"Joseph Henry Keenan" [label="Joseph Henry Keenan
+(1922)" fillcolor="#f5f5f5"]
+	"William Linvill" [label="William Linvill
+(1949)" fillcolor="#f5f5f5"]
+	"Ernst Guillemin" [label="Ernst Guillemin
+(1926)" fillcolor="#f5f5f5"]
+	"Arthur Cayley" [label="Arthur Cayley
+(1842)" fillcolor="#f5f5f5"]
+	"Leopold Gmelin" [label="Leopold Gmelin
+(1812)" fillcolor="#f5f5f5"]
+	"Jöns Jacob Berzelius" [label="Jöns Jacob Berzelius
+(1802)" fillcolor="#f5f5f5"]
+	"William Ramsay" [label="William Ramsay
+(1872)" fillcolor="#f5f5f5"]
+	"Josiah Parsons Cooke" [label="Josiah Parsons Cooke
+(1848)" fillcolor="#f5f5f5"]
+	"Werner Sombart" [label="Werner Sombart
+(1888)" fillcolor="#f5f5f5"]
+	"Gustav von Schmoller" [label="Gustav von Schmoller
+(1860)" fillcolor="#f5f5f5"]
+	"Adolph Heinrich Gotthelf Wagner" [label="Adolph Heinrich Gotthelf Wagner
+(1857)" fillcolor="#f5f5f5"]
+	"Andrew Russell Forsyth" [label="Andrew Russell Forsyth
+(1881)" fillcolor="#f5f5f5"]
+	"Harmon Northrop Morse" [label="Harmon Northrop Morse
+(1875)" fillcolor="#f5f5f5"]
+	"Robert E. Swain" [label="Robert E. Swain
+(1904)" fillcolor="#f5f5f5"]
+	"Lafayette Mendel" [label="Lafayette Mendel
+(1893)" fillcolor="#f5f5f5"]
+	"Vannevar Bush" [label="Vannevar Bush
+(1916)" fillcolor="#f5f5f5"]
+	"Shirley Leon Quimby" [label="Shirley Leon Quimby
+(1925)" fillcolor="#f5f5f5"]
+	"Albert Potter Wills" [label="Albert Potter Wills
+(1897)" fillcolor="#f5f5f5"]
+	"Reginald Patrick Linstead" [label="Reginald Patrick Linstead
+(1926)" fillcolor="#f5f5f5"]
+	"George Armand Robert Kon" [label="George Armand Robert Kon
+(1922)" fillcolor="#f5f5f5"]
+	"Arnold Sommerfeld" [label="Arnold Sommerfeld
+(1891)" fillcolor="#f5f5f5"]
+	"Eugene Guth" [label="Eugene Guth
+(1928)" fillcolor="#f5f5f5"]
+	"Jorgen Holmboe" [label="Jorgen Holmboe
+(1930)" fillcolor="#f5f5f5"]
+	"Vilhelm Friman Koren Bjerknes" [label="Vilhelm Friman Koren Bjerknes
+(1892)" fillcolor="#f5f5f5"]
+	"William Baumol" [label="William Baumol
+(1949)" fillcolor="#f5f5f5"]
+	"Lionel Robbins" [label="Lionel Robbins
+(1923)" fillcolor="#f5f5f5"]
+	"Joseph Franz von Jacquin" [label="Joseph Franz von Jacquin
+(1788)" fillcolor="#f5f5f5"]
+	"Nikolaus Joseph von Jacquin" [label="Nikolaus Joseph von Jacquin
+(1754)" fillcolor="#f5f5f5"]
+	"Friedrich Stromeyer" [label="Friedrich Stromeyer
+(1800)" fillcolor="#f5f5f5"]
+	"Johann Friedrich Gmelin" [label="Johann Friedrich Gmelin
+(1768)" fillcolor="#f5f5f5"]
+	"Johann Afzelius" [label="Johann Afzelius
+(1776)" fillcolor="#f5f5f5"]
+	"William Arnold Anthony" [label="William Arnold Anthony
+(1856)" fillcolor="#f5f5f5"]
+	"Hans Julius Anton Edward Hübner" [label="Hans Julius Anton Edward Hübner
+(1859)" fillcolor="#f5f5f5"]
+	"Harold Kilbrith Barrows" [label="Harold Kilbrith Barrows
+(1885)" fillcolor="#f5f5f5"]
+	"Russell Henry Chittenden" [label="Russell Henry Chittenden
+(1880)" fillcolor="#f5f5f5"]
+	"Arthur Gordon Webster" [label="Arthur Gordon Webster
+(1890)" fillcolor="#f5f5f5"]
+	"Philip Franklin" [label="Philip Franklin
+(1921)" fillcolor="#f5f5f5"]
+	"Oswald Veblen" [label="Oswald Veblen
+(1903)" fillcolor="#f5f5f5"]
+	"Jocelyn F. Thorpe" [label="Jocelyn F. Thorpe
+(1895)" fillcolor="#f5f5f5"]
+	"Joseph Schumpeter" [label="Joseph Schumpeter
+(1906)" fillcolor="#f5f5f5"]
+	"Gerhard Tintner" [label="Gerhard Tintner
+(1929)" fillcolor="#f5f5f5"]
+	"Ludwig Heinrich von Mises" [label="Ludwig Heinrich von Mises
+(1912)" fillcolor="#f5f5f5"]
+	"Adriaan van Royen" [label="Adriaan van Royen
+(1728)" fillcolor="#f5f5f5"]
+	"Gerard van Swieten" [label="Gerard van Swieten
+(1725)" fillcolor="#f5f5f5"]
+	"Philipp Friedrich Gmelin" [label="Philipp Friedrich Gmelin
+(1742)" fillcolor="#f5f5f5"]
+	"Ferdinand Christoph Oetinger" [label="Ferdinand Christoph Oetinger
+(unknown)" fillcolor="#c8f7c5"]
+	"Torbern Olof Bergman" [label="Torbern Olof Bergman
+(1758)" fillcolor="#f5f5f5"]
+	"Johann Georg Anton Geuther" [label="Johann Georg Anton Geuther
+(1855)" fillcolor="#f5f5f5"]
+	"Hermann Paasche" [label="Hermann Paasche
+(1875)" fillcolor="#f5f5f5"]
+	"Johannes Conrad" [label="Johannes Conrad
+(1864)" fillcolor="#f5f5f5"]
+	"Wilhelm Kühne" [label="Wilhelm Kühne
+(1856)" fillcolor="#f5f5f5"]
+	"Samuel William Johnson" [label="Samuel William Johnson
+(1857)" fillcolor="#f5f5f5"]
+	"Dugald C. Jackson" [label="Dugald C. Jackson
+(1885)" fillcolor="#f5f5f5"]
+	"Hermann von Helmholtz" [label="Hermann von Helmholtz
+(1842)" fillcolor="#f5f5f5"]
+	"Charles Elwood Mendenhall" [label="Charles Elwood Mendenhall
+(1898)" fillcolor="#f5f5f5"]
+	"Henry Augustus Rowland" [label="Henry Augustus Rowland
+(1870)" fillcolor="#f5f5f5"]
+	"E. H. Moore" [label="E. H. Moore
+(1885)" fillcolor="#f5f5f5"]
+	"Eugen von Böhm-Bawerk" [label="Eugen von Böhm-Bawerk
+(1872)" fillcolor="#f5f5f5"]
+	"Stephen Prokofyevich Timoshenko" [label="Stephen Prokofyevich Timoshenko
+(1907)" fillcolor="#f5f5f5"]
+	"Viktor Lvovich Kirpichov" [label="Viktor Lvovich Kirpichov
+(1876)" fillcolor="#f5f5f5"]
+	"Ludwig Prandtl" [label="Ludwig Prandtl
+(1899)" fillcolor="#f5f5f5"]
+	"Hubert Anson Newton" [label="Hubert Anson Newton
+(1850)" fillcolor="#f5f5f5"]
+	"Michel Chasles" [label="Michel Chasles
+(1814)" fillcolor="#f5f5f5"]
+	"Burchard David Mauchart" [label="Burchard David Mauchart
+(1722)" fillcolor="#f5f5f5"]
+	"Bengt Ferrner" [label="Bengt Ferrner
+(1751)" fillcolor="#f5f5f5"]
+	"Johannes Peter Müller" [label="Johannes Peter Müller
+(1822)" fillcolor="#f5f5f5"]
+	"John Pitkin Norton" [label="John Pitkin Norton
+(1845)" fillcolor="#f5f5f5"]
+	"Franz S. Exner" [label="Franz S. Exner
+(1871)" fillcolor="#f5f5f5"]
+	"Viktor von Lang" [label="Viktor von Lang
+(1859)" fillcolor="#f5f5f5"]
+	"August Adolph Eduard Eberhard Kundt" [label="August Adolph Eduard Eberhard Kundt
+(1864)" fillcolor="#f5f5f5"]
+	"Gustav Robert Kirchhoff" [label="Gustav Robert Kirchhoff
+(1847)" fillcolor="#f5f5f5"]
+	"Karl Friedrich von Auwers" [label="Karl Friedrich von Auwers
+(1885)" fillcolor="#f5f5f5"]
+	"August Wilhelm von Hofmann" [label="August Wilhelm von Hofmann
+(1841)" fillcolor="#f5f5f5"]
+	"Clarence Linus Cory" [label="Clarence Linus Cory
+(1889)" fillcolor="#f5f5f5"]
+	"Louis Bell" [label="Louis Bell
+(1888)" fillcolor="#f5f5f5"]
+	"Christian August Hausen" [label="Christian August Hausen
+(1713)" fillcolor="#f5f5f5"]
+	"Johann Christoph Wichmannshausen" [label="Johann Christoph Wichmannshausen
+(1685)" fillcolor="#f5f5f5"]
+	"Johann Andreas Planer" [label="Johann Andreas Planer
+(unknown)" fillcolor="#c8f7c5"]
+	"Elias Rudolph Camerarius Jr." [label="Elias Rudolph Camerarius Jr.
+(1691)" fillcolor="#f5f5f5"]
+	"Samuel Klingenstierna" [label="Samuel Klingenstierna
+(1728)" fillcolor="#f5f5f5"]
+	"Mårten Strömer" [label="Mårten Strömer
+(1731)" fillcolor="#f5f5f5"]
+	"August Franz Joseph Karl Mayer" [label="August Franz Joseph Karl Mayer
+(unknown)" fillcolor="#c8f7c5"]
+	"Karl Asmund Rudolphi" [label="Karl Asmund Rudolphi
+(1793)" fillcolor="#f5f5f5"]
+	"Justus Von Liebig" [label="Justus Von Liebig
+(1822)" fillcolor="#f5f5f5"]
+	"Benjamin Silliman" [label="Benjamin Silliman
+(1796)" fillcolor="#f5f5f5"]
+	"James Finlay Weir Johnston" [label="James Finlay Weir Johnston
+(1833)" fillcolor="#f5f5f5"]
+	"Otto Mencke" [label="Otto Mencke
+(1665)" fillcolor="#f5f5f5"]
+	"Elias Rudolph Camerarius Sr." [label="Elias Rudolph Camerarius Sr.
+(1663)" fillcolor="#f5f5f5"]
+	"Jean Le Rond d'Alembert" [label="Jean Le Rond d'Alembert
+(1735)" fillcolor="#f5f5f5"]
+	"Leonor Caron" [label="Leonor Caron
+(1710)" fillcolor="#f5f5f5"]
+	"Thomas Postlethwaite" [label="Thomas Postlethwaite
+(1756)" fillcolor="#f5f5f5"]
+	"Christian Ehrenfried Weigel" [label="Christian Ehrenfried Weigel
+(1771)" fillcolor="#f5f5f5"]
+	"James Woodhouse" [label="James Woodhouse
+(unknown)" fillcolor="#c8f7c5"]
+	"Thomas Charles Hope" [label="Thomas Charles Hope
+(unknown)" fillcolor="#c8f7c5"]
+	"Pierre-Simon Laplace" [label="Pierre-Simon Laplace
+(1769)" fillcolor="#f5f5f5"]
+	"Karl Christian von Langsdorf" [label="Karl Christian von Langsdorf
+(1781)" fillcolor="#f5f5f5"]
+	"Karl Friedrich Wilhelm Gottlob Kastner" [label="Karl Friedrich Wilhelm Gottlob Kastner
+(1805)" fillcolor="#f5f5f5"]
+	"Antonio Scarpa" [label="Antonio Scarpa
+(1770)" fillcolor="#f5f5f5"]
+	"Georg Balthasar Metzger" [label="Georg Balthasar Metzger
+(1650)" fillcolor="#f5f5f5"]
+	"Jakob Thomasius" [label="Jakob Thomasius
+(1643)" fillcolor="#f5f5f5"]
+	"Pierre Varignon" [label="Pierre Varignon
+(1687)" fillcolor="#f5f5f5"]
+	"Anders Gabriel Duhre" [label="Anders Gabriel Duhre
+(1711)" fillcolor="#f5f5f5"]
+	"Christian M. von Wolff" [label="Christian M. von Wolff
+(1703)" fillcolor="#f5f5f5"]
+	"Leonhard Euler" [label="Leonhard Euler
+(1726)" fillcolor="#f5f5f5"]
+	"Stephen Whisson" [label="Stephen Whisson
+(1742)" fillcolor="#f5f5f5"]
+	"Johann Christian Polycarp Erxleben" [label="Johann Christian Polycarp Erxleben
+(1767)" fillcolor="#f5f5f5"]
+	"Johann Friedrich August Göttling" [label="Johann Friedrich August Göttling
+(1789)" fillcolor="#f5f5f5"]
+	"Christoph Gudermann" [label="Christoph Gudermann
+(1832)" fillcolor="#f5f5f5"]
+	"Gottfried Möbius" [label="Gottfried Möbius
+(1640)" fillcolor="#f5f5f5"]
+	"Johann Jakob von Brunn" [label="Johann Jakob von Brunn
+(unknown)" fillcolor="#c8f7c5"]
+	"Petrus (the Elder) Elvius" [label="Petrus (the Elder) Elvius
+(1688)" fillcolor="#f5f5f5"]
+	"Johann Bernoulli" [label="Johann Bernoulli
+(1694)" fillcolor="#f5f5f5"]
+	"Gabriel Gruber" [label="Gabriel Gruber
+(1767)" fillcolor="#f5f5f5"]
+	"Joseph Giuseppe Jakob von Maffei" [label="Joseph Giuseppe Jakob von Maffei
+(1762)" fillcolor="#f5f5f5"]
+	"Ernst Gottfried Baldinger" [label="Ernst Gottfried Baldinger
+(1760)" fillcolor="#f5f5f5"]
+	"Karl Christian (Christian Karl) Reisig" [label="Karl Christian (Christian Karl) Reisig
+(1816)" fillcolor="#f5f5f5"]
+	"Johann Gottfried Jakob Hermann" [label="Johann Gottfried Jakob Hermann
+(1790)" fillcolor="#f5f5f5"]
+	"Friedrich Wilhelm Bessel" [label="Friedrich Wilhelm Bessel
+(1810)" fillcolor="#f5f5f5"]
+	"Carl Friedrich Gauss" [label="Carl Friedrich Gauss
+(1799)" fillcolor="#f5f5f5"]
+	"Ehrenfried Walter von Tschirnhaus" [label="Ehrenfried Walter von Tschirnhaus
+(1674)" fillcolor="#f5f5f5"]
+	"Arnold Geulincx" [label="Arnold Geulincx
+(1646)" fillcolor="#f5f5f5"]
+	"Franciscus de le Boë Sylvius" [label="Franciscus de le Boë Sylvius
+(1637)" fillcolor="#f5f5f5"]
+	"Pieter van Schooten" [label="Pieter van Schooten
+(1655)" fillcolor="#f5f5f5"]
+	"Petrus Hoffvenius" [label="Petrus Hoffvenius
+(1660)" fillcolor="#f5f5f5"]
+	"Jacob Bernoulli" [label="Jacob Bernoulli
+(1684)" fillcolor="#f5f5f5"]
+	"Frans van Schooten Jr." [label="Frans van Schooten Jr.
+(1635)" fillcolor="#f5f5f5"]
+	"Johannes Antonides van der Linden" [label="Johannes Antonides van der Linden
+(1630)" fillcolor="#f5f5f5"]
+	"Gottfried Wilhelm Leibniz" [label="Gottfried Wilhelm Leibniz
+(1666)" fillcolor="#f5f5f5"]
+	"Roger Cotes" [label="Roger Cotes
+(1706)" fillcolor="#f5f5f5"]
+	"Jacobus Golius" [label="Jacobus Golius
+(1621)" fillcolor="#f5f5f5"]
+	"Adolph Vorstius" [label="Adolph Vorstius
+(1622)" fillcolor="#f5f5f5"]
+	"Gilbert Jacchaeus" [label="Gilbert Jacchaeus
+(1603)" fillcolor="#f5f5f5"]
+	"Adriaan van den Spieghel" [label="Adriaan van den Spieghel
+(1603)" fillcolor="#f5f5f5"]
+	"Erycius (Henrick van den Putte) Puteanus" [label="Erycius (Henrick van den Putte) Puteanus
+(1595)" fillcolor="#f5f5f5"]
+	"Menelaus Winsemius" [label="Menelaus Winsemius
+(1613)" fillcolor="#f5f5f5"]
+	"Isaac Newton" [label="Isaac Newton
+(1668)" fillcolor="#f5f5f5"]
+	"Willebrord (Snel van Royen) Snellius" [label="Willebrord (Snel van Royen) Snellius
+(1607)" fillcolor="#f5f5f5"]
+	"Thomas Erpenius" [label="Thomas Erpenius
+(1608)" fillcolor="#f5f5f5"]
+	"Duncan Liddel" [label="Duncan Liddel
+(1603)" fillcolor="#f5f5f5"]
+	"Jacobus (Jacob Harmensz.) Arminius" [label="Jacobus (Jacob Harmensz.) Arminius
+(1582)" fillcolor="#f5f5f5"]
+	"Girolamo (Hieronymus Fabricus) Fabrici d'Acquapendente" [label="Girolamo (Hieronymus Fabricus) Fabrici d'Acquapendente
+(1559)" fillcolor="#f5f5f5"]
+	"Johann Matthias Gesner" [label="Johann Matthias Gesner
+(1715)" fillcolor="#f5f5f5"]
+	"Johann Christoph Gottsched" [label="Johann Christoph Gottsched
+(1719)" fillcolor="#f5f5f5"]
+	"Pieter (Petrus Pavius) Pauw" [label="Pieter (Petrus Pavius) Pauw
+(1585)" fillcolor="#f5f5f5"]
+	"Isaac Barrow" [label="Isaac Barrow
+(unknown)" fillcolor="#c8f7c5"]
+	"Benjamin Pulleyn" [label="Benjamin Pulleyn
+(unknown)" fillcolor="#c8f7c5"]
+	"Rudolph (Snel van Royen) Snellius" [label="Rudolph (Snel van Royen) Snellius
+(1572)" fillcolor="#f5f5f5"]
+	"Joseph Justus Scaliger" [label="Joseph Justus Scaliger
+(1563)" fillcolor="#f5f5f5"]
+	"Johann Franz Buddeus" [label="Johann Franz Buddeus
+(1687)" fillcolor="#f5f5f5"]
+	"Georg Heinrich Rast" [label="Georg Heinrich Rast
+(1716)" fillcolor="#f5f5f5"]
+	"Adrien Turnèbe" [label="Adrien Turnèbe
+(1532)" fillcolor="#f5f5f5"]
+	"Johann Peter von Ludewig" [label="Johann Peter von Ludewig
+(1690)" fillcolor="#f5f5f5"]
+	"Christian Thomasius" [label="Christian Thomasius
+(1679)" fillcolor="#f5f5f5"]
+	"Immanuel Tremellius" [label="Immanuel Tremellius
+(1561)" fillcolor="#f5f5f5"]
+	"Michael Walther" [label="Michael Walther
+(1687)" fillcolor="#f5f5f5"]
+	"David Blaesing" [label="David Blaesing
+(1682)" fillcolor="#f5f5f5"]
+	"Johannes (Johan van Heurne) Heurnius" [label="Johannes (Johan van Heurne) Heurnius
+(1566)" fillcolor="#f5f5f5"]
+	"Petrus Ramus" [label="Petrus Ramus
+(1536)" fillcolor="#f5f5f5"]
+	"Henricus Brucaeus" [label="Henricus Brucaeus
+(1554)" fillcolor="#f5f5f5"]
+	"Jacques Toussain" [label="Jacques Toussain
+(1521)" fillcolor="#f5f5f5"]
+	"Johann Friedrich Rhetius" [label="Johann Friedrich Rhetius
+(1652)" fillcolor="#f5f5f5"]
+	"Theodor Zwinger" [label="Theodor Zwinger
+(1559)" fillcolor="#f5f5f5"]
+	"Bassiano Landi" [label="Bassiano Landi
+(1542)" fillcolor="#f5f5f5"]
+	"Laurentius Weger Jr." [label="Laurentius Weger Jr.
+(1675)" fillcolor="#f5f5f5"]
+	"Georg Joachim von Leuchen Rheticus" [label="Georg Joachim von Leuchen Rheticus
+(1535)" fillcolor="#f5f5f5"]
+	"Nicolo Tartaglia" [label="Nicolo Tartaglia
+(1537)" fillcolor="#f5f5f5"]
+	"Giovanni Battista della Monte" [label="Giovanni Battista della Monte
+(1520)" fillcolor="#f5f5f5"]
+	"Constantin Ziegra" [label="Constantin Ziegra
+(1640)" fillcolor="#f5f5f5"]
+	"Johann Sperling" [label="Johann Sperling
+(1625)" fillcolor="#f5f5f5"]
+	"Johannes (Johann Sturm) Sturmius" [label="Johannes (Johann Sturm) Sturmius
+(1527)" fillcolor="#f5f5f5"]
+	"Nicolas (Nicolaes Cleynaerts) Clénard" [label="Nicolas (Nicolaes Cleynaerts) Clénard
+(1521)" fillcolor="#f5f5f5"]
+	"Johannes Winter von Andernach" [label="Johannes Winter von Andernach
+(1527)" fillcolor="#f5f5f5"]
+	"Guillaume Budé" [label="Guillaume Budé
+(1491)" fillcolor="#f5f5f5"]
+	"Nicolaus Copernicus" [label="Nicolaus Copernicus
+(1499)" fillcolor="#f5f5f5"]
+	"Johannes Volmar" [label="Johannes Volmar
+(1515)" fillcolor="#f5f5f5"]
+	"Nicoletto Vernia" [label="Nicoletto Vernia
+(1458)" fillcolor="#f5f5f5"]
+	"Pietro Roccabonella" [label="Pietro Roccabonella
+(1459)" fillcolor="#f5f5f5"]
+	"Niccolò Leoniceno" [label="Niccolò Leoniceno
+(1453)" fillcolor="#f5f5f5"]
+	"Marco Musuro" [label="Marco Musuro
+(1486)" fillcolor="#f5f5f5"]
+	"Georg Calixt" [label="Georg Calixt
+(1607)" fillcolor="#f5f5f5"]
+	"Johannes Caselius" [label="Johannes Caselius
+(1560)" fillcolor="#f5f5f5"]
+	"Cornelius Martini" [label="Cornelius Martini
+(1592)" fillcolor="#f5f5f5"]
+	"Christoph Nottnagel" [label="Christoph Nottnagel
+(1630)" fillcolor="#f5f5f5"]
+	"Ambrosius Rhodius" [label="Ambrosius Rhodius
+(1610)" fillcolor="#f5f5f5"]
+	"Daniel Sennert" [label="Daniel Sennert
+(1599)" fillcolor="#f5f5f5"]
+	"Rutger Rescius" [label="Rutger Rescius
+(1513)" fillcolor="#f5f5f5"]
+	"Jacobus (Jacques Dubois) Sylvius" [label="Jacobus (Jacques Dubois) Sylvius
+(1530)" fillcolor="#f5f5f5"]
+	"Jacobus (Jacques Masson) Latomus" [label="Jacobus (Jacques Masson) Latomus
+(1502)" fillcolor="#f5f5f5"]
+	"Jan (Johannes Campensis) van Campen" [label="Jan (Johannes Campensis) van Campen
+(1519)" fillcolor="#f5f5f5"]
+	"Georgius Hermonymus" [label="Georgius Hermonymus
+(unknown)" fillcolor="#c8f7c5"]
+	"Janus Lascaris" [label="Janus Lascaris
+(1471)" fillcolor="#f5f5f5"]
+	"Deomenico Maria Novara da Ferrara" [label="Deomenico Maria Novara da Ferrara
+(1483)" fillcolor="#f5f5f5"]
+	"Philipp Melanchthon" [label="Philipp Melanchthon
+(1514)" fillcolor="#f5f5f5"]
+	"Johannes Kepler" [label="Johannes Kepler
+(1591)" fillcolor="#f5f5f5"]
+	"Jan Jessenius" [label="Jan Jessenius
+(1591)" fillcolor="#f5f5f5"]
+	"Girolamo (Hieronymus Aleander) Aleandro" [label="Girolamo (Hieronymus Aleander) Aleandro
+(1508)" fillcolor="#f5f5f5"]
+	"Johann (Johannes Kapnion) Reuchlin" [label="Johann (Johannes Kapnion) Reuchlin
+(1481)" fillcolor="#f5f5f5"]
+	"Matthaeus Adrianus" [label="Matthaeus Adrianus
+(unknown)" fillcolor="#c8f7c5"]
+	"Demetrios Chalcocondyles" [label="Demetrios Chalcocondyles
+(1452)" fillcolor="#f5f5f5"]
+	"Michael Maestlin" [label="Michael Maestlin
+(1571)" fillcolor="#f5f5f5"]
+	"Moses Perez" [label="Moses Perez
+(unknown)" fillcolor="#c8f7c5"]
+	"Scipione Fortiguerra" [label="Scipione Fortiguerra
+(1493)" fillcolor="#f5f5f5"]
+	"Theodoros Gazes" [label="Theodoros Gazes
+(1433)" fillcolor="#f5f5f5"]
+	"Nikolaus Selnecker" [label="Nikolaus Selnecker
+(1570)" fillcolor="#f5f5f5"]
+	"Philipp Apian" [label="Philipp Apian
+(1552)" fillcolor="#f5f5f5"]
+	"Gabriel Falloppio" [label="Gabriel Falloppio
+(1548)" fillcolor="#f5f5f5"]
+	"Johannes Argyropoulos" [label="Johannes Argyropoulos
+(1444)" fillcolor="#f5f5f5"]
+	"Jacob ben Jehiel Loans" [label="Jacob ben Jehiel Loans
+(unknown)" fillcolor="#c8f7c5"]
+	"Angelo Poliziano" [label="Angelo Poliziano
+(1477)" fillcolor="#f5f5f5"]
+	"Georgios Plethon Gemistos" [label="Georgios Plethon Gemistos
+(1393)" fillcolor="#f5f5f5"]
+	"Johannes von Gmunden" [label="Johannes von Gmunden
+(1406)" fillcolor="#f5f5f5"]
+	"Thomas von Kempen à Kempis" [label="Thomas von Kempen à Kempis
+(unknown)" fillcolor="#f5f5f5"]
+	"Petrus Apianus" [label="Petrus Apianus
+(1521)" fillcolor="#f5f5f5"]
+	"Antonio Musa Brasavola" [label="Antonio Musa Brasavola
+(1520)" fillcolor="#f5f5f5"]
+	"Marsilio Ficino" [label="Marsilio Ficino
+(1462)" fillcolor="#f5f5f5"]
+	"Guarino da Verona" [label="Guarino da Verona
+(1408)" fillcolor="#f5f5f5"]
+	"Heinrich von Langenstein" [label="Heinrich von Langenstein
+(1363)" fillcolor="#f5f5f5"]
+	"Johannes Stabius" [label="Johannes Stabius
+(1484)" fillcolor="#f5f5f5"]
+	"Nicolo da Lonigo" [label="Nicolo da Lonigo
+(1453)" fillcolor="#f5f5f5"]
+	"Gregory Palamas" [label="Gregory Palamas
+(1316)" fillcolor="#f5f5f5"]
+	"Theodore Metochites" [label="Theodore Metochites
+(1315)" fillcolor="#f5f5f5"]
+	"Battista Guarino" [label="Battista Guarino
+(1455)" fillcolor="#f5f5f5"]
+	"Manuel Bryennios" [label="Manuel Bryennios
+(1300)" fillcolor="#f5f5f5"]
+	"Gregory Chioniadis" [label="Gregory Chioniadis
+(1296)" fillcolor="#f5f5f5"]
+	"Qutb al-Dīn Ibrāhīm al-Mīṣrī" [label="Qutb al-Dīn Ibrāhīm al-Mīṣrī
+(1222)" fillcolor="#f5f5f5"]
+	"Albert Presto" [label="Albert Presto
+(2005)" fillcolor="#c6e2ff"]
+	"Neil M. Donahue" [label="Neil M. Donahue
+(1991)" fillcolor="#f5f5f5"]
+	"Satbir Singh" [label="Satbir Singh
+(2006)" fillcolor="#c6e2ff"]
+	"Rolf D. Reitz" [label="Rolf D. Reitz
+(1978)" fillcolor="#f5f5f5"]
+	"Carmel Majidi" [label="Carmel Majidi
+(2007)" fillcolor="#c6e2ff"]
+	"Ronald S. Fearing" [label="Ronald S. Fearing
+(1988)" fillcolor="#f5f5f5"]
+	"Sarah Bergbreiter" [label="Sarah Bergbreiter
+(2007)" fillcolor="#c6e2ff"]
+	"Kristofer Pister" [label="Kristofer Pister
+(1992)" fillcolor="#f5f5f5"]
+	"Shawn Litster" [label="Shawn Litster
+(2008)" fillcolor="#c6e2ff"]
+	"Juan G. Santiago" [label="Juan G. Santiago
+(1995)" fillcolor="#f5f5f5"]
+	"Reeja Jayan" [label="Reeja Jayan
+(2012)" fillcolor="#c6e2ff"]
+	"Aaron Johnson" [label="Aaron Johnson
+(2014)" fillcolor="#c6e2ff"]
+	"Daniel E. Koditschek" [label="Daniel E. Koditschek
+(1983)" fillcolor="#f5f5f5"]
+	"Eni Hallilaj" [label="Eni Hallilaj
+(2015)" fillcolor="#c6e2ff"]
+	"Joseph Crisco" [label="Joseph Crisco
+(1989)" fillcolor="#f5f5f5"]
+	"Ding Zhao" [label="Ding Zhao
+(2016)" fillcolor="#c6e2ff"]
+	"Huei Peng" [label="Huei Peng
+(1992)" fillcolor="#f5f5f5"]
+	"Victoria Webster-Wood" [label="Victoria Webster-Wood
+(2017)" fillcolor="#c6e2ff"]
+	"Roger D. Quinn" [label="Roger D. Quinn
+(1985)" fillcolor="#f5f5f5"]
+	"Ozan Akkus" [label="Ozan Akkus
+(2000)" fillcolor="#f5f5f5"]
+	"Diana Haidar" [label="Diana Haidar
+(2018)" fillcolor="#c6e2ff"]
+	"David Burris" [label="David Burris
+(2007)" fillcolor="#f5f5f5"]
+	"Noelia Grande Gutiérrez" [label="Noelia Grande Gutiérrez
+(2019)" fillcolor="#c6e2ff"]
+	"Allison Marsden" [label="Allison Marsden
+(2005)" fillcolor="#f5f5f5"]
+	"Jack Beuth" [label="Jack Beuth
+(1992)" fillcolor="#c6e2ff"]
+	"John W. Hutchinson" [label="John W. Hutchinson
+(1963)" fillcolor="#f5f5f5"]
+	"Yoed Rabin" [label="Yoed Rabin
+(1994)" fillcolor="#c6e2ff"]
+	"Avraham Shitzer" [label="Avraham Shitzer
+(1971)" fillcolor="#f5f5f5"]
+	"Maarten de Boer" [label="Maarten de Boer
+(1996)" fillcolor="#c6e2ff"]
+	"Burak Ozdoganlar" [label="Burak Ozdoganlar
+(1999)" fillcolor="#c6e2ff"]
+	"William J. Endres" [label="William J. Endres
+(1992)" fillcolor="#f5f5f5"]
+	"Philip Leduc" [label="Philip Leduc
+(1999)" fillcolor="#c6e2ff"]
+	"Gang Bao" [label="Gang Bao
+(1987)" fillcolor="#f5f5f5"]
+	"Alan McGaughey" [label="Alan McGaughey
+(2004)" fillcolor="#c6e2ff"]
+	"Massoud Kaviany" [label="Massoud Kaviany
+(1979)" fillcolor="#f5f5f5"]
+	"Burak Aksak" [label="Burak Aksak
+(2008)" fillcolor="#c6e2ff"]
+	"Metin Sitti" [label="Metin Sitti
+(1999)" fillcolor="#f5f5f5"]
+	"Joanna Wolfe" [label="Joanna Wolfe
+(2001)" fillcolor="#c6e2ff"]
+	"Davida Charney" [label="Davida Charney
+(1985)" fillcolor="#f5f5f5"]
+	"Liwei Wang" [label="Liwei Wang
+(2022)" fillcolor="#c6e2ff"]
+	"Wei Chen" [label="Wei Chen
+(1995)" fillcolor="#f5f5f5"]
+	"Ping Zhu" [label="Ping Zhu
+(2000)" fillcolor="#f5f5f5"]
+	"Jonathan Cagan" [label="Jonathan Cagan
+(1989)" fillcolor="#c6e2ff"]
+	"Alica Agogino" [label="Alica Agogino
+(1984)" fillcolor="#f5f5f5"]
+	"Kenji Shimada" [label="Kenji Shimada
+(1993)" fillcolor="#c6e2ff"]
+	"David Gossard" [label="David Gossard
+(1975)" fillcolor="#f5f5f5"]
+	"Nestor Gomez" [label="Nestor Gomez
+(1998)" fillcolor="#c6e2ff"]
+	"Steven Fenves" [label="Steven Fenves
+(1961)" fillcolor="#f5f5f5"]
+	"Douglas Weber" [label="Douglas Weber
+(2001)" fillcolor="#c6e2ff"]
+	"Jiping He" [label="Jiping He
+(1988)" fillcolor="#f5f5f5"]
+	"Levent Burak Kara" [label="Levent Burak Kara
+(2004)" fillcolor="#c6e2ff"]
+	"Thomas F. Stahovich" [label="Thomas F. Stahovich
+(1996)" fillcolor="#f5f5f5"]
+	"Rahul Panat" [label="Rahul Panat
+(2004)" fillcolor="#c6e2ff"]
+	"K. Jimmy Hsia" [label="K. Jimmy Hsia
+(1990)" fillcolor="#f5f5f5"]
+	"Jessica Yongjie Zhang" [label="Jessica Yongjie Zhang
+(2005)" fillcolor="#c6e2ff"]
+	"Jeremy Michalek" [label="Jeremy Michalek
+(2005)" fillcolor="#c6e2ff"]
+	"Panos Papalambros" [label="Panos Papalambros
+(1979)" fillcolor="#f5f5f5"]
+	"Mark Bedillion" [label="Mark Bedillion
+(2005)" fillcolor="#c6e2ff"]
+	"William Messner" [label="William Messner
+(1992)" fillcolor="#f5f5f5"]
+	"Ryan Sullivan" [label="Ryan Sullivan
+(2008)" fillcolor="#c6e2ff"]
+	"Jonathan Malen" [label="Jonathan Malen
+(2009)" fillcolor="#c6e2ff"]
+	"Rachel A Segalman" [label="Rachel A Segalman
+(2002)" fillcolor="#f5f5f5"]
+	"Arunava Majumdar" [label="Arunava Majumdar
+(1989)" fillcolor="#f5f5f5"]
+	"Chang-Lin Tien" [label="Chang-Lin Tien
+(1959)" fillcolor="#f5f5f5"]
+	"Conrad Tucker" [label="Conrad Tucker
+(2011)" fillcolor="#c6e2ff"]
+	"Harrison Kim" [label="Harrison Kim
+(2001)" fillcolor="#f5f5f5"]
+	"Kate Whitefoot" [label="Kate Whitefoot
+(2011)" fillcolor="#c6e2ff"]
+	"Steven J. Skerlos" [label="Steven J. Skerlos
+(2000)" fillcolor="#f5f5f5"]
+	"Meredith L. Fowlie" [label="Meredith L. Fowlie
+(2006)" fillcolor="#f5f5f5"]
+	"Rebecca Taylor" [label="Rebecca Taylor
+(2013)" fillcolor="#c6e2ff"]
+	"Beth Pruitt" [label="Beth Pruitt
+(2002)" fillcolor="#f5f5f5"]
+	"Narayan R. Aluru" [label="Narayan R. Aluru
+(1995)" fillcolor="#f5f5f5"]
+	"Christopher McComb" [label="Christopher McComb
+(2016)" fillcolor="#c6e2ff"]
+	"Kenneth Kotovksy" [label="Kenneth Kotovksy
+(1983)" fillcolor="#f5f5f5"]
+	"Sneha Prabha Narra" [label="Sneha Prabha Narra
+(2017)" fillcolor="#c6e2ff"]
+	"Inseung Kang" [label="Inseung Kang
+(2021)" fillcolor="#c6e2ff"]
+	"Aaron J Young" [label="Aaron J Young
+(2014)" fillcolor="#f5f5f5"]
+	"Ophelia Bolmin" [label="Ophelia Bolmin
+(2021)" fillcolor="#c6e2ff"]
+	"Aimy Wissa" [label="Aimy Wissa
+(2014)" fillcolor="#f5f5f5"]
+	"Marianne Alleyne" [label="Marianne Alleyne
+(2000)" fillcolor="#f5f5f5"]
+	"Frederike Dümbgen" [label="Frederike Dümbgen
+(2021)" fillcolor="#c6e2ff"]
+	"Martin Vetterli" [label="Martin Vetterli
+(1986)" fillcolor="#f5f5f5"]
+	"Adam Scholefield" [label="Adam Scholefield
+(2014)" fillcolor="#f5f5f5"]
+	"Trevor Jones" [label="Trevor Jones
+(2023)" fillcolor="#c6e2ff"]
+	"Pierre-Thomas Brun" [label="Pierre-Thomas Brun
+(2012)" fillcolor="#f5f5f5"]
+	"Chester Paul Siess" [label="Chester Paul Siess
+(1948)" fillcolor="#f5f5f5"]
+	"Bernard Budiansky" [label="Bernard Budiansky
+(1950)" fillcolor="#f5f5f5"]
+	"Douglass Wilde" [label="Douglass Wilde
+(1960)" fillcolor="#f5f5f5"]
+	"Kumpati S. Narendra" [label="Kumpati S. Narendra
+(1959)" fillcolor="#f5f5f5"]
+	"Gerald F. Smith" [label="Gerald F. Smith
+(1956)" fillcolor="#f5f5f5"]
+	"William S. Levine" [label="William S. Levine
+(1969)" fillcolor="#f5f5f5"]
+	"Thomas O. Binford" [label="Thomas O. Binford
+(1965)" fillcolor="#f5f5f5"]
+	"Manohar M. Panjabi" [label="Manohar M. Panjabi
+(1971)" fillcolor="#f5f5f5"]
+	"Shiv G. Kapoor" [label="Shiv G. Kapoor
+(1977)" fillcolor="#f5f5f5"]
+	"Robert W. Dutton" [label="Robert W. Dutton
+(1970)" fillcolor="#f5f5f5"]
+	"Clare M. Rimnac" [label="Clare M. Rimnac
+(1983)" fillcolor="#f5f5f5"]
+	"Kiyohiko Ikeda" [label="Kiyohiko Ikeda
+(1983)" fillcolor="#f5f5f5"]
+	"Levi Hargrove" [label="Levi Hargrove
+(2008)" fillcolor="#f5f5f5"]
+	"Todd Kuiken" [label="Todd Kuiken
+(1989)" fillcolor="#f5f5f5"]
+	"Hideki Hashimoto" [label="Hideki Hashimoto
+(1987)" fillcolor="#f5f5f5"]
+	"Lynne Reder" [label="Lynne Reder
+(1976)" fillcolor="#f5f5f5"]
+	"Richard S. Sidell" [label="Richard S. Sidell
+(1972)" fillcolor="#f5f5f5"]
+	"Ali S. Argon" [label="Ali S. Argon
+(1956)" fillcolor="#f5f5f5"]
+	"David M. Parks" [label="David M. Parks
+(1975)" fillcolor="#f5f5f5"]
+	"Roger T. Howe" [label="Roger T. Howe
+(1984)" fillcolor="#f5f5f5"]
+	"J. Craig Dutton" [label="J. Craig Dutton
+(1979)" fillcolor="#f5f5f5"]
+	"Warren Seering" [label="Warren Seering
+(1978)" fillcolor="#f5f5f5"]
+	"Parviz Moin" [label="Parviz Moin
+(1978)" fillcolor="#f5f5f5"]
+	"Severin Borenstein" [label="Severin Borenstein
+(1983)" fillcolor="#f5f5f5"]
+	"Catherine Wolfram" [label="Catherine Wolfram
+(1996)" fillcolor="#f5f5f5"]
+	"W. Gregory Sawyer" [label="W. Gregory Sawyer
+(1996)" fillcolor="#f5f5f5"]
+	"Neil Ribe" [label="Neil Ribe
+(1981)" fillcolor="#f5f5f5"]
+	"Basile Audoly" [label="Basile Audoly
+(2003)" fillcolor="#f5f5f5"]
+	"Pier Luigi Dragotti" [label="Pier Luigi Dragotti
+(2002)" fillcolor="#f5f5f5"]
+	"William Prager" [label="William Prager
+(1926)" fillcolor="#f5f5f5"]
+	"Philippe Emmanuel Le Corbeiller" [label="Philippe Emmanuel Le Corbeiller
+(1926)" fillcolor="#f5f5f5"]
+	"Andreas Acrivos" [label="Andreas Acrivos
+(1954)" fillcolor="#f5f5f5"]
+	"R. L. Mattson" [label="R. L. Mattson
+(1962)" fillcolor="#f5f5f5"]
+	"Myron L. Good" [label="Myron L. Good
+(1951)" fillcolor="#f5f5f5"]
+	"Michael Athans" [label="Michael Athans
+(1961)" fillcolor="#f5f5f5"]
+	"A. L. Addy" [label="A. L. Addy
+(1963)" fillcolor="#f5f5f5"]
+	"Dudley Childress" [label="Dudley Childress
+(1966)" fillcolor="#f5f5f5"]
+	"William Zev Rymer" [label="William Zev Rymer
+(1973)" fillcolor="#FFA500"]
+	"Thierry Blanchet" [label="Thierry Blanchet
+(1992)" fillcolor="#f5f5f5"]
+	"Kevin B. Englehart" [label="Kevin B. Englehart
+(1998)" fillcolor="#f5f5f5"]
+	"Hisashi Igaki" [label="Hisashi Igaki
+(1970)" fillcolor="#f5f5f5"]
+	"Fumio Harashima" [label="Fumio Harashima
+(1967)" fillcolor="#f5f5f5"]
+	"James G. Greeno" [label="James G. Greeno
+(1961)" fillcolor="#f5f5f5"]
+	"Gary M. Olson" [label="Gary M. Olson
+(1970)" fillcolor="#f5f5f5"]
+	"Robert M. Drake Jr." [label="Robert M. Drake Jr.
+(1950)" fillcolor="#f5f5f5"]
+	"David N. Wormley" [label="David N. Wormley
+(1967)" fillcolor="#f5f5f5"]
+	"James R. Rice" [label="James R. Rice
+(1964)" fillcolor="#f5f5f5"]
+	"John Isaiah Brauman" [label="John Isaiah Brauman
+(1963)" fillcolor="#f5f5f5"]
+	"Richard W. Hertzberg" [label="Richard W. Hertzberg
+(1965)" fillcolor="#f5f5f5"]
+	"John A. Manson" [label="John A. Manson
+(1956)" fillcolor="#f5f5f5"]
+	"Paul L. Joskow" [label="Paul L. Joskow
+(1972)" fillcolor="#f5f5f5"]
+	"Nancy L. Rose" [label="Nancy L. Rose
+(1985)" fillcolor="#f5f5f5"]
+	"Stanford S. Penner" [label="Stanford S. Penner
+(1946)" fillcolor="#f5f5f5"]
+	"Charles Émile Picard" [label="Charles Émile Picard
+(1877)" fillcolor="#f5f5f5"]
+	"Emil Kammer" [label="Emil Kammer
+(1913)" fillcolor="#f5f5f5"]
+	"Harold M. Westergaard" [label="Harold M. Westergaard
+(1916)" fillcolor="#f5f5f5"]
+	"Donald C. Spencer" [label="Donald C. Spencer
+(1939)" fillcolor="#f5f5f5"]
+	"Neal Russell Amundson" [label="Neal Russell Amundson
+(1945)" fillcolor="#f5f5f5"]
+	"Leon Madansky" [label="Leon Madansky
+(1948)" fillcolor="#f5f5f5"]
+	"Otto J. M. Smith" [label="Otto J. M. Smith
+(1941)" fillcolor="#f5f5f5"]
+	"Bernard Widrow" [label="Bernard Widrow
+(1956)" fillcolor="#f5f5f5"]
+	"Paul C. Paris" [label="Paul C. Paris
+(1962)" fillcolor="#f5f5f5"]
+	"Jerry L. Stimac" [label="Jerry L. Stimac
+(1978)" fillcolor="#f5f5f5"]
+	"David Lee LaBerge" [label="David Lee LaBerge
+(1955)" fillcolor="#f5f5f5"]
+	"Gordon H. Bower" [label="Gordon H. Bower
+(1959)" fillcolor="#f5f5f5"]
+	"Laurence Cragg" [label="Laurence Cragg
+(1937)" fillcolor="#f5f5f5"]
+	"Walter J. Wohlenberg" [label="Walter J. Wohlenberg
+(1916)" fillcolor="#f5f5f5"]
+	"Ralph J. Harker" [label="Ralph J. Harker
+(1941)" fillcolor="#f5f5f5"]
+	"Andrew Streitwieser" [label="Andrew Streitwieser
+(1952)" fillcolor="#f5f5f5"]
+	"Ferdinand P. Beer" [label="Ferdinand P. Beer
+(1937)" fillcolor="#f5f5f5"]
+	"Richard W. Jones" [label="Richard W. Jones
+(1941)" fillcolor="#f5f5f5"]
+	"Herbert H. Richardson" [label="Herbert H. Richardson
+(1958)" fillcolor="#f5f5f5"]
+	"Alvin Klevorick" [label="Alvin Klevorick
+(1967)" fillcolor="#f5f5f5"]
+	"Richard Nelson" [label="Richard Nelson
+(1956)" fillcolor="#f5f5f5"]
+	"John McGowan" [label="John McGowan
+(1965)" fillcolor="#f5f5f5"]
+	"Henri J. Bussbaumer" [label="Henri J. Bussbaumer
+(1977)" fillcolor="#f5f5f5"]
+	"Francis Kennedy" [label="Francis Kennedy
+(1972)" fillcolor="#f5f5f5"]
+	"Maryhelen Stevenson" [label="Maryhelen Stevenson
+(1991)" fillcolor="#f5f5f5"]
+	"Theodore von Kármán" [label="Theodore von Kármán
+(1908)" fillcolor="#f5f5f5"]
+	"Gaston Darboux" [label="Gaston Darboux
+(1866)" fillcolor="#f5f5f5"]
+	"Morton Finston" [label="Morton Finston
+(1949)" fillcolor="#f5f5f5"]
+	"W. Scott Overton" [label="W. Scott Overton
+(1964)" fillcolor="#f5f5f5"]
+	"Norman H. Anderson" [label="Norman H. Anderson
+(1961)" fillcolor="#f5f5f5"]
+	"Merton J. Peck" [label="Merton J. Peck
+(1954)" fillcolor="#f5f5f5"]
+	"Frank B. Kenrick" [label="Frank B. Kenrick
+(1896)" fillcolor="#f5f5f5"]
+	"William Fellner" [label="William Fellner
+(1929)" fillcolor="#f5f5f5"]
+	"James Tobin" [label="James Tobin
+(1947)" fillcolor="#f5f5f5"]
+	"Douglas Howard Lawrence" [label="Douglas Howard Lawrence
+(1948)" fillcolor="#f5f5f5"]
+	"Frank A. Logan" [label="Frank A. Logan
+(1951)" fillcolor="#f5f5f5"]
+	"Charles Russ Richards" [label="Charles Russ Richards
+(unknown)" fillcolor="#c8f7c5"]
+	"August Otto Föppl" [label="August Otto Föppl
+(1886)" fillcolor="#f5f5f5"]
+	"Joseph Carroll" [label="Joseph Carroll
+(1929)" fillcolor="#f5f5f5"]
+	"Walter S. Huxford" [label="Walter S. Huxford
+(1928)" fillcolor="#f5f5f5"]
+	"Marcellus Lee Wiedenbeck" [label="Marcellus Lee Wiedenbeck
+(1945)" fillcolor="#f5f5f5"]
+	"William von Eggers Doering" [label="William von Eggers Doering
+(1943)" fillcolor="#f5f5f5"]
+	"Robert W. Mann" [label="Robert W. Mann
+(1957)" fillcolor="#f5f5f5"]
+	"John R. Meyer" [label="John R. Meyer
+(1955)" fillcolor="#f5f5f5"]
+	"Jule Gregory Charney" [label="Jule Gregory Charney
+(1946)" fillcolor="#f5f5f5"]
+	"Richard E. Quandt" [label="Richard E. Quandt
+(1957)" fillcolor="#f5f5f5"]
+	"Burton Malkiel" [label="Burton Malkiel
+(1964)" fillcolor="#f5f5f5"]
+	"Frederick F. Ling" [label="Frederick F. Ling
+(1954)" fillcolor="#f5f5f5"]
+	"Jean Céa" [label="Jean Céa
+(1964)" fillcolor="#f5f5f5"]
+	"J. A. Stuller" [label="J. A. Stuller
+(1971)" fillcolor="#f5f5f5"]
+	"James Dusenberry" [label="James Dusenberry
+(1949)" fillcolor="#f5f5f5"]
+	"Thomas Richard Edmund Southwood" [label="Thomas Richard Edmund Southwood
+(1955)" fillcolor="#f5f5f5"]
+	"Alva Leroy Finkner" [label="Alva Leroy Finkner
+(1950)" fillcolor="#f5f5f5"]
+	"Wilhelm Ostwald" [label="Wilhelm Ostwald
+(1878)" fillcolor="#f5f5f5"]
+	"Edward Sagendorph Mason" [label="Edward Sagendorph Mason
+(1925)" fillcolor="#f5f5f5"]
+	"Neal Elgar Miller" [label="Neal Elgar Miller
+(1935)" fillcolor="#f5f5f5"]
+	"Kenneth Wartinbee Spence" [label="Kenneth Wartinbee Spence
+(1933)" fillcolor="#f5f5f5"]
+	"Heinrich Bruns" [label="Heinrich Bruns
+(1871)" fillcolor="#f5f5f5"]
+	"Neal H. Williams" [label="Neal H. Williams
+(1912)" fillcolor="#f5f5f5"]
+	"Ladislaus Bortkiewicz" [label="Ladislaus Bortkiewicz
+(1882)" fillcolor="#f5f5f5"]
+	"Harris J. Ryan" [label="Harris J. Ryan
+(1887)" fillcolor="#f5f5f5"]
+	"Rolin Wavre" [label="Rolin Wavre
+(1921)" fillcolor="#f5f5f5"]
+	"Albert Gordon Hill" [label="Albert Gordon Hill
+(1937)" fillcolor="#f5f5f5"]
+	"George Francis Carrier" [label="George Francis Carrier
+(1944)" fillcolor="#f5f5f5"]
+	"Allan Thurstan Gifford" [label="Allan Thurstan Gifford
+(1946)" fillcolor="#f5f5f5"]
+	"Edward Aaron Saibel" [label="Edward Aaron Saibel
+(1928)" fillcolor="#f5f5f5"]
+	"John A. Hrones" [label="John A. Hrones
+(1942)" fillcolor="#f5f5f5"]
+	"Jacques-Louis Lions" [label="Jacques-Louis Lions
+(1954)" fillcolor="#f5f5f5"]
+	"Harold M. Lucal" [label="Harold M. Lucal
+(1953)" fillcolor="#f5f5f5"]
+	"George David Birkhoff" [label="George David Birkhoff
+(1907)" fillcolor="#f5f5f5"]
+	"Richard Loree Anderson" [label="Richard Loree Anderson
+(1941)" fillcolor="#f5f5f5"]
+	"Arthur Joachim von Oettingen" [label="Arthur Joachim von Oettingen
+(1865)" fillcolor="#f5f5f5"]
+	"Carl Ernst Heinrich Schmidt" [label="Carl Ernst Heinrich Schmidt
+(1844)" fillcolor="#f5f5f5"]
+	"Frank William Taussig" [label="Frank William Taussig
+(1883)" fillcolor="#f5f5f5"]
+	"Clark L. Hull" [label="Clark L. Hull
+(1920)" fillcolor="#f5f5f5"]
+	"Robert Mearns Yerkes" [label="Robert Mearns Yerkes
+(1902)" fillcolor="#f5f5f5"]
+	"Wilhelm Lexis" [label="Wilhelm Lexis
+(1859)" fillcolor="#f5f5f5"]
+	"Karl Eugen Guthe" [label="Karl Eugen Guthe
+(1892)" fillcolor="#f5f5f5"]
+	"Lloyd N. Robinson" [label="Lloyd N. Robinson
+(1917)" fillcolor="#f5f5f5"]
+	"Lee Alvin DuBridge" [label="Lee Alvin DuBridge
+(1926)" fillcolor="#f5f5f5"]
+	"James Norman Goodler" [label="James Norman Goodler
+(1931)" fillcolor="#f5f5f5"]
+	"Laurent Schwartz" [label="Laurent Schwartz
+(1943)" fillcolor="#f5f5f5"]
+	"Joseph Jastrow" [label="Joseph Jastrow
+(1886)" fillcolor="#f5f5f5"]
+	"Hugo Münsterberg" [label="Hugo Münsterberg
+(1885)" fillcolor="#f5f5f5"]
+	"Georg Hanssen" [label="Georg Hanssen
+(1831)" fillcolor="#f5f5f5"]
+	"August Beer" [label="August Beer
+(1848)" fillcolor="#f5f5f5"]
+	"Heinrich Rudolph Hertz" [label="Heinrich Rudolph Hertz
+(1880)" fillcolor="#f5f5f5"]
+	"Fred Eugene Pernot" [label="Fred Eugene Pernot
+(1912)" fillcolor="#f5f5f5"]
+	"Georges Valiron" [label="Georges Valiron
+(1914)" fillcolor="#f5f5f5"]
+	"Charles Sanders Peirce" [label="Charles Sanders Peirce
+(unknown)" fillcolor="#c8f7c5"]
+	"Wilhelm Max Wundt" [label="Wilhelm Max Wundt
+(1856)" fillcolor="#f5f5f5"]
+	"August Christian Niemann" [label="August Christian Niemann
+(unknown)" fillcolor="#c8f7c5"]
+	"Emile Borel" [label="Emile Borel
+(1893)" fillcolor="#f5f5f5"]
+	"Karl Ewald Hasse" [label="Karl Ewald Hasse
+(1833)" fillcolor="#f5f5f5"]
+	"Franz Ernst Neumann" [label="Franz Ernst Neumann
+(1825)" fillcolor="#f5f5f5"]
+	"Friedrich Julius Richelot" [label="Friedrich Julius Richelot
+(1831)" fillcolor="#f5f5f5"]
+	"Ernst Heinrich Weber" [label="Ernst Heinrich Weber
+(1815)" fillcolor="#f5f5f5"]
+	"Christian Ludwig Gerling" [label="Christian Ludwig Gerling
+(1812)" fillcolor="#f5f5f5"]
+	"Christian Samuel Weiss" [label="Christian Samuel Weiss
+(1801)" fillcolor="#f5f5f5"]
+	"Carl Gustav Jacob Jacobi" [label="Carl Gustav Jacob Jacobi
+(1825)" fillcolor="#f5f5f5"]
+	"Karl Theodor Wilhelm Weierstrass" [label="Karl Theodor Wilhelm Weierstrass
+(1841)" fillcolor="#f5f5f5"]
+	"Ernst Eduard Kummer" [label="Ernst Eduard Kummer
+(1831)" fillcolor="#f5f5f5"]
+	"Felix Papencordt" [label="Felix Papencordt
+(1832)" fillcolor="#f5f5f5"]
+	"Wilhelm Bogen" [label="Wilhelm Bogen
+(1849)" fillcolor="#f5f5f5"]
+	"Johann Christian Rosenmüller" [label="Johann Christian Rosenmüller
+(1797)" fillcolor="#f5f5f5"]
+	"Abraham Gottlob Werner" [label="Abraham Gottlob Werner
+(1774)" fillcolor="#f5f5f5"]
+	"Enno Heeren Dirksen" [label="Enno Heeren Dirksen
+(1820)" fillcolor="#f5f5f5"]
+	"Heinrich Ferdinand Scherk" [label="Heinrich Ferdinand Scherk
+(1823)" fillcolor="#f5f5f5"]
+	"Friedrich Wilhelm Ritschl" [label="Friedrich Wilhelm Ritschl
+(1829)" fillcolor="#f5f5f5"]
+	"Johann Gottlob Haase" [label="Johann Gottlob Haase
+(1766)" fillcolor="#f5f5f5"]
+	"Johann Friedrich Pfaff" [label="Johann Friedrich Pfaff
+(1786)" fillcolor="#f5f5f5"]
+	"Johann Carl Gehler" [label="Johann Carl Gehler
+(1758)" fillcolor="#f5f5f5"]
+	"Johann Tobias Mayer" [label="Johann Tobias Mayer
+(1773)" fillcolor="#f5f5f5"]
+	"Heinrich Wilhelm Brandes" [label="Heinrich Wilhelm Brandes
+(1800)" fillcolor="#f5f5f5"]
+	"Christian Gottlieb Ludwig" [label="Christian Gottlieb Ludwig
+(1737)" fillcolor="#f5f5f5"]
+	"Johann Christoph Pohl" [label="Johann Christoph Pohl
+(1734)" fillcolor="#f5f5f5"]
+	"Nicolas Malebranche" [label="Nicolas Malebranche
+(unknown)" fillcolor="#c8f7c5"]
+	"Christoph Pfautz" [label="Christoph Pfautz
+(1663)" fillcolor="#f5f5f5"]
+	"Johann Elert Bode" [label="Johann Elert Bode
+(unknown)" fillcolor="#c8f7c5"]
+	"Augustin Friedrich Walther" [label="Augustin Friedrich Walther
+(1712)" fillcolor="#f5f5f5"]
+	"Werner Rolfinck" [label="Werner Rolfinck
+(unknown)" fillcolor="#c8f7c5"]
+	"Erhard Pfautz" [label="Erhard Pfautz
+(1659)" fillcolor="#f5f5f5"]
+	"Ernst Anton Nicolai" [label="Ernst Anton Nicolai
+(1745)" fillcolor="#f5f5f5"]
+	"Johann Gottfried von Berger" [label="Johann Gottfried von Berger
+(1682)" fillcolor="#f5f5f5"]
+	"Emmanuel Stupanus" [label="Emmanuel Stupanus
+(1613)" fillcolor="#f5f5f5"]
+	"Johann Gottlob Krüger" [label="Johann Gottlob Krüger
+(1742)" fillcolor="#f5f5f5"]
+	"Augustin Heinrich Fasch" [label="Augustin Heinrich Fasch
+(1665)" fillcolor="#f5f5f5"]
+	"Petrus Ryff" [label="Petrus Ryff
+(unknown)" fillcolor="#c8f7c5"]
+	"Friedrich Hoffmann" [label="Friedrich Hoffmann
+(1681)" fillcolor="#f5f5f5"]
+	"Karl Gottlieb Knorre" [label="Karl Gottlieb Knorre
+(1721)" fillcolor="#f5f5f5"]
+	"John Craig" [label="John Craig
+(1580)" fillcolor="#f5f5f5"]
+	"Paul Wittich" [label="Paul Wittich
+(1566)" fillcolor="#f5f5f5"]
+	"Valentin Thau" [label="Valentin Thau
+(1555)" fillcolor="#f5f5f5"]
+	"Johannes Hommel" [label="Johannes Hommel
+(1543)" fillcolor="#f5f5f5"]
+	"Aegidius Strauch" [label="Aegidius Strauch
+(1633)" fillcolor="#f5f5f5"]
+	"Johann Andreas Quenstedt" [label="Johann Andreas Quenstedt
+(1643)" fillcolor="#f5f5f5"]
+	"Nicolaus Zapf" [label="Nicolaus Zapf
+(1629)" fillcolor="#f5f5f5"]
+	"Erasmus Schmidt" [label="Erasmus Schmidt
+(1592)" fillcolor="#f5f5f5"]
+	"Jacobus Martini" [label="Jacobus Martini
+(1596)" fillcolor="#f5f5f5"]
+	"Jakob Milich" [label="Jakob Milich
+(1523)" fillcolor="#f5f5f5"]
+	"Sethus Calvisius" [label="Sethus Calvisius
+(1582)" fillcolor="#f5f5f5"]
+	"Desiderius Erasmus" [label="Desiderius Erasmus
+(1506)" fillcolor="#f5f5f5"]
+	"Alexander Hegius" [label="Alexander Hegius
+(1463)" fillcolor="#f5f5f5"]
+	"Rudolf Agricola" [label="Rudolf Agricola
+(unknown)" fillcolor="#c8f7c5"]
+	subgraph rank_sink_faculty {
+		rank=sink
+		"Aaron Johnson"
+		"Alan McGaughey"
+		"Albert Presto"
+		"Amir Barati Farimani"
+		"Burak Aksak"
+		"Burak Ozdoganlar"
+		"Carmel Majidi"
+		"Christopher McComb"
+		"Conrad Tucker"
+		"Diana Haidar"
+		"Ding Zhao"
+		"Douglas Weber"
+		"Eni Hallilaj"
+		"Fracis Ogoke"
+		"Frederike Dümbgen"
+		"Inseung Kang"
+		"Jack Beuth"
+		"Jeremy Michalek"
+		"Jessica Yongjie Zhang"
+		"Joanna Wolfe"
+		"Jonathan Cagan"
+		"Jonathan Malen"
+		"Kate Whitefoot"
+		"Kenji Shimada"
+		"Levent Burak Kara"
+		"Liwei Wang"
+		"Maarten de Boer"
+		"Mark Bedillion"
+		"Nestor Gomez"
+		"Noelia Grande Gutiérrez"
+		"Ophelia Bolmin"
+		"Philip Leduc"
+		"Rahul Panat"
+		"Rebecca Taylor"
+		"Reeja Jayan"
+		"Ryan F. Johnson"
+		"Ryan Sullivan"
+		"Sarah Bergbreiter"
+		"Satbir Singh"
+		"Shawn Litster"
+		"Sneha Prabha Narra"
+		"Trevor Jones"
+		"Victoria Webster-Wood"
+		"Yoed Rabin"
+	}
+	nan -> "Yves Pomeau"
+	nan -> "Minoru Hamada"
+	nan -> "Gaetano Crocco"
+	nan -> "Zenzaburo Sawai"
+	nan -> "Robert N. Scott"
+	nan -> "Siegmund Müller"
+	nan -> "Carrington Bonsor Williams"
+	nan -> "Georg Christoph Mehrtens"
+	nan -> "James Holt"
+	nan -> "Charles Franklin Dunbar"
+	nan -> "Edwin Cannan"
+	nan -> "Helmut H. Korst"
+	nan -> "René Just Haüy"
+	nan -> "Nikolaus Boda Poda von Neuhaus"
+	nan -> "Johann Daniel Arcularius"
+	nan -> "Samuel Stryk"
+	nan -> "Johann Hoffmann"
+	nan -> Pelope
+	nan -> "Ernestus Hettenbach"
+	nan -> "Luca Pacioli"
+	nan -> "Matthias Hafenreffer"
+	nan -> "Elissaeus Judaeus"
+	nan -> "Nicole Oresme"
+	nan -> "Johann von Dalberg"
+	nan -> "Sharaf al-Dīn al-Ṭūsī"
+	nan -> "Florens (Florentius Radwyn) Radewyns"
+	nan -> "Abu Abdallah Al-Husayn ibn Ibrahim al-Natili"
+	nan -> "Abu Sahl 'Isa ibn Yahya al-Masihi"
+	nan -> "Abu Mansur al-Hasan ibn Nuh al-Qumri"
+	nan -> "Heinrich Müller-Breslau"
+	"Francis Lawry Usher" -> "Basrur Sanjiva Rao"
+	"Siméon Denis Poisson" -> "Peter Gustav Lejeune Dirichlet"
+	"Jean-Baptiste Joseph Fourier" -> "Peter Gustav Lejeune Dirichlet"
+	nan -> "Augustus Edward Hough Love"
+	nan -> "Frederic Poole Gorham"
+	nan -> "Nathaniel Bowditch"
+	nan -> "W. W. Rouse Ball"
+	nan -> "Wilhelm Roscher"
+	"Thomas Jones" -> "Adam Sedgwick"
+	"John Dawson" -> "Adam Sedgwick"
+	"John Slee" -> "John Gough"
+	"George Bewley" -> "John Gough"
+	"Peter Gustav Lejeune Dirichlet" -> "Rudolf Lipschitz"
+	"Martin Ohm" -> "Rudolf Lipschitz"
+	"John Gough" -> "William Whewell"
+	"Edward Waring" -> "John Dawson"
+	"Henry Bracken" -> "John Dawson"
+	nan -> "Edward Waring"
+	nan -> "John Cranke"
+	"Antonio Maria Valsalva" -> "Giovanni Battista Morgagni"
+	nan -> "Farrokh Mistree"
+	nan -> "Bengt Jakobsson"
+	nan -> "Justus (Joost Lips) Lipsius"
+	nan -> "Richard Ruggles"
+	nan -> "J. W. McNaul"
+	nan -> "Henry Bruton"
+	nan -> "Ludolph van Ceulen"
+	nan -> "Lionel Simeon Marks"
+	nan -> "Charles Harold Berry"
+	nan -> "Henri Fehr"
+	nan -> "Thomas Cranmer"
+	nan -> "Valentin Alberti"
+	nan -> "Karl Wolfgang Christoph Schütz"
+	nan -> "Wilhelm von Bezold"
+	nan -> "Leonhard von Dobschütz"
+	nan -> "Bonifazius Erasmi"
+	nan -> "Francois Dubois"
+	nan -> "Jean Tagault"
+	nan -> "Jan Standonck"
+	nan -> "Johannes Stöffler"
+	nan -> "Reinhard Bachoff von Echt"
+	nan -> "Gasparino da Barzizza"
+	nan -> "Giovanni Conversini"
+	nan -> "Christian August Brandis"
+	nan -> "Friedrich Leibniz"
+	nan -> "Sigismondo Polcastro"
+	nan -> "Paolo (Nicoletti) da Venezia"
+	nan -> "Marin Mersenne"
+	nan -> "Ulrich Zasius"
+	nan -> "Geert (Gerardus Magnus) Groote"
+	"Luigi Crocco" -> "Frediano V. Bracco"
+	"Alan J. Bearden" -> "Janet Allen"
+	"Joseph Pierre LaSalle" -> "Leonard Meirovitch"
+	"Paul L. Richards" -> "Thomas W. Kenny"
+	"Frederic Poole Gorham" -> "Frederick George Keyes"
+	"John Emery Bucher" -> "Frederick George Keyes"
+	"Nathaniel Bowditch" -> "Benjamin Peirce"
+	"Friedrich Hasenöhrl" -> "Hans Thirring"
+	"Edward John Routh" -> "George Howard Darwin"
+	"Joseph Louis Lagrange" -> "Jean-Baptiste Joseph Fourier"
+	"Heinrich Limpricht" -> "Wilhelm Rudolph Fittig"
+	"Friedrich Wöhler" -> "Wilhelm Rudolph Fittig"
+	"William Hopkins" -> "Edward John Routh"
+	"Isaac Todhunter" -> "Edward John Routh"
+	"August De Morgan" -> "Edward John Routh"
+	"C. Felix Klein" -> "Ferdinand von Lindemann"
+	nan -> "Arthur Edwin Kennelly"
+	"Rudolf Lipschitz" -> "C. Felix Klein"
+	"Julius Plücker" -> "C. Felix Klein"
+	"Maximilian Wolfgang Duncker" -> "Bruno Hildebrand"
+	"Bruno Hildebrand" -> "Karl Knies"
+	"John Hudson" -> "George Peacock"
+	"Ignaz Lindner" -> "Andreas von Ettingshausen"
+	"Ignaz Döllinger" -> "Johann Lukas Schönlein"
+	"Georg Jurij Bartolomej Veha von Vega" -> "Ignaz Lindner"
+	"Herman Boerhaave" -> "Henry Bracken"
+	"Robert Smith" -> "Walter Taylor"
+	"Marcello Malpighi" -> "Antonio Maria Valsalva"
+	"Johann Friedrich Christ" -> "Friedrich Wolfgang Reiz"
+	"Johann August Ernesti" -> "Friedrich Wolfgang Reiz"
+	"Giovanni Alfonso Borelli" -> "Marcello Malpighi"
+	"Philipp Müller" -> "Erhard Weigel"
+	"Benedetto Castelli" -> "Giovanni Alfonso Borelli"
+	"Ostilio Ricci" -> "Galileo Galilei"
+	"Moritz Valentin Steinmetz" -> "Christoph Meurer"
+	"Erasmus Reinhold" -> "Valentine Naibod"
+	"Pietro Pomponazzi" -> "Vittore Trincavelli"
+	nan -> "Josias Christoph Neander"
+	nan -> "Abraham Heinecke"
+	nan -> "Petrus Otto"
+	"Paolo (Nicoletti) da Venezia" -> "Paolo da Pergola"
+	"Georg von Peuerbach" -> "Johannes Müller Regiomontanus"
+	"Basilios Bessarion" -> "Johannes Müller Regiomontanus"
+	"George of Trebizond" -> "Cristoforo Landino"
+	"NIlos Kabasilas" -> "Demetrios Kydones"
+	"Henry Schultz" -> "Herbert A. Simon"
+	"Warren M. Rohsenow" -> "John C. Chato"
+	"Shien-Ming Wu" -> "Richard E. DeVor"
+	"Daniel E. Whitney" -> "Masayoshi Tomizuka"
+	"John McCarthy" -> "Randall Davis"
+	"Wesley L. Harris" -> "James E. Hubbard"
+	"Masayoshi Tomizuka" -> "Roberto Horowitz"
+	"Earl R. Parker" -> "Victor Zackay"
+	"Conrad Celtes (Celtis)" -> "Georg (Collimitus) Tanstetter"
+	"Vittorino da Feltre" -> "George of Trebizond"
+	"Demetrios Kydones" -> "Manuel Chrysoloras"
+	"William M. Kays" -> "William Craig Reynolds"
+	"Stephen J. Kline" -> "William Craig Reynolds"
+	"David Middlebrook" -> "Richard S. Muller"
+	"Philip A. Parker" -> "Bernard S. Hudgins"
+	"Robert N. Scott" -> "Bernard S. Hudgins"
+	"Rodolphus Agricola" -> "Conrad Celtes (Celtis)"
+	"Johann von Dalberg" -> "Conrad Celtes (Celtis)"
+	"Paolo (Nicoletti) da Venezia" -> "Gaetano da Thiene"
+	"Rudolph Ernest Langer" -> "Hugh Turrittin"
+	nan -> "Walter W. Soroka"
+	"Arthur Smithies" -> "Guy Orcutt"
+	"Nasir al-Dīn al-Ṭūsī" -> "Shams al‐Dīn al‐Bukhārī"
+	"Kamāl al-Dīn Ibn Yūnus" -> "Nasir al-Dīn al-Ṭūsī"
+	"Athīr al-Dīn al-Mufaḍḍal al-Abharī" -> "Nasir al-Dīn al-Ṭūsī"
+	"Sharaf al-Dīn al-Ṭūsī" -> "Kamāl al-Dīn Ibn Yūnus"
+	"Saraf al-Dīn Muhammad al-Masʿūdī al-Marwazī" -> "Kamāl al-Dīn Ibn Yūnus"
+	"Ghiyāth al-Dīn Abū al-Fatḥ ʿUmar ibn Ibrāhīm al-Khayyām al-Nīsābūrī" -> "Saraf al-Dīn Muhammad al-Masʿūdī al-Marwazī"
+	"Rudolf Wagner" -> "Rudolf Karl Georg Friedrich Leuckart"
+	"Saraf al-Dīn Muhammad al-Masʿūdī al-Marwazī" -> "Fakhr al-Dīn Muhammad al-Rēzī"
+	"Abu ʿAli al-Husayn (Avicenna) ibn Sina" -> "Bahmanyār ibn al-Marzubān"
+	"Eilhard Mitscherlich" -> "Heinrich Gustav Magnus"
+	"Abu Abdallah Al-Husayn ibn Ibrahim al-Natili" -> "Abu ʿAli al-Husayn (Avicenna) ibn Sina"
+	"Abu Sahl 'Isa ibn Yahya al-Masihi" -> "Abu ʿAli al-Husayn (Avicenna) ibn Sina"
+	"Abu Mansur al-Hasan ibn Nuh al-Qumri" -> "Abu ʿAli al-Husayn (Avicenna) ibn Sina"
+	"Abraham Gotthelf Kästner" -> "Bernhard Friedrich Thibaut"
+	"Georg Christoph Lichtenberg" -> "Bernhard Friedrich Thibaut"
+	"Reinhard Bachoff von Echt" -> "Albert Clampius"
+	"Amir Barati Farimani" -> "Fracis Ogoke"
+	"Harsha K. Chelliah" -> "Ryan F. Johnson"
+	"Earl R. Parker" -> "William Gerberich"
+	"Victor Zackay" -> "William Gerberich"
+	"Hans Conrad" -> "William Gerberich"
+	"J. (Jagannatha) Gopalakrishnan" -> "Arumugam Manthiram"
+	"John Edward Hopcroft" -> "Chandrajit L. Bajaj"
+	"Robert N. Rosenfeld" -> "Kimberly A. Prather"
+	"Forman A. Williams" -> "Harsha K. Chelliah"
+	"Nathan M. Newmark" -> "Aristides S. Veletsos"
+	"John S. Lewis" -> "Ronald G. Prinn"
+	nan -> "Earl R. Parker"
+	"William Donald Robertson" -> "Hans Conrad"
+	"Charles Lloyd Bauer" -> "Edward J. Kramer"
+	"Chunibhai Chhotabhai Patel" -> "J. (Jagannatha) Gopalakrishnan"
+	"Robert Ernest Hall" -> "Jeffrey Perloff"
+	"Franklin Fisher" -> "Jeffrey Perloff"
+	"Robert J. O'Neil" -> "Robert N. Wiedenmann"
+	"Howard Wilson Emmons" -> "S. L. Soo"
+	"George Bienkowski" -> "Wesley L. Harris"
+	"Sydney Goldstein" -> "Ronald S. Rivlin"
+	"Richard Becker" -> "Egon Orowan"
+	"Gaetano Crocco" -> "Luigi Crocco"
+	"Aristotle Demetrius Michal" -> "Joseph Pierre LaSalle"
+	"Mandikal Ramanna Aswathanarayana Rao" -> "Chunibhai Chhotabhai Patel"
+	"Michael Tinkham" -> "Paul L. Richards"
+	"Franklin Fisher" -> "Richard L. Schmalensee"
+	"Robert Boyd Gordon" -> "Charles Lloyd Bauer"
+	"Robert M. Solow" -> "Robert Ernest Hall"
+	"Harold Urey" -> "John S. Lewis"
+	"James M. Kelly" -> "Robert L. Piziali"
+	"Robert F. Steidel" -> "Robert L. Piziali"
+	"Joseph Pedlosky" -> "Frank Richter"
+	"Simon Newcomb" -> "Henry L. Moore"
+	"John Bates Clark" -> "Henry L. Moore"
+	"Ferdinand von Lindemann" -> "Wilhelm Schlink"
+	"Gustav Bauer" -> "Wilhelm Schlink"
+	"August Weismann" -> "Richard Becker"
+	"William Draper Harkins" -> "Henry W. Newson"
+	nan -> "Hardy Cross"
+	"Gilbert N. Lewis" -> "Harold Urey"
+	"Griffith C. Evans" -> "Aristotle Demetrius Michal"
+	"Frederick George Keyes" -> "Herbert Henry Uhlig"
+	"John Gamble Kirkwood" -> "Herbert Henry Uhlig"
+	"Llewellyn MIchael Kraus Boelter" -> "Ralph A. Seban"
+	"Joseph M Pettit" -> "David Middlebrook"
+	"Wassily W. Leontief" -> "Robert M. Solow"
+	"M. W. P. Strandberg" -> "Michael Tinkham"
+	"Arthur Stanley Nowick" -> "Robert Boyd Gordon"
+	"Henry Paynter" -> "Thomas B. Sheridan"
+	"Theodore William Richards" -> "Farrington Daniels"
+	"Augustus Edward Hough Love" -> "Godfrey Harold Hardy"
+	"E. T. Whittaker" -> "Godfrey Harold Hardy"
+	nan -> "Arthur Newell Talbot"
+	"Charles Harold Berry" -> "John Finnie Downie Smith"
+	"Lionel Simeon Marks" -> "John Finnie Downie Smith"
+	"Frederick E Terman" -> "Joseph M Pettit"
+	"Henry Frederick Baker" -> "Harold Jeffreys"
+	"Peter Gustav Lejeune Dirichlet" -> "Gustav Bauer"
+	"Benjamin Peirce" -> "Simon Newcomb"
+	"Karl Knies" -> "John Bates Clark"
+	"Maxime Bôcher" -> "Griffith C. Evans"
+	"Ernest Barnes" -> "John Edensor Littlewood"
+	"Kurt Beyer" -> "Wilhelm Flugge"
+	"Frederick George Keyes" -> "John Gamble Kirkwood"
+	"Llewellyn MIchael Kraus Boelter" -> "Alexander Louis London"
+	"Joseph Henry Keenan" -> "Ascher Herman Shapiro"
+	"Ernst Guillemin" -> "William Linvill"
+	"Arthur Cayley" -> "Henry Frederick Baker"
+	"Leopold Gmelin" -> "Friedrich Wöhler"
+	"Jöns Jacob Berzelius" -> "Friedrich Wöhler"
+	"William Ramsay" -> "Francis Lawry Usher"
+	"Josiah Parsons Cooke" -> "Theodore William Richards"
+	"Gustav von Schmoller" -> "Werner Sombart"
+	"Adolph Heinrich Gotthelf Wagner" -> "Werner Sombart"
+	"George Howard Darwin" -> "E. T. Whittaker"
+	"Andrew Russell Forsyth" -> "E. T. Whittaker"
+	"Harmon Northrop Morse" -> "John Emery Bucher"
+	"Lafayette Mendel" -> "Robert E. Swain"
+	"Georg Christoph Mehrtens" -> "Kurt Beyer"
+	"W. W. Rouse Ball" -> "Ernest Barnes"
+	nan -> "Joseph Henry Keenan"
+	"Vannevar Bush" -> "Frederick E Terman"
+	"Albert Potter Wills" -> "Shirley Leon Quimby"
+	"George Armand Robert Kon" -> "Reginald Patrick Linstead"
+	"Arnold Sommerfeld" -> "Ernst Guillemin"
+	"Hans Thirring" -> "Eugene Guth"
+	"Vilhelm Friman Koren Bjerknes" -> "Jorgen Holmboe"
+	"Lionel Robbins" -> "William Baumol"
+	"Nikolaus Joseph von Jacquin" -> "Joseph Franz von Jacquin"
+	"Johann Friedrich Gmelin" -> "Friedrich Stromeyer"
+	"Georg Christoph Lichtenberg" -> "Friedrich Stromeyer"
+	"Johann Afzelius" -> "Jöns Jacob Berzelius"
+	"Friedrich Stromeyer" -> "Leopold Gmelin"
+	"Joseph Franz von Jacquin" -> "Leopold Gmelin"
+	nan -> "Josiah Parsons Cooke"
+	nan -> "William Arnold Anthony"
+	"Wilhelm Rudolph Fittig" -> "William Ramsay"
+	"Hans Julius Anton Edward Hübner" -> "Harmon Northrop Morse"
+	"Arthur Cayley" -> "Andrew Russell Forsyth"
+	nan -> "Harold Kilbrith Barrows"
+	"Ferdinand von Lindemann" -> "Arnold Sommerfeld"
+	"Russell Henry Chittenden" -> "Lafayette Mendel"
+	"Arthur Gordon Webster" -> "Albert Potter Wills"
+	"Oswald Veblen" -> "Philip Franklin"
+	"Jocelyn F. Thorpe" -> "George Armand Robert Kon"
+	"Edwin Cannan" -> "Lionel Robbins"
+	"Joseph Schumpeter" -> "Arthur Smithies"
+	"Ludwig Heinrich von Mises" -> "Gerhard Tintner"
+	"Adriaan van Royen" -> "Nikolaus Joseph von Jacquin"
+	"Gerard van Swieten" -> "Nikolaus Joseph von Jacquin"
+	"Abraham Gotthelf Kästner" -> "Georg Christoph Lichtenberg"
+	"Philipp Friedrich Gmelin" -> "Johann Friedrich Gmelin"
+	"Ferdinand Christoph Oetinger" -> "Johann Friedrich Gmelin"
+	"Torbern Olof Bergman" -> "Johann Afzelius"
+	"George Peacock" -> "Arthur Cayley"
+	"William Hopkins" -> "Arthur Cayley"
+	"Johann Georg Anton Geuther" -> "Hans Julius Anton Edward Hübner"
+	"Friedrich Wöhler" -> "Hans Julius Anton Edward Hübner"
+	"Johannes Conrad" -> "Hermann Paasche"
+	"Wilhelm Kühne" -> "Russell Henry Chittenden"
+	"Samuel William Johnson" -> "Russell Henry Chittenden"
+	nan -> "Dugald C. Jackson"
+	"Hermann von Helmholtz" -> "Arthur Gordon Webster"
+	"Henry Augustus Rowland" -> "Charles Elwood Mendenhall"
+	"E. H. Moore" -> "Oswald Veblen"
+	"Eugen von Böhm-Bawerk" -> "Joseph Schumpeter"
+	"Viktor Lvovich Kirpichov" -> "Stephen Prokofyevich Timoshenko"
+	"Ludwig Prandtl" -> "Stephen Prokofyevich Timoshenko"
+	"Michel Chasles" -> "Hubert Anson Newton"
+	"Rudolf Wagner" -> "Wilhelm Kühne"
+	"Herman Boerhaave" -> "Gerard van Swieten"
+	"Burchard David Mauchart" -> "Philipp Friedrich Gmelin"
+	"Bengt Ferrner" -> "Torbern Olof Bergman"
+	"George Peacock" -> "August De Morgan"
+	"William Whewell" -> "August De Morgan"
+	"Adam Sedgwick" -> "William Hopkins"
+	"Johannes Peter Müller" -> "Hermann von Helmholtz"
+	"Friedrich Wöhler" -> "Johann Georg Anton Geuther"
+	"John Pitkin Norton" -> "Samuel William Johnson"
+	"Bruno Hildebrand" -> "Johannes Conrad"
+	"Hermann von Helmholtz" -> "Henry Augustus Rowland"
+	"Viktor von Lang" -> "Franz S. Exner"
+	"August Adolph Eduard Eberhard Kundt" -> "Franz S. Exner"
+	"Karl Knies" -> "Eugen von Böhm-Bawerk"
+	"Wilhelm Roscher" -> "Eugen von Böhm-Bawerk"
+	"Bruno Hildebrand" -> "Eugen von Böhm-Bawerk"
+	"Gustav Robert Kirchhoff" -> "Viktor Lvovich Kirpichov"
+	"August Wilhelm von Hofmann" -> "Karl Friedrich von Auwers"
+	"Louis Bell" -> "Clarence Linus Cory"
+	"Johann Christoph Wichmannshausen" -> "Christian August Hausen"
+	"Johann Andreas Planer" -> "Christian August Hausen"
+	"Elias Rudolph Camerarius Jr." -> "Burchard David Mauchart"
+	"Samuel Klingenstierna" -> "Bengt Ferrner"
+	"Mårten Strömer" -> "Bengt Ferrner"
+	"Thomas Jones" -> "John Hudson"
+	"Siméon Denis Poisson" -> "Michel Chasles"
+	"August Franz Joseph Karl Mayer" -> "Johannes Peter Müller"
+	"Karl Asmund Rudolphi" -> "Johannes Peter Müller"
+	"Johann Lukas Schönlein" -> "Rudolf Wagner"
+	"Justus Von Liebig" -> "August Wilhelm von Hofmann"
+	"Benjamin Silliman" -> "John Pitkin Norton"
+	"James Finlay Weir Johnston" -> "John Pitkin Norton"
+	"William Hopkins" -> "Isaac Todhunter"
+	"Henry Augustus Rowland" -> "Louis Bell"
+	"Otto Mencke" -> "Johann Christoph Wichmannshausen"
+	"Elias Rudolph Camerarius Sr." -> "Elias Rudolph Camerarius Jr."
+	"Leonor Caron" -> "Jean Le Rond d'Alembert"
+	"Thomas Postlethwaite" -> "Thomas Jones"
+	"John Cranke" -> "Thomas Jones"
+	"Christian Ehrenfried Weigel" -> "Karl Asmund Rudolphi"
+	"James Woodhouse" -> "Benjamin Silliman"
+	"Thomas Charles Hope" -> "Benjamin Silliman"
+	"Joseph Louis Lagrange" -> "Siméon Denis Poisson"
+	"Pierre-Simon Laplace" -> "Siméon Denis Poisson"
+	"Karl Christian von Langsdorf" -> "Martin Ohm"
+	"Karl Friedrich Wilhelm Gottlob Kastner" -> "Justus Von Liebig"
+	"Jöns Jacob Berzelius" -> "James Finlay Weir Johnston"
+	"Antonio Scarpa" -> "Ignaz Döllinger"
+	"Georg Balthasar Metzger" -> "Elias Rudolph Camerarius Sr."
+	"Jakob Thomasius" -> "Otto Mencke"
+	"Pierre Varignon" -> "Leonor Caron"
+	"Anders Gabriel Duhre" -> "Samuel Klingenstierna"
+	"Christian M. von Wolff" -> "Samuel Klingenstierna"
+	"Leonhard Euler" -> "Joseph Louis Lagrange"
+	"Stephen Whisson" -> "Thomas Postlethwaite"
+	"Johann Christian Polycarp Erxleben" -> "Christian Ehrenfried Weigel"
+	"Abraham Gotthelf Kästner" -> "Karl Christian von Langsdorf"
+	"Johann Friedrich August Göttling" -> "Karl Friedrich Wilhelm Gottlob Kastner"
+	"Bernhard Friedrich Thibaut" -> "Christoph Gudermann"
+	"Friedrich Leibniz" -> "Jakob Thomasius"
+	"Gottfried Möbius" -> "Georg Balthasar Metzger"
+	"Johann Jakob von Brunn" -> "Georg Balthasar Metzger"
+	"Petrus (the Elder) Elvius" -> "Anders Gabriel Duhre"
+	"Johann Bernoulli" -> "Leonhard Euler"
+	"Walter Taylor" -> "Stephen Whisson"
+	"Abraham Gotthelf Kästner" -> "Johann Christian Polycarp Erxleben"
+	"Giovanni Battista Morgagni" -> "Antonio Scarpa"
+	"Gabriel Gruber" -> "Georg Jurij Bartolomej Veha von Vega"
+	"Joseph Giuseppe Jakob von Maffei" -> "Georg Jurij Bartolomej Veha von Vega"
+	"Ernst Gottfried Baldinger" -> "Johann Friedrich August Göttling"
+	"Johann Gottfried Jakob Hermann" -> "Karl Christian (Christian Karl) Reisig"
+	"Carl Friedrich Gauss" -> "Friedrich Wilhelm Bessel"
+	"Arnold Geulincx" -> "Ehrenfried Walter von Tschirnhaus"
+	"Franciscus de le Boë Sylvius" -> "Ehrenfried Walter von Tschirnhaus"
+	"Pieter van Schooten" -> "Ehrenfried Walter von Tschirnhaus"
+	"Petrus Hoffvenius" -> "Petrus (the Elder) Elvius"
+	"Jacob Bernoulli" -> "Johann Bernoulli"
+	"Christian August Hausen" -> "Abraham Gotthelf Kästner"
+	"Nikolaus Boda Poda von Neuhaus" -> "Joseph Giuseppe Jakob von Maffei"
+	"Nikolaus Boda Poda von Neuhaus" -> "Gabriel Gruber"
+	"Friedrich Wolfgang Reiz" -> "Johann Gottfried Jakob Hermann"
+	"Frans van Schooten Jr." -> "Pieter van Schooten"
+	"Johannes Antonides van der Linden" -> "Petrus Hoffvenius"
+	"Gottfried Wilhelm Leibniz" -> "Jacob Bernoulli"
+	"Roger Cotes" -> "Robert Smith"
+	"Jacobus Golius" -> "Frans van Schooten Jr."
+	"Marin Mersenne" -> "Frans van Schooten Jr."
+	"Gilbert Jacchaeus" -> "Adolph Vorstius"
+	"Adriaan van den Spieghel" -> "Adolph Vorstius"
+	"Justus (Joost Lips) Lipsius" -> "Erycius (Henrick van den Putte) Puteanus"
+	"Menelaus Winsemius" -> "Johannes Antonides van der Linden"
+	"Erhard Weigel" -> "Gottfried Wilhelm Leibniz"
+	"Isaac Newton" -> "Roger Cotes"
+	"Willebrord (Snel van Royen) Snellius" -> "Jacobus Golius"
+	"Thomas Erpenius" -> "Jacobus Golius"
+	"Duncan Liddel" -> "Gilbert Jacchaeus"
+	"Jacobus (Jacob Harmensz.) Arminius" -> "Gilbert Jacchaeus"
+	"Girolamo (Hieronymus Fabricus) Fabrici d'Acquapendente" -> "Adriaan van den Spieghel"
+	"Johann Matthias Gesner" -> "Johann August Ernesti"
+	"Johann Christoph Gottsched" -> "Johann August Ernesti"
+	"Pieter (Petrus Pavius) Pauw" -> "Menelaus Winsemius"
+	"Isaac Barrow" -> "Isaac Newton"
+	"Benjamin Pulleyn" -> "Isaac Newton"
+	"Rudolph (Snel van Royen) Snellius" -> "Willebrord (Snel van Royen) Snellius"
+	"Ludolph van Ceulen" -> "Willebrord (Snel van Royen) Snellius"
+	"Joseph Justus Scaliger" -> "Thomas Erpenius"
+	"Rudolph (Snel van Royen) Snellius" -> "Jacobus (Jacob Harmensz.) Arminius"
+	"Johann Franz Buddeus" -> "Johann Matthias Gesner"
+	"Georg Heinrich Rast" -> "Johann Christoph Gottsched"
+	"Christoph Meurer" -> "Philipp Müller"
+	"Galileo Galilei" -> "Benedetto Castelli"
+	"Adrien Turnèbe" -> "Joseph Justus Scaliger"
+	"Samuel Stryk" -> "Johann Peter von Ludewig"
+	"Christian Thomasius" -> "Johann Peter von Ludewig"
+	"Valentine Naibod" -> "Rudolph (Snel van Royen) Snellius"
+	"Immanuel Tremellius" -> "Rudolph (Snel van Royen) Snellius"
+	"Michael Walther" -> "Johann Franz Buddeus"
+	"David Blaesing" -> "Georg Heinrich Rast"
+	"Petrus Ramus" -> "Johannes (Johan van Heurne) Heurnius"
+	"Petrus Ramus" -> "Henricus Brucaeus"
+	"Thomas Cranmer" -> "Immanuel Tremellius"
+	"Jacques Toussain" -> "Adrien Turnèbe"
+	"Valentin Alberti" -> "Christian Thomasius"
+	"Jakob Thomasius" -> "Christian Thomasius"
+	"Johann Friedrich Rhetius" -> "Christian Thomasius"
+	"Petrus Ramus" -> "Theodor Zwinger"
+	"Bassiano Landi" -> "Theodor Zwinger"
+	"Vittore Trincavelli" -> "Theodor Zwinger"
+	"Laurentius Weger Jr." -> "David Blaesing"
+	"Georg Joachim von Leuchen Rheticus" -> "Moritz Valentin Steinmetz"
+	"Johann Hoffmann" -> "Moritz Valentin Steinmetz"
+	"Nicolo Tartaglia" -> "Ostilio Ricci"
+	"Vittore Trincavelli" -> "Bassiano Landi"
+	"Giovanni Battista della Monte" -> "Bassiano Landi"
+	"Jakob Thomasius" -> "Laurentius Weger Jr."
+	"Johann Sperling" -> "Constantin Ziegra"
+	nan -> "Nicolo Tartaglia"
+	"Nicolas (Nicolaes Cleynaerts) Clénard" -> "Johannes (Johann Sturm) Sturmius"
+	"Johannes Winter von Andernach" -> "Johannes (Johann Sturm) Sturmius"
+	"Guillaume Budé" -> "Jacques Toussain"
+	"Nicolaus Copernicus" -> "Georg Joachim von Leuchen Rheticus"
+	"Johannes Volmar" -> "Georg Joachim von Leuchen Rheticus"
+	"Nicoletto Vernia" -> "Pietro Pomponazzi"
+	"Pietro Roccabonella" -> "Pietro Pomponazzi"
+	"Niccolò Leoniceno" -> "Giovanni Battista della Monte"
+	"Marco Musuro" -> "Giovanni Battista della Monte"
+	"Pietro Pomponazzi" -> "Giovanni Battista della Monte"
+	"Johannes Caselius" -> "Georg Calixt"
+	"Cornelius Martini" -> "Georg Calixt"
+	"Ambrosius Rhodius" -> "Christoph Nottnagel"
+	"Daniel Sennert" -> "Johann Sperling"
+	"Rutger Rescius" -> "Johannes Winter von Andernach"
+	"Jacobus (Jacques Dubois) Sylvius" -> "Johannes Winter von Andernach"
+	"Jacobus (Jacques Masson) Latomus" -> "Nicolas (Nicolaes Cleynaerts) Clénard"
+	"Jan (Johannes Campensis) van Campen" -> "Nicolas (Nicolaes Cleynaerts) Clénard"
+	"Georgius Hermonymus" -> "Guillaume Budé"
+	"Janus Lascaris" -> "Guillaume Budé"
+	"Leonhard von Dobschütz" -> "Nicolaus Copernicus"
+	"Deomenico Maria Novara da Ferrara" -> "Nicolaus Copernicus"
+	"Bonifazius Erasmi" -> "Johannes Volmar"
+	"Albert Clampius" -> "Cornelius Martini"
+	"Duncan Liddel" -> "Cornelius Martini"
+	"Gaetano da Thiene" -> "Nicoletto Vernia"
+	"Paolo da Pergola" -> "Nicoletto Vernia"
+	Pelope -> "Niccolò Leoniceno"
+	"Pietro Roccabonella" -> "Niccolò Leoniceno"
+	"Janus Lascaris" -> "Marco Musuro"
+	"Philipp Melanchthon" -> "Johannes Caselius"
+	"Johannes Kepler" -> "Ambrosius Rhodius"
+	"Ernestus Hettenbach" -> "Ambrosius Rhodius"
+	"Jan Jessenius" -> "Daniel Sennert"
+	"Girolamo (Hieronymus Aleander) Aleandro" -> "Rutger Rescius"
+	"Francois Dubois" -> "Jacobus (Jacques Dubois) Sylvius"
+	"Jean Tagault" -> "Jacobus (Jacques Dubois) Sylvius"
+	"Jan Standonck" -> "Jacobus (Jacques Masson) Latomus"
+	"Johann (Johannes Kapnion) Reuchlin" -> "Jan (Johannes Campensis) van Campen"
+	"Matthaeus Adrianus" -> "Jan (Johannes Campensis) van Campen"
+	"Basilios Bessarion" -> "Janus Lascaris"
+	"Demetrios Chalcocondyles" -> "Janus Lascaris"
+	"Johannes Müller Regiomontanus" -> "Deomenico Maria Novara da Ferrara"
+	"Luca Pacioli" -> "Deomenico Maria Novara da Ferrara"
+	"Johannes Stöffler" -> "Philipp Melanchthon"
+	"Johann (Johannes Kapnion) Reuchlin" -> "Philipp Melanchthon"
+	"Matthias Hafenreffer" -> "Johannes Kepler"
+	"Michael Maestlin" -> "Johannes Kepler"
+	"Girolamo (Hieronymus Fabricus) Fabrici d'Acquapendente" -> "Jan Jessenius"
+	"Moses Perez" -> "Girolamo (Hieronymus Aleander) Aleandro"
+	"Scipione Fortiguerra" -> "Girolamo (Hieronymus Aleander) Aleandro"
+	"Theodoros Gazes" -> "Demetrios Chalcocondyles"
+	nan -> "Nikolaus Selnecker"
+	"Philipp Apian" -> "Michael Maestlin"
+	"Gabriel Falloppio" -> "Girolamo (Hieronymus Fabricus) Fabrici d'Acquapendente"
+	"Johannes Argyropoulos" -> "Johann (Johannes Kapnion) Reuchlin"
+	"Jacob ben Jehiel Loans" -> "Johann (Johannes Kapnion) Reuchlin"
+	"Angelo Poliziano" -> "Scipione Fortiguerra"
+	"Vittorino da Feltre" -> "Theodoros Gazes"
+	"Georgios Plethon Gemistos" -> "Basilios Bessarion"
+	"Johannes von Gmunden" -> "Georg von Peuerbach"
+	"Geert (Gerardus Magnus) Groote" -> "Thomas von Kempen à Kempis"
+	"Florens (Florentius Radwyn) Radewyns" -> "Thomas von Kempen à Kempis"
+	"Petrus Apianus" -> "Philipp Apian"
+	"Antonio Musa Brasavola" -> "Gabriel Falloppio"
+	"Demetrios Kydones" -> "Georgios Plethon Gemistos"
+	"Elissaeus Judaeus" -> "Georgios Plethon Gemistos"
+	"Marsilio Ficino" -> "Angelo Poliziano"
+	"Cristoforo Landino" -> "Angelo Poliziano"
+	"Gasparino da Barzizza" -> "Vittorino da Feltre"
+	"Giovanni Conversini" -> "Vittorino da Feltre"
+	"Guarino da Verona" -> "Vittorino da Feltre"
+	"Heinrich von Langenstein" -> "Johannes von Gmunden"
+	"Georg (Collimitus) Tanstetter" -> "Petrus Apianus"
+	"Johannes Stabius" -> "Petrus Apianus"
+	"Nicolo da Lonigo" -> "Antonio Musa Brasavola"
+	"Johannes Argyropoulos" -> "Marsilio Ficino"
+	"Giovanni Conversini" -> "Guarino da Verona"
+	"Manuel Chrysoloras" -> "Guarino da Verona"
+	"Nicole Oresme" -> "Heinrich von Langenstein"
+	"Georg (Collimitus) Tanstetter" -> "Johannes Stabius"
+	"Pietro Roccabonella" -> "Nicolo da Lonigo"
+	"Gregory Palamas" -> "NIlos Kabasilas"
+	"Basilios Bessarion" -> "Johannes Argyropoulos"
+	"Sigismondo Polcastro" -> "Pietro Roccabonella"
+	"Gaetano da Thiene" -> "Pietro Roccabonella"
+	"Theodore Metochites" -> "Gregory Palamas"
+	"Battista Guarino" -> "Rodolphus Agricola"
+	"Manuel Bryennios" -> "Theodore Metochites"
+	"Guarino da Verona" -> "Battista Guarino"
+	"Gregory Chioniadis" -> "Manuel Bryennios"
+	"Shams al‐Dīn al‐Bukhārī" -> "Gregory Chioniadis"
+	"Kamāl al-Dīn Ibn Yūnus" -> "Athīr al-Dīn al-Mufaḍḍal al-Abharī"
+	"Qutb al-Dīn Ibrāhīm al-Mīṣrī" -> "Athīr al-Dīn al-Mufaḍḍal al-Abharī"
+	"Fakhr al-Dīn Muhammad al-Rēzī" -> "Qutb al-Dīn Ibrāhīm al-Mīṣrī"
+	"Bahmanyār ibn al-Marzubān" -> "Ghiyāth al-Dīn Abū al-Fatḥ ʿUmar ibn Ibrāhīm al-Khayyām al-Nīsābūrī"
+	"Neil M. Donahue" -> "Albert Presto"
+	"Rolf D. Reitz" -> "Satbir Singh"
+	"Ronald S. Fearing" -> "Carmel Majidi"
+	"Kristofer Pister" -> "Sarah Bergbreiter"
+	"Juan G. Santiago" -> "Shawn Litster"
+	"Arumugam Manthiram" -> "Reeja Jayan"
+	"Daniel E. Koditschek" -> "Aaron Johnson"
+	"Joseph Crisco" -> "Eni Hallilaj"
+	"Huei Peng" -> "Ding Zhao"
+	"Roger D. Quinn" -> "Victoria Webster-Wood"
+	"Ozan Akkus" -> "Victoria Webster-Wood"
+	"David Burris" -> "Diana Haidar"
+	"Allison Marsden" -> "Noelia Grande Gutiérrez"
+	"John W. Hutchinson" -> "Jack Beuth"
+	"Avraham Shitzer" -> "Yoed Rabin"
+	"William Gerberich" -> "Maarten de Boer"
+	"William J. Endres" -> "Burak Ozdoganlar"
+	"Gang Bao" -> "Philip Leduc"
+	"Massoud Kaviany" -> "Alan McGaughey"
+	"Metin Sitti" -> "Burak Aksak"
+	"Davida Charney" -> "Joanna Wolfe"
+	"Wei Chen" -> "Liwei Wang"
+	"Ping Zhu" -> "Liwei Wang"
+	"Alica Agogino" -> "Jonathan Cagan"
+	"David Gossard" -> "Kenji Shimada"
+	"Steven Fenves" -> "Nestor Gomez"
+	"Jiping He" -> "Douglas Weber"
+	"Thomas F. Stahovich" -> "Levent Burak Kara"
+	"K. Jimmy Hsia" -> "Rahul Panat"
+	"Chandrajit L. Bajaj" -> "Jessica Yongjie Zhang"
+	"Panos Papalambros" -> "Jeremy Michalek"
+	"William Messner" -> "Mark Bedillion"
+	"Kimberly A. Prather" -> "Ryan Sullivan"
+	"Rachel A Segalman" -> "Jonathan Malen"
+	"Arunava Majumdar" -> "Jonathan Malen"
+	"Chang-Lin Tien" -> "Arunava Majumdar"
+	"Harrison Kim" -> "Conrad Tucker"
+	"Steven J. Skerlos" -> "Kate Whitefoot"
+	"Meredith L. Fowlie" -> "Kate Whitefoot"
+	"Beth Pruitt" -> "Rebecca Taylor"
+	"Narayan R. Aluru" -> "Amir Barati Farimani"
+	"Jonathan Cagan" -> "Christopher McComb"
+	"Kenneth Kotovksy" -> "Christopher McComb"
+	"Jack Beuth" -> "Sneha Prabha Narra"
+	"Aaron J Young" -> "Inseung Kang"
+	"Aimy Wissa" -> "Ophelia Bolmin"
+	"Marianne Alleyne" -> "Ophelia Bolmin"
+	"Martin Vetterli" -> "Frederike Dümbgen"
+	"Adam Scholefield" -> "Frederike Dümbgen"
+	"Pierre-Thomas Brun" -> "Trevor Jones"
+	"Aristides S. Veletsos" -> "Steven Fenves"
+	"Chester Paul Siess" -> "Steven Fenves"
+	"Bernard Budiansky" -> "John W. Hutchinson"
+	"John C. Chato" -> "Avraham Shitzer"
+	"Frediano V. Bracco" -> "Rolf D. Reitz"
+	"Chang-Lin Tien" -> "Massoud Kaviany"
+	"Douglass Wilde" -> "Panos Papalambros"
+	"Kumpati S. Narendra" -> "Daniel E. Koditschek"
+	"Herbert A. Simon" -> "Kenneth Kotovksy"
+	"Douglass Wilde" -> "Alica Agogino"
+	"Leonard Meirovitch" -> "Roger D. Quinn"
+	"Gerald F. Smith" -> "Gang Bao"
+	"William S. Levine" -> "Jiping He"
+	"Thomas O. Binford" -> "Ronald S. Fearing"
+	"Manohar M. Panjabi" -> "Joseph Crisco"
+	"Ronald G. Prinn" -> "Neil M. Donahue"
+	"Masayoshi Tomizuka" -> "Huei Peng"
+	"Richard E. DeVor" -> "William J. Endres"
+	"Shiv G. Kapoor" -> "William J. Endres"
+	"Roberto Horowitz" -> "William Messner"
+	"Robert W. Dutton" -> "Narayan R. Aluru"
+	"Farrokh Mistree" -> "Wei Chen"
+	"Janet Allen" -> "Wei Chen"
+	"Robert N. Wiedenmann" -> "Marianne Alleyne"
+	"Clare M. Rimnac" -> "Ozan Akkus"
+	"Kiyohiko Ikeda" -> "Ping Zhu"
+	"Richard E. DeVor" -> "Steven J. Skerlos"
+	"Shiv G. Kapoor" -> "Steven J. Skerlos"
+	"Panos Papalambros" -> "Harrison Kim"
+	"Thomas W. Kenny" -> "Beth Pruitt"
+	"Levi Hargrove" -> "Aaron J Young"
+	"Todd Kuiken" -> "Aaron J Young"
+	"James E. Hubbard" -> "Aimy Wissa"
+	"Hideki Hashimoto" -> "Metin Sitti"
+	"Lynne Reder" -> "Davida Charney"
+	"Richard S. Sidell" -> "David Gossard"
+	"Ali S. Argon" -> "K. Jimmy Hsia"
+	"David M. Parks" -> "K. Jimmy Hsia"
+	"Roger T. Howe" -> "Kristofer Pister"
+	"J. Craig Dutton" -> "Juan G. Santiago"
+	"Randall Davis" -> "Thomas F. Stahovich"
+	"Warren Seering" -> "Thomas F. Stahovich"
+	"Edward J. Kramer" -> "Rachel A Segalman"
+	"Parviz Moin" -> "Allison Marsden"
+	"Severin Borenstein" -> "Meredith L. Fowlie"
+	"Catherine Wolfram" -> "Meredith L. Fowlie"
+	"Jeffrey Perloff" -> "Meredith L. Fowlie"
+	"W. Gregory Sawyer" -> "David Burris"
+	"Neil Ribe" -> "Pierre-Thomas Brun"
+	"Basile Audoly" -> "Pierre-Thomas Brun"
+	"Pier Luigi Dragotti" -> "Adam Scholefield"
+	"Nathan M. Newmark" -> "Chester Paul Siess"
+	"William Prager" -> "Bernard Budiansky"
+	"Philippe Emmanuel Le Corbeiller" -> "Kumpati S. Narendra"
+	"Andreas Acrivos" -> "Douglass Wilde"
+	"R. L. Mattson" -> "John Edward Hopcroft"
+	"Myron L. Good" -> "Thomas O. Binford"
+	"Michael Athans" -> "William S. Levine"
+	"Richard S. Muller" -> "Robert W. Dutton"
+	"A. L. Addy" -> "J. Craig Dutton"
+	"Richard S. Muller" -> "Roger T. Howe"
+	"Dudley Childress" -> "Todd Kuiken"
+	"William Zev Rymer" -> "Todd Kuiken"
+	"Thierry Blanchet" -> "W. Gregory Sawyer"
+	"Kevin B. Englehart" -> "Levi Hargrove"
+	"Bernard S. Hudgins" -> "Levi Hargrove"
+	"Shien-Ming Wu" -> "Shiv G. Kapoor"
+	"Hisashi Igaki" -> "Kiyohiko Ikeda"
+	"Fumio Harashima" -> "Hideki Hashimoto"
+	"James G. Greeno" -> "Lynne Reder"
+	"Gary M. Olson" -> "Lynne Reder"
+	"Egon Orowan" -> "Ali S. Argon"
+	"Ronald S. Rivlin" -> "Gerald F. Smith"
+	"S. L. Soo" -> "Chang-Lin Tien"
+	"Robert M. Drake Jr." -> "Chang-Lin Tien"
+	"Bengt Jakobsson" -> "Manohar M. Panjabi"
+	"David N. Wormley" -> "Richard S. Sidell"
+	"James R. Rice" -> "David M. Parks"
+	"William Craig Reynolds" -> "Parviz Moin"
+	"Robert L. Piziali" -> "Warren Seering"
+	"John Isaiah Brauman" -> "Robert N. Rosenfeld"
+	"Frank Richter" -> "Neil Ribe"
+	"Richard W. Hertzberg" -> "Clare M. Rimnac"
+	"John A. Manson" -> "Clare M. Rimnac"
+	"Richard L. Schmalensee" -> "Severin Borenstein"
+	"Paul L. Joskow" -> "Catherine Wolfram"
+	"Nancy L. Rose" -> "Catherine Wolfram"
+	"Martin Vetterli" -> "Pier Luigi Dragotti"
+	"Yves Pomeau" -> "Basile Audoly"
+	"Stanford S. Penner" -> "Forman A. Williams"
+	"Henry L. Moore" -> "Henry Schultz"
+	"Charles Émile Picard" -> "Philippe Emmanuel Le Corbeiller"
+	"Wilhelm Schlink" -> "William Prager"
+	"Emil Kammer" -> "William Prager"
+	"Hardy Cross" -> "Nathan M. Newmark"
+	"Harold M. Westergaard" -> "Nathan M. Newmark"
+	"Donald C. Spencer" -> "John McCarthy"
+	"Henry W. Newson" -> "Myron L. Good"
+	"Neal Russell Amundson" -> "Andreas Acrivos"
+	"Leon Madansky" -> "Alan J. Bearden"
+	"Otto J. M. Smith" -> "Michael Athans"
+	"Bernard Widrow" -> "R. L. Mattson"
+	"Helmut H. Korst" -> "A. L. Addy"
+	"Paul C. Paris" -> "Richard W. Hertzberg"
+	"Jerry L. Stimac" -> "Robert J. O'Neil"
+	"Zenzaburo Sawai" -> "Fumio Harashima"
+	"Minoru Hamada" -> "Hisashi Igaki"
+	"David Lee LaBerge" -> "James G. Greeno"
+	"Gordon H. Bower" -> "Gary M. Olson"
+	"Laurence Cragg" -> "John A. Manson"
+	"Walter J. Wohlenberg" -> "Warren M. Rohsenow"
+	"Herbert Henry Uhlig" -> "William Donald Robertson"
+	"Ralph A. Seban" -> "Robert M. Drake Jr."
+	"Ralph J. Harker" -> "Shien-Ming Wu"
+	"Andrew Streitwieser" -> "John Isaiah Brauman"
+	"Ferdinand P. Beer" -> "James R. Rice"
+	"Richard W. Jones" -> "Dudley Childress"
+	"Herbert H. Richardson" -> "David N. Wormley"
+	"Thomas B. Sheridan" -> "Daniel E. Whitney"
+	"Alvin Klevorick" -> "Paul L. Joskow"
+	"Richard Nelson" -> "Paul L. Joskow"
+	"John McGowan" -> "Paul L. Joskow"
+	"Paul L. Joskow" -> "Nancy L. Rose"
+	"Franklin Fisher" -> "Nancy L. Rose"
+	"Henri J. Bussbaumer" -> "Martin Vetterli"
+	"Francis Kennedy" -> "Thierry Blanchet"
+	"Philip A. Parker" -> "Kevin B. Englehart"
+	"Maryhelen Stevenson" -> "Kevin B. Englehart"
+	"Farrington Daniels" -> "Stanford S. Penner"
+	"Theodore von Kármán" -> "Stanford S. Penner"
+	"Gaston Darboux" -> "Charles Émile Picard"
+	"John Finnie Downie Smith" -> "Howard Wilson Emmons"
+	"Charles Harold Berry" -> "Howard Wilson Emmons"
+	"John Edensor Littlewood" -> "Donald C. Spencer"
+	"Godfrey Harold Hardy" -> "Donald C. Spencer"
+	"Hugh Turrittin" -> "Neal Russell Amundson"
+	"William Linvill" -> "Bernard Widrow"
+	"Morton Finston" -> "George Bienkowski"
+	"W. Scott Overton" -> "Jerry L. Stimac"
+	"Norman H. Anderson" -> "Jerry L. Stimac"
+	"Merton J. Peck" -> "John McGowan"
+	"Richard Ruggles" -> "John McGowan"
+	"Frank B. Kenrick" -> "Laurence Cragg"
+	"Heinrich Müller-Breslau" -> "Emil Kammer"
+	"Siegmund Müller" -> "Emil Kammer"
+	"Henry Bruton" -> "Richard Nelson"
+	"William Fellner" -> "Richard Nelson"
+	"James Tobin" -> "Richard Nelson"
+	"Walter W. Soroka" -> "Robert F. Steidel"
+	"Douglas Howard Lawrence" -> "David Lee LaBerge"
+	"Frank A. Logan" -> "Gordon H. Bower"
+	"Charles Russ Richards" -> "Walter J. Wohlenberg"
+	"Harold Jeffreys" -> "Sydney Goldstein"
+	"Arthur Newell Talbot" -> "Harold M. Westergaard"
+	"August Otto Föppl" -> "Harold M. Westergaard"
+	"Basrur Sanjiva Rao" -> "Mandikal Ramanna Aswathanarayana Rao"
+	"Joseph Carroll" -> "Otto J. M. Smith"
+	"J. W. McNaul" -> "Ralph J. Harker"
+	"Walter S. Huxford" -> "Richard W. Jones"
+	"Marcellus Lee Wiedenbeck" -> "Leon Madansky"
+	"Alexander Louis London" -> "William M. Kays"
+	"William von Eggers Doering" -> "Andrew Streitwieser"
+	"Ascher Herman Shapiro" -> "Stephen J. Kline"
+	"Robert W. Mann" -> "Herbert H. Richardson"
+	"John R. Meyer" -> "Franklin Fisher"
+	"Ferdinand P. Beer" -> "Paul C. Paris"
+	"Wilhelm Flugge" -> "James M. Kelly"
+	"Jule Gregory Charney" -> "Joseph Pedlosky"
+	"Richard E. Quandt" -> "Alvin Klevorick"
+	"Burton Malkiel" -> "Alvin Klevorick"
+	"Frederick F. Ling" -> "Francis Kennedy"
+	"Jean Céa" -> "Henri J. Bussbaumer"
+	"Robert N. Scott" -> "Philip A. Parker"
+	"J. A. Stuller" -> "Philip A. Parker"
+	"Bernard Widrow" -> "Maryhelen Stevenson"
+	"Ludwig Prandtl" -> "Theodore von Kármán"
+	"Friedrich Wöhler" -> "August Weismann"
+	"Michel Chasles" -> "Gaston Darboux"
+	"Robert E. Swain" -> "William Draper Harkins"
+	"James Dusenberry" -> "John R. Meyer"
+	"Guy Orcutt" -> "John R. Meyer"
+	"Thomas Richard Edmund Southwood" -> "Norman H. Anderson"
+	"Alva Leroy Finkner" -> "W. Scott Overton"
+	"Wilhelm Ostwald" -> "Frank B. Kenrick"
+	"Edward Sagendorph Mason" -> "Merton J. Peck"
+	"Werner Sombart" -> "William Fellner"
+	"Joseph Schumpeter" -> "James Tobin"
+	"Neal Elgar Miller" -> "Douglas Howard Lawrence"
+	"Kenneth Wartinbee Spence" -> "Frank A. Logan"
+	"Heinrich Bruns" -> "August Otto Föppl"
+	"C. Felix Klein" -> "August Otto Föppl"
+	"Theodore William Richards" -> "Gilbert N. Lewis"
+	"Neal H. Williams" -> "Walter S. Huxford"
+	"Ladislaus Bortkiewicz" -> "Wassily W. Leontief"
+	"Werner Sombart" -> "Wassily W. Leontief"
+	"Harris J. Ryan" -> "Joseph Carroll"
+	"Rolin Wavre" -> "Ferdinand P. Beer"
+	"Reginald Patrick Linstead" -> "William von Eggers Doering"
+	"Eugene Guth" -> "Marcellus Lee Wiedenbeck"
+	"Jorgen Holmboe" -> "Jule Gregory Charney"
+	"Albert Gordon Hill" -> "M. W. P. Strandberg"
+	"George Francis Carrier" -> "Morton Finston"
+	"Shirley Leon Quimby" -> "Arthur Stanley Nowick"
+	"Allan Thurstan Gifford" -> "Henry Paynter"
+	"Edward Aaron Saibel" -> "Frederick F. Ling"
+	"John A. Hrones" -> "Robert W. Mann"
+	"Wassily W. Leontief" -> "Richard E. Quandt"
+	"Jacques-Louis Lions" -> "Jean Céa"
+	"William Baumol" -> "Burton Malkiel"
+	"Harold M. Lucal" -> "J. A. Stuller"
+	"George David Birkhoff" -> "Rudolph Ernest Langer"
+	"Carrington Bonsor Williams" -> "Thomas Richard Edmund Southwood"
+	"Richard Loree Anderson" -> "Alva Leroy Finkner"
+	"Arthur Joachim von Oettingen" -> "Wilhelm Ostwald"
+	"Carl Ernst Heinrich Schmidt" -> "Wilhelm Ostwald"
+	"Frank William Taussig" -> "Edward Sagendorph Mason"
+	"Clark L. Hull" -> "Neal Elgar Miller"
+	"Robert Mearns Yerkes" -> "Kenneth Wartinbee Spence"
+	"Wilhelm Lexis" -> "Ladislaus Bortkiewicz"
+	"William Arnold Anthony" -> "Harris J. Ryan"
+	"C. Felix Klein" -> "Maxime Bôcher"
+	"Karl Eugen Guthe" -> "Neal H. Williams"
+	"Lloyd N. Robinson" -> "Llewellyn MIchael Kraus Boelter"
+	"Henri Fehr" -> "Rolin Wavre"
+	"Philip Franklin" -> "Edward Aaron Saibel"
+	"Lee Alvin DuBridge" -> "Albert Gordon Hill"
+	"James Holt" -> "John A. Hrones"
+	"James Norman Goodler" -> "George Francis Carrier"
+	"Harold Kilbrith Barrows" -> "Allan Thurstan Gifford"
+	"Arthur Smithies" -> "James Dusenberry"
+	"Ernst Guillemin" -> "Harold M. Lucal"
+	"Laurent Schwartz" -> "Jacques-Louis Lions"
+	"E. H. Moore" -> "George David Birkhoff"
+	"Gerhard Tintner" -> "Richard Loree Anderson"
+	"Carl Ernst Heinrich Schmidt" -> "Arthur Joachim von Oettingen"
+	"Justus Von Liebig" -> "Carl Ernst Heinrich Schmidt"
+	"Rudolf Wagner" -> "Carl Ernst Heinrich Schmidt"
+	"Charles Franklin Dunbar" -> "Frank William Taussig"
+	"Joseph Jastrow" -> "Clark L. Hull"
+	"Hugo Münsterberg" -> "Robert Mearns Yerkes"
+	"Georg Hanssen" -> "Adolph Heinrich Gotthelf Wagner"
+	"August Beer" -> "Wilhelm Lexis"
+	"Karl Wolfgang Christoph Schütz" -> "Gustav von Schmoller"
+	"Heinrich Rudolph Hertz" -> "Vilhelm Friman Koren Bjerknes"
+	"Hermann Paasche" -> "Karl Eugen Guthe"
+	"Dugald C. Jackson" -> "Vannevar Bush"
+	"Arthur Edwin Kennelly" -> "Vannevar Bush"
+	"Fred Eugene Pernot" -> "Lloyd N. Robinson"
+	"Charles Elwood Mendenhall" -> "Lee Alvin DuBridge"
+	"Stephen Prokofyevich Timoshenko" -> "James Norman Goodler"
+	"Georges Valiron" -> "Laurent Schwartz"
+	"Hubert Anson Newton" -> "E. H. Moore"
+	"Franz S. Exner" -> "Friedrich Hasenöhrl"
+	"Charles Sanders Peirce" -> "Joseph Jastrow"
+	"Wilhelm Max Wundt" -> "Hugo Münsterberg"
+	"Rudolf Karl Georg Friedrich Leuckart" -> "Hugo Münsterberg"
+	"August Christian Niemann" -> "Georg Hanssen"
+	"Julius Plücker" -> "August Beer"
+	"Hermann von Helmholtz" -> "Heinrich Rudolph Hertz"
+	"Wilhelm von Bezold" -> "Heinrich Rudolph Hertz"
+	"Karl Friedrich von Auwers" -> "Jocelyn F. Thorpe"
+	"Clarence Linus Cory" -> "Fred Eugene Pernot"
+	"Emile Borel" -> "Georges Valiron"
+	"Eugen von Böhm-Bawerk" -> "Ludwig Heinrich von Mises"
+	"Karl Ewald Hasse" -> "Wilhelm Max Wundt"
+	"Herman Boerhaave" -> "Adriaan van Royen"
+	"Friedrich Wöhler" -> "Heinrich Limpricht"
+	"Gaston Darboux" -> "Emile Borel"
+	"August Otto Föppl" -> "Ludwig Prandtl"
+	"Franz Ernst Neumann" -> "Gustav Robert Kirchhoff"
+	"Friedrich Julius Richelot" -> "Gustav Robert Kirchhoff"
+	"Ernst Heinrich Weber" -> "Karl Ewald Hasse"
+	"Christian Ludwig Gerling" -> "Julius Plücker"
+	"Andreas von Ettingshausen" -> "Viktor von Lang"
+	"Heinrich Gustav Magnus" -> "August Adolph Eduard Eberhard Kundt"
+	"Christian Samuel Weiss" -> "Franz Ernst Neumann"
+	"Carl Gustav Jacob Jacobi" -> "Friedrich Julius Richelot"
+	"Karl Theodor Wilhelm Weierstrass" -> "Heinrich Bruns"
+	"Ernst Eduard Kummer" -> "Heinrich Bruns"
+	"Felix Papencordt" -> "Maximilian Wolfgang Duncker"
+	"Wilhelm Bogen" -> "Maximilian Wolfgang Duncker"
+	"Johann Christian Rosenmüller" -> "Ernst Heinrich Weber"
+	"Samuel Klingenstierna" -> "Mårten Strömer"
+	"Carl Friedrich Gauss" -> "Christian Ludwig Gerling"
+	"Abraham Gottlob Werner" -> "Christian Samuel Weiss"
+	"René Just Haüy" -> "Christian Samuel Weiss"
+	"Enno Heeren Dirksen" -> "Carl Gustav Jacob Jacobi"
+	"Christoph Gudermann" -> "Karl Theodor Wilhelm Weierstrass"
+	"Heinrich Ferdinand Scherk" -> "Ernst Eduard Kummer"
+	"Christian August Brandis" -> "Felix Papencordt"
+	"Friedrich Wilhelm Ritschl" -> "Wilhelm Bogen"
+	"Johann Gottlob Haase" -> "Johann Christian Rosenmüller"
+	"Jean Le Rond d'Alembert" -> "Pierre-Simon Laplace"
+	"Johann Friedrich Pfaff" -> "Carl Friedrich Gauss"
+	"Friedrich Stromeyer" -> "Eilhard Mitscherlich"
+	"Johann Carl Gehler" -> "Abraham Gottlob Werner"
+	"Johann Tobias Mayer" -> "Enno Heeren Dirksen"
+	"Bernhard Friedrich Thibaut" -> "Enno Heeren Dirksen"
+	"Friedrich Wilhelm Bessel" -> "Heinrich Ferdinand Scherk"
+	"Heinrich Wilhelm Brandes" -> "Heinrich Ferdinand Scherk"
+	"Karl Christian (Christian Karl) Reisig" -> "Friedrich Wilhelm Ritschl"
+	"Christian Gottlieb Ludwig" -> "Johann Gottlob Haase"
+	"Johann Christoph Pohl" -> "Johann Gottlob Haase"
+	"Nicolas Malebranche" -> "Pierre Varignon"
+	"Ehrenfried Walter von Tschirnhaus" -> "Christian M. von Wolff"
+	"Gottfried Wilhelm Leibniz" -> "Christian M. von Wolff"
+	"Christoph Pfautz" -> "Christian M. von Wolff"
+	"Abraham Gotthelf Kästner" -> "Johann Friedrich Pfaff"
+	"Johann Elert Bode" -> "Johann Friedrich Pfaff"
+	"Christian Gottlieb Ludwig" -> "Johann Carl Gehler"
+	"Abraham Gotthelf Kästner" -> "Johann Tobias Mayer"
+	"Georg Christoph Lichtenberg" -> "Johann Tobias Mayer"
+	"Abraham Gotthelf Kästner" -> "Heinrich Wilhelm Brandes"
+	"Georg Christoph Lichtenberg" -> "Heinrich Wilhelm Brandes"
+	"Augustin Friedrich Walther" -> "Christian Gottlieb Ludwig"
+	"Augustin Friedrich Walther" -> "Johann Christoph Pohl"
+	"Werner Rolfinck" -> "Gottfried Möbius"
+	"Erhard Pfautz" -> "Christoph Pfautz"
+	"Ernst Anton Nicolai" -> "Ernst Gottfried Baldinger"
+	"Johann Gottfried von Berger" -> "Augustin Friedrich Walther"
+	"Adolph Vorstius" -> "Franciscus de le Boë Sylvius"
+	"Emmanuel Stupanus" -> "Franciscus de le Boë Sylvius"
+	"Erycius (Henrick van den Putte) Puteanus" -> "Arnold Geulincx"
+	"Johann Daniel Arcularius" -> "Erhard Pfautz"
+	"Johann Gottlob Krüger" -> "Ernst Anton Nicolai"
+	"Augustin Heinrich Fasch" -> "Johann Gottfried von Berger"
+	"Petrus Ryff" -> "Emmanuel Stupanus"
+	"Friedrich Hoffmann" -> "Johann Gottlob Krüger"
+	"Karl Gottlieb Knorre" -> "Johann Friedrich Christ"
+	"Augustin Heinrich Fasch" -> "Friedrich Hoffmann"
+	"Johann Peter von Ludewig" -> "Karl Gottlieb Knorre"
+	"John Craig" -> "Duncan Liddel"
+	"Paul Wittich" -> "Duncan Liddel"
+	"Johannes (Johan van Heurne) Heurnius" -> "Pieter (Petrus Pavius) Pauw"
+	"Henricus Brucaeus" -> "Pieter (Petrus Pavius) Pauw"
+	"Werner Rolfinck" -> "Augustin Heinrich Fasch"
+	"Valentin Thau" -> "Paul Wittich"
+	"Theodor Zwinger" -> "John Craig"
+	"Johannes Hommel" -> "Valentin Thau"
+	"Aegidius Strauch" -> "Michael Walther"
+	"Constantin Ziegra" -> "Michael Walther"
+	"Johann Andreas Quenstedt" -> "Michael Walther"
+	"Johannes (Johann Sturm) Sturmius" -> "Petrus Ramus"
+	"Jacques Toussain" -> "Petrus Ramus"
+	"Josias Christoph Neander" -> "Johann Friedrich Rhetius"
+	"Erasmus Reinhold" -> "Johannes Hommel"
+	"Philipp Melanchthon" -> "Johannes Hommel"
+	"Georg Calixt" -> "Johann Andreas Quenstedt"
+	"Christoph Nottnagel" -> "Johann Andreas Quenstedt"
+	"Nicolaus Zapf" -> "Aegidius Strauch"
+	"Erasmus Schmidt" -> "Nicolaus Zapf"
+	"Abraham Heinecke" -> "Nicolaus Zapf"
+	"Jacobus Martini" -> "Nicolaus Zapf"
+	"Jakob Milich" -> "Erasmus Reinhold"
+	"Sethus Calvisius" -> "Erasmus Schmidt"
+	"Petrus Otto" -> "Erasmus Schmidt"
+	"Cornelius Martini" -> "Jacobus Martini"
+	"Desiderius Erasmus" -> "Jakob Milich"
+	"Ulrich Zasius" -> "Jakob Milich"
+	"Nikolaus Selnecker" -> "Sethus Calvisius"
+	"Moritz Valentin Steinmetz" -> "Sethus Calvisius"
+	"Jan Standonck" -> "Desiderius Erasmus"
+	"Alexander Hegius" -> "Desiderius Erasmus"
+	"Rudolf Agricola" -> "Alexander Hegius"
+	"Thomas von Kempen à Kempis" -> "Alexander Hegius"
+}
