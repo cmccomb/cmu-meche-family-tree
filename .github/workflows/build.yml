@@ -76,8 +76,8 @@ jobs:
             </style>
           </head>
           <body>
-            <h1>CMU Mechanical Engineering Academic Family Tree</h1>
-            <p>This graph is generated automatically from a publicly shared CSV.  It shows advisor–advisee relationships among Mechanical Engineering scholars at Carnegie Mellon University.</p>
+            <h1>CMU MechE Academic Family Tree</h1>
+            <p>This graph is generated automatically from a publicly shared CSV. It shows advisor–advisee relationships for Mechanical Engineering faculty at Carnegie Mellon University.</p>
             <figure>
               <picture>
                 <source srcset="cmu_meche_family_tree.svg" type="image/svg+xml">
