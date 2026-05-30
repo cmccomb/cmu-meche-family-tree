@@ -6,8 +6,8 @@ permissions:
   id-token: write
 
 # This workflow installs dependencies, generates the family tree from the
-# configured CSV, and deploys the result to the `gh-pages` branch so it
-# can be served by GitHub Pages.  The workflow expects a repository
+# configured CSV, and deploys the result through the GitHub Pages workflow
+# artifact pipeline.  The workflow expects a repository
 # secret named `CSV_URL` containing the URL of the published CSV (e.g.
 # `https://docs.google.com/spreadsheets/d/…/export?format=csv`).
 
@@ -61,39 +61,15 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Create index.html
+      - name: Create site pages
         run: |
-          cat > docs/index.html <<HTML
-          <!doctype html>
-          <html lang="en">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>CMU MechE Family Tree</title>
-            <style>
-              body { font-family: sans-serif; margin: 2rem; }
-              img { max-width: 100%; height: auto; }
-            </style>
-          </head>
-          <body>
-            <h1>CMU MechE Academic Family Tree</h1>
-            <p>This graph is generated automatically from a publicly shared CSV. It shows advisor–advisee relationships for Mechanical Engineering faculty at Carnegie Mellon University.</p>
-            <figure>
-              <picture>
-                <source srcset="cmu_meche_family_tree.svg" type="image/svg+xml">
-                <img src="cmu_meche_family_tree.png" alt="CMU MechE Family Tree">
-              </picture>
-            </figure>
-            <p><strong>Build</strong>: <code>${{ github.sha }}</code> at <code>$(date -u +"%Y-%m-%dT%H:%M:%SZ")</code>.</p>
-            <p>
-              Download:
-              <a href="cmu_meche_family_tree.svg">SVG</a> ·
-              <a href="cmu_meche_family_tree.png">PNG</a>
-            </p>
-            <p>For more details on how this graph is built, see the <a href="../README.md">README</a> on the main branch.</p>
-          </body>
-          </html>
-          HTML
+          BUILD_COMMIT=$(awk -F= '$1 == "commit" { print $2 }' docs/build_meta.txt)
+          BUILD_AT_UTC=$(awk -F= '$1 == "built_at_utc" { print $2 }' docs/build_meta.txt)
+          sed \
+            -e "s|__BUILD_COMMIT__|${BUILD_COMMIT}|g" \
+            -e "s|__BUILD_AT_UTC__|${BUILD_AT_UTC}|g" \
+            site/index.html > docs/index.html
+          cp site/zoom.html docs/zoom.html
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
