@@ -140,8 +140,19 @@ def to_int_or_none(x: object) -> Optional[int]:
         return None
 
 
-def clean_name(s: object) -> str:
-    """Normalise names by collapsing consecutive whitespace and stripping.
+def _normalize_token(s: object) -> str:
+    """Normalise token whitespace for case-insensitive comparisons."""
+    if pd.isna(s):
+        return ""
+    return re.sub(r"\s+", " ", str(s).strip())
+
+
+PLACEHOLDER_TOKENS: Set[str] = {"none", "n/a", "na", "nan", "null", "unknown", "-"}
+SPECIAL_ADVISOR_TOKENS: Set[str] = {"none", "ill request"}
+
+
+def clean_name(s: object) -> Optional[str]:
+    """Normalise names, skipping missing and placeholder tokens.
 
     Advises are passed around in their cleaned form to ensure consistent
     dictionary keys.
@@ -153,15 +164,13 @@ def clean_name(s: object) -> str:
 
     Returns
     -------
-    str
-        Cleaned name.
+    Optional[str]
+        Cleaned name or ``None`` when token is missing/placeholder.
     """
-    if pd.isna(s):
-        return ""
-    return re.sub(r"\s+", " ", str(s).strip())
-
-
-PLACEHOLDER_TOKENS: Set[str] = {"n/a", "na", "nan", "null", "unknown", "-"}
+    normalized = _normalize_token(s)
+    if not normalized or normalized.casefold() in PLACEHOLDER_TOKENS:
+        return None
+    return normalized
 
 
 def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
@@ -189,22 +198,26 @@ def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
     """
     if val is None or pd.isna(val):
         return [], False, False
-    raw = str(val).strip()
+    raw = _normalize_token(val)
     if raw == "":
         return [], False, False
 
     # split by semicolons, commas or newline characters
-    parts = [clean_name(a) for a in re.split(r"[;,\n]+", raw) if a is not None and a.strip() != ""]
-    parts_l = [p.lower() for p in parts]
+    parts = [_normalize_token(a) for a in re.split(r"[;,\n]+", raw) if _normalize_token(a) != ""]
+    parts_l = [p.casefold() for p in parts]
     has_none = any(p == "none" for p in parts_l)
     has_ill = any(p == "ill request" for p in parts_l)
 
-    tokens_exclude = PLACEHOLDER_TOKENS | {"none", "ill request"}
-    advisors: List[str] = [p for p in parts if p.lower() not in tokens_exclude]
+    tokens_exclude = PLACEHOLDER_TOKENS | SPECIAL_ADVISOR_TOKENS
+    advisors: List[str] = [p for p in parts if p.casefold() not in tokens_exclude]
     return advisors, has_none, has_ill
 
 
-def build_graph(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Optional[object]]], List[Tuple[str, str]], Set[str], Set[str]]:
+def build_graph(
+    df: pd.DataFrame,
+) -> Tuple[
+    Dict[str, Dict[str, Optional[object]]], List[Tuple[str, str]], Set[str], Set[str], int
+]:
     """Construct dictionaries describing people and advisor/advisee relationships.
 
     Parameters
@@ -216,7 +229,7 @@ def build_graph(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Optional[object]]
     Returns
     -------
     tuple
-        A tuple ``(people, edges, explicit_none, explicit_ill_request)`` where
+        A tuple ``(people, edges, explicit_none, explicit_ill_request, skipped_rows)`` where
 
         * ``people`` maps a person's name to a dict with keys ``year``,
           ``cmu`` and ``title``;
@@ -225,21 +238,29 @@ def build_graph(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Optional[object]]
           ``None``;
         * ``explicit_ill_request`` is a set of advisees whose advisor column
           contained ``ILL Request``.
+        * ``skipped_rows`` is the number of rows skipped due to missing/placeholder
+          advisee values.
     """
     people: Dict[str, Dict[str, Optional[object]]] = {}
     edges: List[Tuple[str, str]] = []
     explicit_none: Set[str] = set()
     explicit_ill_request: Set[str] = set()
+    skipped_rows = 0
 
     # First pass: build people dictionary and detect special flags
     for _, r in df.iterrows():
-        advisee = clean_name(r["advisee"])
         advisors, has_none_flag, has_ill_flag = split_advisors_with_flags(r.get("advisor", ""))
+        advisee = clean_name(r["advisee"])
 
         year: Optional[int] = r.get("year", None)
         # generation is stored as bool; CMU faculty are those with generation == False
         cmu: bool = bool(r.get("generation", False) == 0)
         title: Optional[str] = None if pd.isna(r.get("title", None)) else str(r.get("title", None))
+
+        # skip rows with missing advisee names
+        if advisee is None:
+            skipped_rows += 1
+            continue
 
         # record the advisee in the people dict
         if advisee not in people:
@@ -254,10 +275,6 @@ def build_graph(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Optional[object]]
             if not people[advisee]["title"] and title:
                 people[advisee]["title"] = title
 
-        # skip rows with missing advisee names
-        if not advisee:
-            continue
-
         # ensure advisor names are also present in the people dict
         for adv in advisors:
             if adv not in people:
@@ -269,9 +286,25 @@ def build_graph(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Optional[object]]
         if has_ill_flag:
             explicit_ill_request.add(advisee)
 
+    # Final defensive filter: remove any placeholder-like nodes that may have
+    # slipped through parser edge cases.
+    placeholder_nodes = {
+        name for name in people if clean_name(name) is None
+    }
+    if placeholder_nodes:
+        for node in placeholder_nodes:
+            people.pop(node, None)
+        explicit_none -= placeholder_nodes
+        explicit_ill_request -= placeholder_nodes
+        edges = [
+            (advisor, student)
+            for advisor, student in edges
+            if advisor not in placeholder_nodes and student not in placeholder_nodes
+        ]
+
     # De‑duplicate edges: multiple rows may specify the same advisor/advisee
     edges = list(dict.fromkeys(edges))
-    return people, edges, explicit_none, explicit_ill_request
+    return people, edges, explicit_none, explicit_ill_request, skipped_rows
 
 
 def impute_years(people: Dict[str, Dict[str, Optional[object]]], placeholder: int = -1) -> None:
@@ -461,7 +494,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     df["year"] = df["year"].map(to_int_or_none)
 
     # Build graph data structures
-    people, edges, explicit_none, explicit_ill = build_graph(df)
+    people, edges, explicit_none, explicit_ill, skipped_rows = build_graph(df)
+    if skipped_rows:
+        print(f"Skipped {skipped_rows} rows because advisee values were missing/placeholder.")
     # Fill missing years
     impute_years(people, placeholder=-1)
     # Render graph

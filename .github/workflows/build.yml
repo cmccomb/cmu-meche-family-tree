@@ -38,12 +38,23 @@ jobs:
         env:
           CSV_URL: ${{ secrets.CSV_URL }}
         run: |
+          rm -rf docs
           mkdir -p docs
           python make_graph.py --csv "$CSV_URL" --output-basename docs/cmu_meche_family_tree
 
+      - name: Create build marker
+        run: |
+          cat > docs/.build_meta <<EOF
+          commit=${{ github.sha }}
+          built_at_utc=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          EOF
+
+      - name: Print build meta for diagnostics
+        run: cat docs/.build_meta
+
       - name: Create index.html
         run: |
-          cat > docs/index.html <<'HTML'
+          cat > docs/index.html <<HTML
           <!doctype html>
           <html lang="en">
           <head>
@@ -64,6 +75,7 @@ jobs:
                 <img src="cmu_meche_family_tree.png" alt="CMU MechE Family Tree">
               </picture>
             </figure>
+            <p><strong>Build</strong>: <code>${{ github.sha }}</code> at <code>$(date -u +"%Y-%m-%dT%H:%M:%SZ")</code>.</p>
             <p>
               Download:
               <a href="cmu_meche_family_tree.svg">SVG</a> ·
