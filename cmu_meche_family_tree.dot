@@ -3,67 +3,65 @@ digraph family_tree_dot {
 	node [color=black fontname=Helvetica fontsize=10 shape=box style="filled,rounded"]
 	edge [arrowsize=0.6 color="#555555" penwidth=1.2]
 	"Yves Pomeau" [label="Yves Pomeau
-(unknown)" fillcolor="#f5f5f5"]
-	nan [label="nan
 (unknown)" fillcolor="#c8f7c5"]
 	"Minoru Hamada" [label="Minoru Hamada
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Gaetano Crocco" [label="Gaetano Crocco
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Zenzaburo Sawai" [label="Zenzaburo Sawai
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Robert N. Scott" [label="Robert N. Scott
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Siegmund Müller" [label="Siegmund Müller
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Carrington Bonsor Williams" [label="Carrington Bonsor Williams
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Georg Christoph Mehrtens" [label="Georg Christoph Mehrtens
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"James Holt" [label="James Holt
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Charles Franklin Dunbar" [label="Charles Franklin Dunbar
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Edwin Cannan" [label="Edwin Cannan
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Helmut H. Korst" [label="Helmut H. Korst
-(1947)" fillcolor="#f5f5f5"]
+(1947)" fillcolor="#c8f7c5"]
 	"René Just Haüy" [label="René Just Haüy
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Nikolaus Boda Poda von Neuhaus" [label="Nikolaus Boda Poda von Neuhaus
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Johann Daniel Arcularius" [label="Johann Daniel Arcularius
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Samuel Stryk" [label="Samuel Stryk
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Johann Hoffmann" [label="Johann Hoffmann
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	Pelope [label="Pelope
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Ernestus Hettenbach" [label="Ernestus Hettenbach
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Luca Pacioli" [label="Luca Pacioli
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Matthias Hafenreffer" [label="Matthias Hafenreffer
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Elissaeus Judaeus" [label="Elissaeus Judaeus
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Nicole Oresme" [label="Nicole Oresme
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Johann von Dalberg" [label="Johann von Dalberg
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Sharaf al-Dīn al-Ṭūsī" [label="Sharaf al-Dīn al-Ṭūsī
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Florens (Florentius Radwyn) Radewyns" [label="Florens (Florentius Radwyn) Radewyns
-(1378)" fillcolor="#f5f5f5"]
+(1378)" fillcolor="#c8f7c5"]
 	"Abu Abdallah Al-Husayn ibn Ibrahim al-Natili" [label="Abu Abdallah Al-Husayn ibn Ibrahim al-Natili
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Abu Sahl 'Isa ibn Yahya al-Masihi" [label="Abu Sahl 'Isa ibn Yahya al-Masihi
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Abu Mansur al-Hasan ibn Nuh al-Qumri" [label="Abu Mansur al-Hasan ibn Nuh al-Qumri
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Heinrich Müller-Breslau" [label="Heinrich Müller-Breslau
-(1921)" fillcolor="#f5f5f5"]
+(1921)" fillcolor="#c8f7c5"]
 	"Basrur Sanjiva Rao" [label="Basrur Sanjiva Rao
 (unknown)" fillcolor="#f5f5f5"]
 	"Francis Lawry Usher" [label="Francis Lawry Usher
@@ -75,15 +73,15 @@ digraph family_tree_dot {
 	"Jean-Baptiste Joseph Fourier" [label="Jean-Baptiste Joseph Fourier
 (unknown)" fillcolor="#f5f5f5"]
 	"Augustus Edward Hough Love" [label="Augustus Edward Hough Love
-(1886)" fillcolor="#f5f5f5"]
+(1886)" fillcolor="#c8f7c5"]
 	"Frederic Poole Gorham" [label="Frederic Poole Gorham
-(1894)" fillcolor="#f5f5f5"]
+(1894)" fillcolor="#c8f7c5"]
 	"Nathaniel Bowditch" [label="Nathaniel Bowditch
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"W. W. Rouse Ball" [label="W. W. Rouse Ball
-(1874)" fillcolor="#f5f5f5"]
+(1874)" fillcolor="#c8f7c5"]
 	"Wilhelm Roscher" [label="Wilhelm Roscher
-(1840)" fillcolor="#f5f5f5"]
+(1840)" fillcolor="#c8f7c5"]
 	"Adam Sedgwick" [label="Adam Sedgwick
 (unknown)" fillcolor="#f5f5f5"]
 	"Thomas Jones" [label="Thomas Jones
@@ -103,75 +101,75 @@ digraph family_tree_dot {
 	"William Whewell" [label="William Whewell
 (unknown)" fillcolor="#f5f5f5"]
 	"Edward Waring" [label="Edward Waring
-(1760)" fillcolor="#f5f5f5"]
+(1760)" fillcolor="#c8f7c5"]
 	"Henry Bracken" [label="Henry Bracken
 (unknown)" fillcolor="#f5f5f5"]
 	"John Cranke" [label="John Cranke
-(1774)" fillcolor="#f5f5f5"]
+(1774)" fillcolor="#c8f7c5"]
 	"Giovanni Battista Morgagni" [label="Giovanni Battista Morgagni
 (unknown)" fillcolor="#f5f5f5"]
 	"Antonio Maria Valsalva" [label="Antonio Maria Valsalva
 (unknown)" fillcolor="#f5f5f5"]
 	"Farrokh Mistree" [label="Farrokh Mistree
-(1974)" fillcolor="#f5f5f5"]
+(1974)" fillcolor="#c8f7c5"]
 	"Bengt Jakobsson" [label="Bengt Jakobsson
-(1947)" fillcolor="#f5f5f5"]
+(1947)" fillcolor="#c8f7c5"]
 	"Justus (Joost Lips) Lipsius" [label="Justus (Joost Lips) Lipsius
-(1569)" fillcolor="#f5f5f5"]
+(1569)" fillcolor="#c8f7c5"]
 	"Richard Ruggles" [label="Richard Ruggles
-(1942)" fillcolor="#f5f5f5"]
+(1942)" fillcolor="#c8f7c5"]
 	"J. W. McNaul" [label="J. W. McNaul
-(1921)" fillcolor="#f5f5f5"]
+(1921)" fillcolor="#c8f7c5"]
 	"Henry Bruton" [label="Henry Bruton
-(1952)" fillcolor="#f5f5f5"]
+(1952)" fillcolor="#c8f7c5"]
 	"Ludolph van Ceulen" [label="Ludolph van Ceulen
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Lionel Simeon Marks" [label="Lionel Simeon Marks
-(1894)" fillcolor="#f5f5f5"]
+(1894)" fillcolor="#c8f7c5"]
 	"Charles Harold Berry" [label="Charles Harold Berry
-(1916)" fillcolor="#f5f5f5"]
+(1916)" fillcolor="#c8f7c5"]
 	"Henri Fehr" [label="Henri Fehr
-(1899)" fillcolor="#f5f5f5"]
+(1899)" fillcolor="#c8f7c5"]
 	"Thomas Cranmer" [label="Thomas Cranmer
-(1526)" fillcolor="#f5f5f5"]
+(1526)" fillcolor="#c8f7c5"]
 	"Valentin Alberti" [label="Valentin Alberti
-(1678)" fillcolor="#f5f5f5"]
+(1678)" fillcolor="#c8f7c5"]
 	"Karl Wolfgang Christoph Schütz" [label="Karl Wolfgang Christoph Schütz
-(1835)" fillcolor="#f5f5f5"]
+(1835)" fillcolor="#c8f7c5"]
 	"Wilhelm von Bezold" [label="Wilhelm von Bezold
-(1860)" fillcolor="#f5f5f5"]
+(1860)" fillcolor="#c8f7c5"]
 	"Leonhard von Dobschütz" [label="Leonhard von Dobschütz
-(1489)" fillcolor="#f5f5f5"]
+(1489)" fillcolor="#c8f7c5"]
 	"Bonifazius Erasmi" [label="Bonifazius Erasmi
-(1509)" fillcolor="#f5f5f5"]
+(1509)" fillcolor="#c8f7c5"]
 	"Francois Dubois" [label="Francois Dubois
-(1516)" fillcolor="#f5f5f5"]
+(1516)" fillcolor="#c8f7c5"]
 	"Jean Tagault" [label="Jean Tagault
-(1524)" fillcolor="#f5f5f5"]
+(1524)" fillcolor="#c8f7c5"]
 	"Jan Standonck" [label="Jan Standonck
-(1490)" fillcolor="#f5f5f5"]
+(1490)" fillcolor="#c8f7c5"]
 	"Johannes Stöffler" [label="Johannes Stöffler
-(1476)" fillcolor="#f5f5f5"]
+(1476)" fillcolor="#c8f7c5"]
 	"Reinhard Bachoff von Echt" [label="Reinhard Bachoff von Echt
-(1598)" fillcolor="#f5f5f5"]
+(1598)" fillcolor="#c8f7c5"]
 	"Gasparino da Barzizza" [label="Gasparino da Barzizza
-(1413)" fillcolor="#f5f5f5"]
+(1413)" fillcolor="#c8f7c5"]
 	"Giovanni Conversini" [label="Giovanni Conversini
-(1363)" fillcolor="#f5f5f5"]
+(1363)" fillcolor="#c8f7c5"]
 	"Christian August Brandis" [label="Christian August Brandis
-(1812)" fillcolor="#f5f5f5"]
+(1812)" fillcolor="#c8f7c5"]
 	"Friedrich Leibniz" [label="Friedrich Leibniz
-(1622)" fillcolor="#f5f5f5"]
+(1622)" fillcolor="#c8f7c5"]
 	"Sigismondo Polcastro" [label="Sigismondo Polcastro
-(1424)" fillcolor="#f5f5f5"]
+(1424)" fillcolor="#c8f7c5"]
 	"Paolo (Nicoletti) da Venezia" [label="Paolo (Nicoletti) da Venezia
-(1405)" fillcolor="#f5f5f5"]
+(1405)" fillcolor="#c8f7c5"]
 	"Marin Mersenne" [label="Marin Mersenne
-(1611)" fillcolor="#f5f5f5"]
+(1611)" fillcolor="#c8f7c5"]
 	"Ulrich Zasius" [label="Ulrich Zasius
-(1501)" fillcolor="#f5f5f5"]
+(1501)" fillcolor="#c8f7c5"]
 	"Geert (Gerardus Magnus) Groote" [label="Geert (Gerardus Magnus) Groote
-(1358)" fillcolor="#f5f5f5"]
+(1358)" fillcolor="#c8f7c5"]
 	"Frediano V. Bracco" [label="Frediano V. Bracco
 (1970)" fillcolor="#f5f5f5"]
 	"Luigi Crocco" [label="Luigi Crocco
@@ -221,7 +219,7 @@ digraph family_tree_dot {
 	"C. Felix Klein" [label="C. Felix Klein
 (unknown)" fillcolor="#f5f5f5"]
 	"Arthur Edwin Kennelly" [label="Arthur Edwin Kennelly
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Julius Plücker" [label="Julius Plücker
 (1823)" fillcolor="#f5f5f5"]
 	"Bruno Hildebrand" [label="Bruno Hildebrand
@@ -283,11 +281,11 @@ digraph family_tree_dot {
 	"Pietro Pomponazzi" [label="Pietro Pomponazzi
 (1487)" fillcolor="#f5f5f5"]
 	"Josias Christoph Neander" [label="Josias Christoph Neander
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Abraham Heinecke" [label="Abraham Heinecke
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Petrus Otto" [label="Petrus Otto
-(unknown)" fillcolor="#f5f5f5"]
+(unknown)" fillcolor="#c8f7c5"]
 	"Paolo da Pergola" [label="Paolo da Pergola
 (unknown)" fillcolor="#f5f5f5"]
 	"Johannes Müller Regiomontanus" [label="Johannes Müller Regiomontanus
@@ -333,7 +331,7 @@ digraph family_tree_dot {
 	"Victor Zackay" [label="Victor Zackay
 (1952)" fillcolor="#f5f5f5"]
 	"Earl R. Parker" [label="Earl R. Parker
-(1935)" fillcolor="#f5f5f5"]
+(1935)" fillcolor="#c8f7c5"]
 	"Georg (Collimitus) Tanstetter" [label="Georg (Collimitus) Tanstetter
 (unknown)" fillcolor="#f5f5f5"]
 	"Conrad Celtes (Celtis)" [label="Conrad Celtes (Celtis)
@@ -365,7 +363,7 @@ digraph family_tree_dot {
 	"Rudolph Ernest Langer" [label="Rudolph Ernest Langer
 (1922)" fillcolor="#f5f5f5"]
 	"Walter W. Soroka" [label="Walter W. Soroka
-(1945)" fillcolor="#f5f5f5"]
+(1945)" fillcolor="#c8f7c5"]
 	"Guy Orcutt" [label="Guy Orcutt
 (1944)" fillcolor="#f5f5f5"]
 	"Arthur Smithies" [label="Arthur Smithies
@@ -511,7 +509,7 @@ digraph family_tree_dot {
 	"William Draper Harkins" [label="William Draper Harkins
 (1907)" fillcolor="#f5f5f5"]
 	"Hardy Cross" [label="Hardy Cross
-(1911)" fillcolor="#f5f5f5"]
+(1911)" fillcolor="#c8f7c5"]
 	"Gilbert N. Lewis" [label="Gilbert N. Lewis
 (1899)" fillcolor="#f5f5f5"]
 	"Griffith C. Evans" [label="Griffith C. Evans
@@ -545,7 +543,7 @@ digraph family_tree_dot {
 	"E. T. Whittaker" [label="E. T. Whittaker
 (1895)" fillcolor="#f5f5f5"]
 	"Arthur Newell Talbot" [label="Arthur Newell Talbot
-(1881)" fillcolor="#f5f5f5"]
+(1881)" fillcolor="#c8f7c5"]
 	"John Finnie Downie Smith" [label="John Finnie Downie Smith
 (1933)" fillcolor="#f5f5f5"]
 	"Frederick E Terman" [label="Frederick E Terman
@@ -569,7 +567,7 @@ digraph family_tree_dot {
 	"Ascher Herman Shapiro" [label="Ascher Herman Shapiro
 (1946)" fillcolor="#f5f5f5"]
 	"Joseph Henry Keenan" [label="Joseph Henry Keenan
-(1922)" fillcolor="#f5f5f5"]
+(1922)" fillcolor="#c8f7c5"]
 	"William Linvill" [label="William Linvill
 (1949)" fillcolor="#f5f5f5"]
 	"Ernst Guillemin" [label="Ernst Guillemin
@@ -583,7 +581,7 @@ digraph family_tree_dot {
 	"William Ramsay" [label="William Ramsay
 (1872)" fillcolor="#f5f5f5"]
 	"Josiah Parsons Cooke" [label="Josiah Parsons Cooke
-(1848)" fillcolor="#f5f5f5"]
+(1848)" fillcolor="#c8f7c5"]
 	"Werner Sombart" [label="Werner Sombart
 (1888)" fillcolor="#f5f5f5"]
 	"Gustav von Schmoller" [label="Gustav von Schmoller
@@ -631,11 +629,11 @@ digraph family_tree_dot {
 	"Johann Afzelius" [label="Johann Afzelius
 (1776)" fillcolor="#f5f5f5"]
 	"William Arnold Anthony" [label="William Arnold Anthony
-(1856)" fillcolor="#f5f5f5"]
+(1856)" fillcolor="#c8f7c5"]
 	"Hans Julius Anton Edward Hübner" [label="Hans Julius Anton Edward Hübner
 (1859)" fillcolor="#f5f5f5"]
 	"Harold Kilbrith Barrows" [label="Harold Kilbrith Barrows
-(1885)" fillcolor="#f5f5f5"]
+(1885)" fillcolor="#c8f7c5"]
 	"Russell Henry Chittenden" [label="Russell Henry Chittenden
 (1880)" fillcolor="#f5f5f5"]
 	"Arthur Gordon Webster" [label="Arthur Gordon Webster
@@ -673,7 +671,7 @@ digraph family_tree_dot {
 	"Samuel William Johnson" [label="Samuel William Johnson
 (1857)" fillcolor="#f5f5f5"]
 	"Dugald C. Jackson" [label="Dugald C. Jackson
-(1885)" fillcolor="#f5f5f5"]
+(1885)" fillcolor="#c8f7c5"]
 	"Hermann von Helmholtz" [label="Hermann von Helmholtz
 (1842)" fillcolor="#f5f5f5"]
 	"Charles Elwood Mendenhall" [label="Charles Elwood Mendenhall
@@ -899,7 +897,7 @@ digraph family_tree_dot {
 	"Georg Joachim von Leuchen Rheticus" [label="Georg Joachim von Leuchen Rheticus
 (1535)" fillcolor="#f5f5f5"]
 	"Nicolo Tartaglia" [label="Nicolo Tartaglia
-(1537)" fillcolor="#f5f5f5"]
+(1537)" fillcolor="#c8f7c5"]
 	"Giovanni Battista della Monte" [label="Giovanni Battista della Monte
 (1520)" fillcolor="#f5f5f5"]
 	"Constantin Ziegra" [label="Constantin Ziegra
@@ -975,7 +973,7 @@ digraph family_tree_dot {
 	"Theodoros Gazes" [label="Theodoros Gazes
 (1433)" fillcolor="#f5f5f5"]
 	"Nikolaus Selnecker" [label="Nikolaus Selnecker
-(1570)" fillcolor="#f5f5f5"]
+(1570)" fillcolor="#c8f7c5"]
 	"Philipp Apian" [label="Philipp Apian
 (1552)" fillcolor="#f5f5f5"]
 	"Gabriel Falloppio" [label="Gabriel Falloppio
@@ -1629,44 +1627,9 @@ digraph family_tree_dot {
 		"Victoria Webster-Wood"
 		"Yoed Rabin"
 	}
-	nan -> "Yves Pomeau"
-	nan -> "Minoru Hamada"
-	nan -> "Gaetano Crocco"
-	nan -> "Zenzaburo Sawai"
-	nan -> "Robert N. Scott"
-	nan -> "Siegmund Müller"
-	nan -> "Carrington Bonsor Williams"
-	nan -> "Georg Christoph Mehrtens"
-	nan -> "James Holt"
-	nan -> "Charles Franklin Dunbar"
-	nan -> "Edwin Cannan"
-	nan -> "Helmut H. Korst"
-	nan -> "René Just Haüy"
-	nan -> "Nikolaus Boda Poda von Neuhaus"
-	nan -> "Johann Daniel Arcularius"
-	nan -> "Samuel Stryk"
-	nan -> "Johann Hoffmann"
-	nan -> Pelope
-	nan -> "Ernestus Hettenbach"
-	nan -> "Luca Pacioli"
-	nan -> "Matthias Hafenreffer"
-	nan -> "Elissaeus Judaeus"
-	nan -> "Nicole Oresme"
-	nan -> "Johann von Dalberg"
-	nan -> "Sharaf al-Dīn al-Ṭūsī"
-	nan -> "Florens (Florentius Radwyn) Radewyns"
-	nan -> "Abu Abdallah Al-Husayn ibn Ibrahim al-Natili"
-	nan -> "Abu Sahl 'Isa ibn Yahya al-Masihi"
-	nan -> "Abu Mansur al-Hasan ibn Nuh al-Qumri"
-	nan -> "Heinrich Müller-Breslau"
 	"Francis Lawry Usher" -> "Basrur Sanjiva Rao"
 	"Siméon Denis Poisson" -> "Peter Gustav Lejeune Dirichlet"
 	"Jean-Baptiste Joseph Fourier" -> "Peter Gustav Lejeune Dirichlet"
-	nan -> "Augustus Edward Hough Love"
-	nan -> "Frederic Poole Gorham"
-	nan -> "Nathaniel Bowditch"
-	nan -> "W. W. Rouse Ball"
-	nan -> "Wilhelm Roscher"
 	"Thomas Jones" -> "Adam Sedgwick"
 	"John Dawson" -> "Adam Sedgwick"
 	"John Slee" -> "John Gough"
@@ -1676,39 +1639,7 @@ digraph family_tree_dot {
 	"John Gough" -> "William Whewell"
 	"Edward Waring" -> "John Dawson"
 	"Henry Bracken" -> "John Dawson"
-	nan -> "Edward Waring"
-	nan -> "John Cranke"
 	"Antonio Maria Valsalva" -> "Giovanni Battista Morgagni"
-	nan -> "Farrokh Mistree"
-	nan -> "Bengt Jakobsson"
-	nan -> "Justus (Joost Lips) Lipsius"
-	nan -> "Richard Ruggles"
-	nan -> "J. W. McNaul"
-	nan -> "Henry Bruton"
-	nan -> "Ludolph van Ceulen"
-	nan -> "Lionel Simeon Marks"
-	nan -> "Charles Harold Berry"
-	nan -> "Henri Fehr"
-	nan -> "Thomas Cranmer"
-	nan -> "Valentin Alberti"
-	nan -> "Karl Wolfgang Christoph Schütz"
-	nan -> "Wilhelm von Bezold"
-	nan -> "Leonhard von Dobschütz"
-	nan -> "Bonifazius Erasmi"
-	nan -> "Francois Dubois"
-	nan -> "Jean Tagault"
-	nan -> "Jan Standonck"
-	nan -> "Johannes Stöffler"
-	nan -> "Reinhard Bachoff von Echt"
-	nan -> "Gasparino da Barzizza"
-	nan -> "Giovanni Conversini"
-	nan -> "Christian August Brandis"
-	nan -> "Friedrich Leibniz"
-	nan -> "Sigismondo Polcastro"
-	nan -> "Paolo (Nicoletti) da Venezia"
-	nan -> "Marin Mersenne"
-	nan -> "Ulrich Zasius"
-	nan -> "Geert (Gerardus Magnus) Groote"
 	"Luigi Crocco" -> "Frediano V. Bracco"
 	"Alan J. Bearden" -> "Janet Allen"
 	"Joseph Pierre LaSalle" -> "Leonard Meirovitch"
@@ -1725,7 +1656,6 @@ digraph family_tree_dot {
 	"Isaac Todhunter" -> "Edward John Routh"
 	"August De Morgan" -> "Edward John Routh"
 	"C. Felix Klein" -> "Ferdinand von Lindemann"
-	nan -> "Arthur Edwin Kennelly"
 	"Rudolf Lipschitz" -> "C. Felix Klein"
 	"Julius Plücker" -> "C. Felix Klein"
 	"Maximilian Wolfgang Duncker" -> "Bruno Hildebrand"
@@ -1746,9 +1676,6 @@ digraph family_tree_dot {
 	"Moritz Valentin Steinmetz" -> "Christoph Meurer"
 	"Erasmus Reinhold" -> "Valentine Naibod"
 	"Pietro Pomponazzi" -> "Vittore Trincavelli"
-	nan -> "Josias Christoph Neander"
-	nan -> "Abraham Heinecke"
-	nan -> "Petrus Otto"
 	"Paolo (Nicoletti) da Venezia" -> "Paolo da Pergola"
 	"Georg von Peuerbach" -> "Johannes Müller Regiomontanus"
 	"Basilios Bessarion" -> "Johannes Müller Regiomontanus"
@@ -1774,7 +1701,6 @@ digraph family_tree_dot {
 	"Johann von Dalberg" -> "Conrad Celtes (Celtis)"
 	"Paolo (Nicoletti) da Venezia" -> "Gaetano da Thiene"
 	"Rudolph Ernest Langer" -> "Hugh Turrittin"
-	nan -> "Walter W. Soroka"
 	"Arthur Smithies" -> "Guy Orcutt"
 	"Nasir al-Dīn al-Ṭūsī" -> "Shams al‐Dīn al‐Bukhārī"
 	"Kamāl al-Dīn Ibn Yūnus" -> "Nasir al-Dīn al-Ṭūsī"
@@ -1803,7 +1729,6 @@ digraph family_tree_dot {
 	"Forman A. Williams" -> "Harsha K. Chelliah"
 	"Nathan M. Newmark" -> "Aristides S. Veletsos"
 	"John S. Lewis" -> "Ronald G. Prinn"
-	nan -> "Earl R. Parker"
 	"William Donald Robertson" -> "Hans Conrad"
 	"Charles Lloyd Bauer" -> "Edward J. Kramer"
 	"Chunibhai Chhotabhai Patel" -> "J. (Jagannatha) Gopalakrishnan"
@@ -1831,7 +1756,6 @@ digraph family_tree_dot {
 	"Gustav Bauer" -> "Wilhelm Schlink"
 	"August Weismann" -> "Richard Becker"
 	"William Draper Harkins" -> "Henry W. Newson"
-	nan -> "Hardy Cross"
 	"Gilbert N. Lewis" -> "Harold Urey"
 	"Griffith C. Evans" -> "Aristotle Demetrius Michal"
 	"Frederick George Keyes" -> "Herbert Henry Uhlig"
@@ -1845,7 +1769,6 @@ digraph family_tree_dot {
 	"Theodore William Richards" -> "Farrington Daniels"
 	"Augustus Edward Hough Love" -> "Godfrey Harold Hardy"
 	"E. T. Whittaker" -> "Godfrey Harold Hardy"
-	nan -> "Arthur Newell Talbot"
 	"Charles Harold Berry" -> "John Finnie Downie Smith"
 	"Lionel Simeon Marks" -> "John Finnie Downie Smith"
 	"Frederick E Terman" -> "Joseph M Pettit"
@@ -1873,7 +1796,6 @@ digraph family_tree_dot {
 	"Lafayette Mendel" -> "Robert E. Swain"
 	"Georg Christoph Mehrtens" -> "Kurt Beyer"
 	"W. W. Rouse Ball" -> "Ernest Barnes"
-	nan -> "Joseph Henry Keenan"
 	"Vannevar Bush" -> "Frederick E Terman"
 	"Albert Potter Wills" -> "Shirley Leon Quimby"
 	"George Armand Robert Kon" -> "Reginald Patrick Linstead"
@@ -1887,12 +1809,9 @@ digraph family_tree_dot {
 	"Johann Afzelius" -> "Jöns Jacob Berzelius"
 	"Friedrich Stromeyer" -> "Leopold Gmelin"
 	"Joseph Franz von Jacquin" -> "Leopold Gmelin"
-	nan -> "Josiah Parsons Cooke"
-	nan -> "William Arnold Anthony"
 	"Wilhelm Rudolph Fittig" -> "William Ramsay"
 	"Hans Julius Anton Edward Hübner" -> "Harmon Northrop Morse"
 	"Arthur Cayley" -> "Andrew Russell Forsyth"
-	nan -> "Harold Kilbrith Barrows"
 	"Ferdinand von Lindemann" -> "Arnold Sommerfeld"
 	"Russell Henry Chittenden" -> "Lafayette Mendel"
 	"Arthur Gordon Webster" -> "Albert Potter Wills"
@@ -1914,7 +1833,6 @@ digraph family_tree_dot {
 	"Johannes Conrad" -> "Hermann Paasche"
 	"Wilhelm Kühne" -> "Russell Henry Chittenden"
 	"Samuel William Johnson" -> "Russell Henry Chittenden"
-	nan -> "Dugald C. Jackson"
 	"Hermann von Helmholtz" -> "Arthur Gordon Webster"
 	"Henry Augustus Rowland" -> "Charles Elwood Mendenhall"
 	"E. H. Moore" -> "Oswald Veblen"
@@ -2059,7 +1977,6 @@ digraph family_tree_dot {
 	"Giovanni Battista della Monte" -> "Bassiano Landi"
 	"Jakob Thomasius" -> "Laurentius Weger Jr."
 	"Johann Sperling" -> "Constantin Ziegra"
-	nan -> "Nicolo Tartaglia"
 	"Nicolas (Nicolaes Cleynaerts) Clénard" -> "Johannes (Johann Sturm) Sturmius"
 	"Johannes Winter von Andernach" -> "Johannes (Johann Sturm) Sturmius"
 	"Guillaume Budé" -> "Jacques Toussain"
@@ -2112,7 +2029,6 @@ digraph family_tree_dot {
 	"Moses Perez" -> "Girolamo (Hieronymus Aleander) Aleandro"
 	"Scipione Fortiguerra" -> "Girolamo (Hieronymus Aleander) Aleandro"
 	"Theodoros Gazes" -> "Demetrios Chalcocondyles"
-	nan -> "Nikolaus Selnecker"
 	"Philipp Apian" -> "Michael Maestlin"
 	"Gabriel Falloppio" -> "Girolamo (Hieronymus Fabricus) Fabrici d'Acquapendente"
 	"Johannes Argyropoulos" -> "Johann (Johannes Kapnion) Reuchlin"
