@@ -11,6 +11,7 @@
       --muted: #5d6b66;
       --paper: #fbfaf5;
       --accent: #0f766e;
+      --tree-base-width: 12000px;
     }
     * { box-sizing: border-box; }
     body {
@@ -83,7 +84,7 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: min(100vw, 2200px);
+      width: var(--tree-base-width);
       max-width: none;
       height: auto;
       transform-origin: 0 0;
@@ -118,6 +119,8 @@
     const viewport = document.getElementById("viewport");
     const tree = document.getElementById("tree");
     const pointers = new Map();
+    const minScale = 0.04;
+    const maxScale = 12;
     let scale = 1;
     let x = 24;
     let y = 24;
@@ -140,7 +143,7 @@
       const pointY = clientY - rect.top;
       const beforeX = (pointX - x) / scale;
       const beforeY = (pointY - y) / scale;
-      scale = clamp(nextScale, 0.25, 8);
+      scale = clamp(nextScale, minScale, maxScale);
       x = pointX - beforeX * scale;
       y = pointY - beforeY * scale;
       render();
@@ -226,13 +229,28 @@
     });
 
     document.querySelector("[data-action='reset']").addEventListener("click", () => {
-      scale = 1;
-      x = 24;
-      y = 24;
-      render();
+      fitTreeToViewport();
     });
 
-    render();
+    function fitTreeToViewport() {
+      const rect = viewport.getBoundingClientRect();
+      const treeWidth = tree.offsetWidth || 12000;
+      const treeHeight = tree.offsetHeight || 6400;
+      scale = clamp(
+        Math.min((rect.width - 48) / treeWidth, (rect.height - 48) / treeHeight),
+        minScale,
+        1
+      );
+      x = Math.max(24, (rect.width - treeWidth * scale) / 2);
+      y = Math.max(24, (rect.height - treeHeight * scale) / 2);
+      render();
+    }
+
+    if (tree.complete) {
+      fitTreeToViewport();
+    } else {
+      tree.addEventListener("load", fitTreeToViewport, { once: true });
+    }
   </script>
 </body>
 </html>
