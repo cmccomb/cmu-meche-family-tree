@@ -115,8 +115,8 @@ def to_bool(x: object) -> bool:
     try:
         return bool(int(float(s)))
     except Exception:
-        # fall back to Python truthiness for other cases
-        return bool(x)
+        # fall back to False for unrecognized values
+        return False
 
 
 def to_int_or_none(x: object) -> Optional[int]:
@@ -156,10 +156,12 @@ def clean_name(s: object) -> str:
     str
         Cleaned name.
     """
+    if pd.isna(s):
+        return ""
     return re.sub(r"\s+", " ", str(s).strip())
 
 
-PLACEHOLDER_TOKENS: Set[str] = {"n/a", "na", "null", "unknown", "-"}
+PLACEHOLDER_TOKENS: Set[str] = {"n/a", "na", "nan", "null", "unknown", "-"}
 
 
 def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
@@ -185,7 +187,7 @@ def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
         * ``has_none_flag`` is ``True`` if the cell contained ``None``;
         * ``has_ill_flag`` is ``True`` if the cell contained ``ILL Request``.
     """
-    if val is None:
+    if val is None or pd.isna(val):
         return [], False, False
     raw = str(val).strip()
     if raw == "":
@@ -251,6 +253,10 @@ def build_graph(df: pd.DataFrame) -> Tuple[Dict[str, Dict[str, Optional[object]]
             # update title if not already present
             if not people[advisee]["title"] and title:
                 people[advisee]["title"] = title
+
+        # skip rows with missing advisee names
+        if not advisee:
+            continue
 
         # ensure advisor names are also present in the people dict
         for adv in advisors:
