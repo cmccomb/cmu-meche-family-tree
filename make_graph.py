@@ -375,7 +375,21 @@ def render_graph(people: Dict[str, Dict[str, Optional[object]]], edges: Iterable
         Base filename for output files.  ``<basename>.dot`` and
         ``<basename>.png`` and ``<basename>.svg`` will be written.
     """
-    roots_no_incoming = find_roots(people, edges, explicit_none, explicit_ill)
+    renderable_people = {
+        name: attrs
+        for name, attrs in people.items()
+        if clean_name(name) is not None
+    }
+    renderable_edges = [
+        (advisor, advisee)
+        for advisor, advisee in edges
+        if advisor in renderable_people and advisee in renderable_people
+    ]
+    renderable_names = set(renderable_people)
+    explicit_none = explicit_none & renderable_names
+    explicit_ill = explicit_ill & renderable_names
+
+    roots_no_incoming = find_roots(renderable_people, renderable_edges, explicit_none, explicit_ill)
 
     # Build the Digraph
     dot = Digraph(
@@ -407,7 +421,7 @@ def render_graph(people: Dict[str, Dict[str, Optional[object]]], edges: Iterable
     )
 
     # Define node colours based on flags
-    for name, attrs in people.items():
+    for name, attrs in renderable_people.items():
         if name in explicit_none:
             fill = NODE_STYLE["fillcolor_explicit_none"]
         elif name in explicit_ill:
@@ -426,7 +440,7 @@ def render_graph(people: Dict[str, Dict[str, Optional[object]]], edges: Iterable
         dot.node(name, label=label, fillcolor=fill)
 
     # Place CMU faculty at the sink (bottom) rank
-    faculty = {n for n, a in people.items() if a.get("cmu", False)}
+    faculty = {n for n, a in renderable_people.items() if a.get("cmu", False)}
     if faculty:
         with dot.subgraph(name="rank_sink_faculty") as sub:
             sub.attr(rank="sink")
@@ -434,8 +448,8 @@ def render_graph(people: Dict[str, Dict[str, Optional[object]]], edges: Iterable
                 sub.node(n)
 
     # Add edges
-    for u, v in edges:
-        if u in people and v in people:
+    for u, v in renderable_edges:
+        if u in renderable_people and v in renderable_people:
             dot.edge(u, v)
 
     # Write files
