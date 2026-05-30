@@ -44,13 +44,14 @@ jobs:
 
       - name: Create build marker
         run: |
-          cat > docs/.build_meta <<EOF
+          cat > docs/build_meta.txt <<EOF
           commit=${{ github.sha }}
           built_at_utc=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           EOF
+          cp docs/build_meta.txt docs/.build_meta
 
       - name: Print build meta for diagnostics
-        run: cat docs/.build_meta
+        run: cat docs/build_meta.txt
 
       - name: Create index.html
         run: |
