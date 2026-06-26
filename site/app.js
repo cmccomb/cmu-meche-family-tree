@@ -1345,18 +1345,25 @@
 
     const ns = "http://www.w3.org/2000/svg";
     const group = document.createElementNS(ns, "g");
-    nodes.forEach((node) => {
+    const miniNodes = nodes.toArray().map((node) => {
+      const fill = node.data("fillColor") || categoryColors[node.data("category")] || "#68707a";
+      return {
+        node,
+        fill,
+        whiteFill: fill.toLowerCase() === "#ffffff" || fill.toLowerCase() === "white",
+      };
+    }).sort((a, b) => {
+      if (a.whiteFill === b.whiteFill) return 0;
+      return a.whiteFill ? -1 : 1;
+    });
+
+    miniNodes.forEach(({ node, fill }) => {
       const position = node.position();
       const circle = document.createElementNS(ns, "circle");
       circle.setAttribute("cx", offsetX + (position.x - bb.x1) * scale);
       circle.setAttribute("cy", offsetY + (position.y - bb.y1) * scale);
       circle.setAttribute("r", node.hasClass("selected") ? "3.1" : "2.1");
-      const fill = node.data("fillColor") || categoryColors[node.data("category")] || "#68707a";
       circle.setAttribute("fill", fill);
-      if (fill === "#ffffff") {
-        circle.setAttribute("stroke", "#9aa3ad");
-        circle.setAttribute("stroke-width", "0.8");
-      }
       circle.setAttribute("opacity", node.hasClass("faded") ? "0.28" : "0.78");
       group.append(circle);
     });
