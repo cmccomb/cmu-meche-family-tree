@@ -41,6 +41,30 @@
     "#cc7a00",
     "#6d7a33",
     "#6574c4",
+    "#9f6b00",
+    "#4466aa",
+    "#7a8750",
+    "#b35c8a",
+    "#3d8a8f",
+    "#a65f2f",
+    "#6f5aa8",
+    "#4c8a73",
+    "#a34b4b",
+    "#587aa0",
+    "#9a7b36",
+    "#7c6f9c",
+    "#b26a6a",
+    "#2f756d",
+    "#855c33",
+    "#5d83b3",
+    "#b36b2c",
+    "#6b8e23",
+    "#8a4f64",
+    "#46707d",
+    "#a06f9f",
+    "#5a6b2f",
+    "#b05530",
+    "#356f44",
   ];
 
   const specialBucketColors = {
@@ -224,25 +248,33 @@
     return specialBucketColors[label] || bucketPalette[index % bucketPalette.length];
   }
 
-  function buildBucketEntries(graph, sourceForPerson, { includeCmu = false } = {}) {
+  function buildBucketEntries(graph, sourceForPerson, { includeCmu = false, pinnedLabels = [] } = {}) {
     const counts = new Map();
     graph.nodes.forEach((person) => incrementCount(counts, sourceForPerson(person)));
 
     const entries = [];
     let paletteIndex = 0;
     let covered = 0;
+    const pinned = new Set(pinnedLabels.filter((label) => label && label !== OTHER_BUCKET));
 
     if (includeCmu) {
       const cmuCount = counts.get(CMU_BUCKET) || 0;
       entries.push({ label: CMU_BUCKET, count: cmuCount, color: bucketColor(CMU_BUCKET, paletteIndex) });
       covered += cmuCount;
       counts.delete(CMU_BUCKET);
+      pinned.delete(CMU_BUCKET);
     }
 
     const otherKnownCount = counts.get(OTHER_BUCKET) || 0;
     counts.delete(OTHER_BUCKET);
 
-    sortedCounts(counts).slice(0, COLOR_BUCKET_LIMIT).forEach(([label, count]) => {
+    const rankedCounts = sortedCounts(counts);
+    const selectedLabels = new Set(rankedCounts.slice(0, COLOR_BUCKET_LIMIT).map(([label]) => label));
+    rankedCounts.forEach(([label]) => {
+      if (pinned.has(label)) selectedLabels.add(label);
+    });
+
+    rankedCounts.filter(([label]) => selectedLabels.has(label)).forEach(([label, count]) => {
       entries.push({ label, count, color: bucketColor(label, paletteIndex) });
       covered += count;
       paletteIndex += 1;
@@ -269,8 +301,19 @@
       .filter((entry) => entry.count > 0 || (entry.label === OTHER_BUCKET && counts.has(OTHER_BUCKET)));
   }
 
+  function currentFacultyUniversityBuckets(graph) {
+    return graph.nodes
+      .filter((person) => person.category === "cmu-faculty")
+      .map((person) => universityBucketSource(person))
+      .filter((label) => label !== OTHER_BUCKET);
+  }
+
   function buildColorBuckets(graph) {
-    model.colorBuckets.university = buildBucketEntries(graph, universityBucketSource, { includeCmu: true });
+    model.colorBuckets.university = buildBucketEntries(
+      graph,
+      universityBucketSource,
+      { includeCmu: true, pinnedLabels: currentFacultyUniversityBuckets(graph) }
+    );
     model.colorBuckets.country = buildBucketEntries(graph, countryBucketSource);
     model.colorBuckets.continent = buildContinentEntries(graph);
     model.colorBucketMaps.university = new Map(model.colorBuckets.university.map((entry) => [entry.label, entry]));
