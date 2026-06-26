@@ -10,6 +10,7 @@ tree from a CSV export and serves it as a browser-based explorer.
   - `advisee`
   - `advisor`
   - `title`
+  - `university` (optional, used for university coloring)
   - `year`
 - Handles multiple advisors in one cell, separated by `;`, `,`, or newlines.
 - Writes `graph-data.json` for the static JavaScript app.
@@ -17,8 +18,9 @@ tree from a CSV export and serves it as a browser-based explorer.
   their descendants, CMU MechE branches grouped horizontally, and advisor links
   directed top-to-bottom.
 - Renders the tree in the browser with Cytoscape.js using those coordinates.
-- Supports search, filters, guided views, selected-person profiles, lineage
-  tracing, branch focus, path finding, mini-map navigation, and shareable URLs.
+- Supports search, selected-person profiles, lineage tracing, branch focus,
+  focused-lineage relayout, path finding, mini-map navigation, university
+  coloring, chronological vertical scaling, and shareable URLs.
 
 Special advisor tokens:
 

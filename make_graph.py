@@ -100,6 +100,23 @@ def clean_name(s: object) -> Optional[str]:
     return normalized
 
 
+def clean_optional_text(s: object) -> Optional[str]:
+    """Normalize optional text fields without treating them as person names."""
+    normalized = _normalize_token(s)
+    if not normalized or normalized.casefold() in PLACEHOLDER_TOKENS:
+        return None
+    return normalized
+
+
+def primary_university(value: Optional[object]) -> str:
+    """Return a compact primary university label for color grouping."""
+    text = clean_optional_text(value)
+    if not text:
+        return "Unknown university"
+    parts = [part.strip() for part in re.split(r"\s*;\s*|\s+ and \s+", text) if part.strip()]
+    return parts[0] if parts else text
+
+
 def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
     """Split advisor cells into names and detect special source flags."""
     if val is None or pd.isna(val):
@@ -140,6 +157,7 @@ def build_graph(
         title = None if pd.isna(r.get("title", None)) else str(r.get("title", None)).strip()
         if title == "":
             title = None
+        university = clean_optional_text(r.get("university", None))
 
         if advisee is None:
             skipped_rows += 1
@@ -151,6 +169,7 @@ def build_graph(
                 "cmu": cmu,
                 "title": title,
                 "generation": source_generation,
+                "university": university,
             }
         else:
             if people[advisee]["year"] is None and year is not None:
@@ -158,6 +177,8 @@ def build_graph(
             people[advisee]["cmu"] = bool(people[advisee]["cmu"]) or cmu
             if not people[advisee]["title"] and title:
                 people[advisee]["title"] = title
+            if not people[advisee].get("university") and university:
+                people[advisee]["university"] = university
             existing_generation = to_int_or_none(people[advisee].get("generation"))
             if source_generation is not None:
                 people[advisee]["generation"] = max(
@@ -167,7 +188,13 @@ def build_graph(
 
         for advisor in advisors:
             if advisor not in people:
-                people[advisor] = {"year": None, "cmu": False, "title": None, "generation": None}
+                people[advisor] = {
+                    "year": None,
+                    "cmu": False,
+                    "title": None,
+                    "generation": None,
+                    "university": None,
+                }
             edges.append((advisor, advisee))
 
         if has_none_flag:
@@ -607,6 +634,44 @@ def build_layout(
     return layout
 
 
+def infer_chronology_years(
+    people: Dict[str, Dict[str, Optional[object]]],
+    edges: Iterable[Tuple[str, str]],
+    unknown_offset: int = 5,
+) -> Dict[str, Optional[int]]:
+    """Infer display years for chronological vertical scaling."""
+    names = sorted(people, key=str.casefold)
+    _, outgoing = _relation_maps(names, edges)
+    memo: Dict[str, Optional[int]] = {}
+
+    def infer(name: str, visiting: Set[str]) -> Optional[int]:
+        if name in memo:
+            return memo[name]
+        known = _known_year(people.get(name, {}))
+        if known is not None:
+            memo[name] = known
+            return known
+        if name in visiting:
+            return None
+
+        visiting.add(name)
+        child_years = [
+            child_year
+            for child in outgoing.get(name, [])
+            for child_year in [infer(child, visiting)]
+            if child_year is not None
+        ]
+        visiting.remove(name)
+
+        inferred = max(child_years) - unknown_offset if child_years else None
+        memo[name] = inferred
+        return inferred
+
+    for name in names:
+        infer(name, set())
+    return memo
+
+
 def build_graph_data(
     people: Dict[str, Dict[str, Optional[object]]],
     edges: Iterable[Tuple[str, str]],
@@ -625,6 +690,7 @@ def build_graph_data(
     explicit_ill = explicit_ill & set(renderable_people)
     roots = find_roots(renderable_people, renderable_edges, explicit_none, explicit_ill)
     layout_by_name = build_layout(renderable_people, renderable_edges)
+    chronology_years = infer_chronology_years(renderable_people, renderable_edges)
 
     ids_by_name = {name: stable_person_id(name) for name in sorted(renderable_people)}
     degree_counts = {name: 0 for name in renderable_people}
@@ -642,13 +708,19 @@ def build_graph_data(
         role = role_for_person(attrs)
         era = era_for_year(year)
         category = category_for_person(name, attrs, roots, explicit_none, explicit_ill)
+        university = clean_optional_text(attrs.get("university"))
+        university_label = primary_university(university)
+        chronology_year = chronology_years.get(name)
         nodes.append(
             {
                 "id": ids_by_name[name],
                 "name": name,
                 "year": year if isinstance(year, int) and year >= 0 else None,
                 "yearLabel": year_label,
+                "chronologyYear": chronology_year,
                 "title": attrs.get("title"),
+                "university": university,
+                "universityLabel": university_label,
                 "role": role,
                 "era": era,
                 "category": category,

@@ -135,7 +135,6 @@ svg {
 
 .icon-button,
 .ghost-button,
-#clearButton,
 .profile-actions button,
 #runPathButton {
   border: 1px solid var(--line);
@@ -172,7 +171,6 @@ svg {
 
 .icon-button:hover,
 .ghost-button:hover,
-#clearButton:hover,
 .profile-actions button:hover,
 #runPathButton:hover {
   border-color: rgba(187, 0, 0, 0.38);
@@ -215,7 +213,7 @@ svg {
 
 .control-group label,
 .relation-block h3,
-.group-heading h2 {
+.display-options h2 {
   display: block;
   margin: 0 0 8px;
   color: #30353b;
@@ -283,8 +281,7 @@ a:focus-visible {
 }
 
 .result-button,
-.relation-list button,
-.chip-list button {
+.relation-list button {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -315,58 +312,45 @@ a:focus-visible {
 }
 
 .result-button:hover,
-.relation-list button:hover,
-.chip-list button:hover {
+.relation-list button:hover {
   border-color: rgba(187, 0, 0, 0.32);
   background: #fff8f8;
 }
 
-.filter-grid {
+.display-options {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
-.group-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.group-heading h2 {
+.display-options h2 {
   margin: 0;
 }
 
-#clearButton {
-  min-height: 30px;
-  padding: 0 9px;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 760;
-}
-
-.chip-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.chip-list button {
-  display: flex;
+.toggle-row {
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  min-height: 40px;
+  gap: 12px;
+  min-height: 42px;
+  margin: 0 !important;
   padding: 8px 10px;
-  font-size: 0.82rem;
-  font-weight: 760;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink) !important;
+  font-size: 0.82rem !important;
+  font-weight: 760 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2;
+  text-transform: none !important;
 }
 
-.chip-list small {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
+.toggle-row input {
+  width: 38px;
+  min-height: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+  flex: 0 0 auto;
 }
 
 .stats-strip {
@@ -596,7 +580,7 @@ a:focus-visible {
 
 .profile-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 18px;
 }
@@ -604,9 +588,10 @@ a:focus-visible {
 .profile-actions button,
 #runPathButton {
   min-height: 40px;
-  padding: 0 11px;
-  font-size: 0.82rem;
+  padding: 0 9px;
+  font-size: 0.78rem;
   font-weight: 820;
+  line-height: 1.1;
 }
 
 .profile-actions button:first-child,
@@ -807,5 +792,9 @@ a:focus-visible {
   .graph-status {
     left: 12px;
     bottom: 12px;
+  }
+
+  .profile-actions {
+    grid-template-columns: 1fr;
   }
 }

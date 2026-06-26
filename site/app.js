@@ -4,7 +4,7 @@
 
   const categoryColors = {
     "cmu-faculty": "#b00",
-    "alumni": "#4f7cac",
+    "alumni": "#ffffff",
     "unknown-lineage": "#3e8c69",
     "missing-advisor": "#c28a16",
     "follow-up": "#d45f16",
@@ -12,11 +12,24 @@
 
   const nodePalette = {
     "cmu-faculty": { fill: "#b00", border: "#ffffff", text: "#ffffff" },
-    "alumni": { fill: "#ffffff", border: "#4f7cac", text: "#1c1f23" },
+    "alumni": { fill: "#ffffff", border: "#cbd1d8", text: "#1c1f23" },
     "unknown-lineage": { fill: "#3e8c69", border: "#ffffff", text: "#ffffff" },
     "missing-advisor": { fill: "#f6d486", border: "#9b6810", text: "#1c1f23" },
     "follow-up": { fill: "#d45f16", border: "#ffffff", text: "#ffffff" },
   };
+
+  const universityPalette = [
+    "#bb0000",
+    "#2f6f9f",
+    "#3e8c69",
+    "#8f5aa3",
+    "#c28a16",
+    "#d45f16",
+    "#247d8f",
+    "#7b6d4f",
+    "#a14f76",
+    "#5f7f3f",
+  ];
 
   const els = {
     appShell: document.getElementById("appShell"),
@@ -25,11 +38,8 @@
     search: document.getElementById("searchInput"),
     peopleOptions: document.getElementById("peopleOptions"),
     searchResults: document.getElementById("searchResults"),
-    eraFilter: document.getElementById("eraFilter"),
-    roleFilter: document.getElementById("roleFilter"),
-    categoryFilter: document.getElementById("categoryFilter"),
-    guidedChips: document.getElementById("guidedChips"),
-    clearButton: document.getElementById("clearButton"),
+    universityColorToggle: document.getElementById("universityColorToggle"),
+    chronologyToggle: document.getElementById("chronologyToggle"),
     fitButton: document.getElementById("fitButton"),
     focusButton: document.getElementById("focusButton"),
     pathButton: document.getElementById("pathButton"),
@@ -51,6 +61,7 @@
     studentList: document.getElementById("studentList"),
     traceButton: document.getElementById("traceButton"),
     focusBranchButton: document.getElementById("focusBranchButton"),
+    relayoutLineageButton: document.getElementById("relayoutLineageButton"),
     pathDialog: document.getElementById("pathDialog"),
     pathFrom: document.getElementById("pathFrom"),
     pathTo: document.getElementById("pathTo"),
@@ -63,10 +74,9 @@
     cy: null,
     selectedId: "",
     query: "",
-    era: "",
-    role: "",
-    category: "",
     focusId: "",
+    colorMode: "category",
+    chronology: false,
   };
 
   const model = {
@@ -78,6 +88,7 @@
     edgeByPair: new Map(),
     rootIds: [],
     miniTransform: null,
+    chronologyRange: null,
   };
 
   let filterTimer = 0;
@@ -89,6 +100,12 @@
 
   function formatNumber(value) {
     return new Intl.NumberFormat("en-US").format(value || 0);
+  }
+
+  function numericChronologyYear(value) {
+    if (value === null || value === undefined || String(value).trim() === "") return null;
+    const year = Number(value);
+    return Number.isFinite(year) ? year : null;
   }
 
   function initials(name) {
@@ -106,6 +123,8 @@
     return [
       person.name,
       person.title,
+      person.university,
+      person.universityLabel,
       person.role,
       person.era,
       person.categoryLabel,
@@ -117,6 +136,43 @@
     return `${a}::${b}`;
   }
 
+  function stableHash(value) {
+    let hash = 0;
+    const text = String(value || "");
+    for (let index = 0; index < text.length; index += 1) {
+      hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+    }
+    return hash;
+  }
+
+  function textColorForBackground(hex) {
+    const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || "");
+    if (!match) return "#1c1f23";
+    const r = parseInt(match[1], 16);
+    const g = parseInt(match[2], 16);
+    const b = parseInt(match[3], 16);
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    return luminance > 0.58 ? "#1c1f23" : "#ffffff";
+  }
+
+  function universityColor(label) {
+    if (!label || label === "Unknown university") return "#ffffff";
+    return universityPalette[stableHash(label) % universityPalette.length];
+  }
+
+  function colorsForPerson(person) {
+    if (state.colorMode === "university") {
+      const fill = universityColor(person.universityLabel);
+      const isUnknown = fill === "#ffffff";
+      return {
+        fill,
+        border: isUnknown ? "#cbd1d8" : "#ffffff",
+        text: textColorForBackground(fill),
+      };
+    }
+    return nodePalette[person.category] || nodePalette.alumni;
+  }
+
   function resolvePersonId(value) {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -124,31 +180,22 @@
     return model.peopleByName.get(raw.toLowerCase()) || "";
   }
 
-  function createOption(select, value, label) {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    select.append(option);
-  }
-
   function readUrlState() {
     const params = new URLSearchParams(window.location.search);
     state.selectedId = params.get("person") || "";
     state.query = params.get("q") || "";
-    state.era = params.get("era") || "";
-    state.role = params.get("role") || "";
-    state.category = params.get("category") || "";
     state.focusId = params.get("focus") || "";
+    state.colorMode = params.get("color") === "university" ? "university" : "category";
+    state.chronology = params.get("chrono") === "1";
   }
 
   function writeUrlState() {
     const params = new URLSearchParams();
     if (state.selectedId) params.set("person", state.selectedId);
     if (state.query) params.set("q", state.query);
-    if (state.era) params.set("era", state.era);
-    if (state.role) params.set("role", state.role);
-    if (state.category) params.set("category", state.category);
     if (state.focusId) params.set("focus", state.focusId);
+    if (state.colorMode === "university") params.set("color", "university");
+    if (state.chronology) params.set("chrono", "1");
     const query = params.toString();
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
     window.history.replaceState({}, "", nextUrl);
@@ -168,6 +215,14 @@
     model.adjacency.clear();
     model.edgeByPair.clear();
     model.rootIds = Array.isArray(graph.roots) ? graph.roots : [];
+    const chronologyYears = graph.nodes
+      .map((person) => numericChronologyYear(person.chronologyYear))
+      .filter((year) => year !== null);
+    const minYear = Math.min(...chronologyYears);
+    const maxYear = Math.max(...chronologyYears);
+    model.chronologyRange = chronologyYears.length
+      ? { min: minYear, max: maxYear, center: (minYear + maxYear) / 2, scale: 10 }
+      : null;
 
     graph.nodes.forEach((person) => {
       person.searchText = searchableText(person);
@@ -195,7 +250,7 @@
       const isFaculty = person.category === "cmu-faculty";
       const boxWidth = Math.max(isFaculty ? 148 : 132, Math.min(172, 124 + Math.sqrt(degree + 1) * 11));
       const boxHeight = isFaculty ? 58 : 52;
-      const palette = nodePalette[person.category] || nodePalette.alumni;
+      const palette = colorsForPerson(person);
       const layout = person.layout || {};
       const x = Number(layout.x);
       const y = Number(layout.y);
@@ -374,6 +429,21 @@
     return { x, y };
   }
 
+  function chronologyLayoutPosition(node) {
+    const base = nodeLayoutPosition(node) || node.position();
+    const range = model.chronologyRange;
+    const year = numericChronologyYear(node.data("chronologyYear"));
+    if (!range || year === null) return base;
+    return {
+      x: base.x,
+      y: (year - range.center) * range.scale,
+    };
+  }
+
+  function activeLayoutPosition(node) {
+    return state.chronology ? chronologyLayoutPosition(node) : nodeLayoutPosition(node);
+  }
+
   function hasPresetLayout(nodes) {
     return Boolean(
       state.graph &&
@@ -405,7 +475,7 @@
     const options = hasPresetLayout(nodes)
       ? {
           name: "preset",
-          positions: (node) => nodeLayoutPosition(node) || node.position(),
+          positions: (node) => activeLayoutPosition(node) || node.position(),
           fit: false,
           animate: !reducedMotion,
           animationDuration: 520,
@@ -456,9 +526,6 @@
   }
 
   function nodePassesFilters(person, queryContext, focusSet) {
-    if (state.era && person.era !== state.era) return false;
-    if (state.role && person.role !== state.role) return false;
-    if (state.category && person.category !== state.category) return false;
     if (focusSet && !focusSet.has(person.id)) return false;
     if (queryContext && !queryContext.context.has(person.id)) return false;
     return true;
@@ -468,9 +535,6 @@
     if (!state.cy || !state.graph) return;
 
     state.query = els.search.value.trim();
-    state.era = els.eraFilter.value;
-    state.role = els.roleFilter.value;
-    state.category = els.categoryFilter.value;
 
     const query = normalizeText(state.query);
     const queryContext = query.length >= 2 ? queryContextIds(query) : null;
@@ -501,6 +565,7 @@
     renderSearchResults(query);
     updateVisibleCount();
     updateModeLabel();
+    renderLegend(state.graph);
     writeUrlState();
 
     if (relayout) {
@@ -526,7 +591,11 @@
       els.modeLabel.textContent = person ? `Focused: ${person.name}` : "Focused branch";
       return;
     }
-    const active = [state.query, state.era, state.role, state.category].filter(Boolean).length;
+    if (state.chronology) {
+      els.modeLabel.textContent = "Chronological y-axis";
+      return;
+    }
+    const active = [state.query].filter(Boolean).length;
     els.modeLabel.textContent = active ? `${active} filter${active === 1 ? "" : "s"}` : "Explore";
   }
 
@@ -535,78 +604,48 @@
     els.edgeCount.textContent = formatNumber(graph.meta.edgeCount);
     els.facultyCount.textContent = formatNumber(graph.meta.facultyCount);
 
-    graph.filters.eras.forEach((era) => createOption(els.eraFilter, era, era));
-    graph.filters.roles.forEach((role) => createOption(els.roleFilter, role, role));
-    graph.filters.categories.forEach((category) => {
-      createOption(els.categoryFilter, category.id, category.label);
-    });
-
     graph.nodes.forEach((person) => {
       const option = document.createElement("option");
       option.value = person.name;
       els.peopleOptions.append(option);
     });
 
-    renderGuidedChips(graph);
     renderLegend(graph);
 
     els.search.value = state.query;
-    els.eraFilter.value = state.era;
-    els.roleFilter.value = state.role;
-    els.categoryFilter.value = state.category;
-  }
-
-  function renderGuidedChips(graph) {
-    els.guidedChips.replaceChildren();
-
-    const categories = new Map(graph.filters.categories.map((category) => [category.id, category.label]));
-    const chips = [];
-    if (categories.has("cmu-faculty")) {
-      chips.push({ label: "CMU faculty", count: graph.meta.facultyCount, category: "cmu-faculty" });
-    }
-    if (graph.filters.eras.includes("2020-present")) {
-      const count = graph.nodes.filter((node) => node.era === "2020-present").length;
-      chips.push({ label: "Recent graduates", count, era: "2020-present" });
-    }
-    if (categories.has("unknown-lineage")) {
-      const count = graph.nodes.filter((node) => node.category === "unknown-lineage").length;
-      chips.push({ label: "Unknown lineage", count, category: "unknown-lineage" });
-    }
-    if (categories.has("follow-up")) {
-      chips.push({ label: "Follow-up needed", count: graph.meta.followUpCount, category: "follow-up" });
-    }
-    if (categories.has("missing-advisor")) {
-      chips.push({ label: "No advisor recorded", count: graph.meta.missingAdvisorCount, category: "missing-advisor" });
-    }
-
-    chips.filter((chip) => chip.count > 0).forEach((chip) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.dataset.era = chip.era || "";
-      button.dataset.category = chip.category || "";
-
-      const label = document.createElement("span");
-      label.textContent = chip.label;
-      const count = document.createElement("small");
-      count.textContent = formatNumber(chip.count);
-      button.append(label, count);
-
-      button.addEventListener("click", () => {
-        clearElementHighlights();
-        state.focusId = "";
-        els.search.value = "";
-        els.eraFilter.value = chip.era || "";
-        els.roleFilter.value = "";
-        els.categoryFilter.value = chip.category || "";
-        applyFilters({ relayout: true });
-      });
-      els.guidedChips.append(button);
-    });
+    els.universityColorToggle.checked = state.colorMode === "university";
+    els.chronologyToggle.checked = state.chronology;
   }
 
   function renderLegend(graph) {
     els.legend.replaceChildren();
-    graph.filters.categories.forEach((category) => {
+
+    if (state.colorMode === "university") {
+      const counts = new Map();
+      const sourceNodes = state.cy ? visibleNodes().toArray().map((node) => node.data()) : graph.nodes;
+      sourceNodes.forEach((person) => {
+        const label = person.universityLabel || "Unknown university";
+        counts.set(label, (counts.get(label) || 0) + 1);
+      });
+      [...counts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, 8)
+        .forEach(([label]) => {
+          const item = document.createElement("span");
+          item.className = "legend-item";
+          const swatch = document.createElement("span");
+          swatch.className = "swatch";
+          swatch.style.background = universityColor(label);
+          if (label === "Unknown university") swatch.style.border = "1px solid #aeb7c2";
+          const text = document.createElement("span");
+          text.textContent = label;
+          item.append(swatch, text);
+          els.legend.append(item);
+        });
+      return;
+    }
+
+    graph.filters.categories.filter((category) => category.id !== "alumni").forEach((category) => {
       const item = document.createElement("span");
       item.className = "legend-item";
       const swatch = document.createElement("span");
@@ -617,6 +656,43 @@
       item.append(swatch, label);
       els.legend.append(item);
     });
+  }
+
+  function applyColorMode() {
+    if (!state.cy) return;
+    state.cy.batch(() => {
+      state.cy.nodes().forEach((node) => {
+        const palette = colorsForPerson(node.data());
+        node.data({
+          fillColor: palette.fill,
+          borderColor: palette.border,
+          labelColor: palette.text,
+        });
+      });
+    });
+    renderLegend(state.graph);
+    scheduleMiniMap();
+    writeUrlState();
+  }
+
+  function setColorMode(useUniversityColors) {
+    state.colorMode = useUniversityColors ? "university" : "category";
+    applyColorMode();
+  }
+
+  function setChronologyMode(enabled) {
+    state.chronology = Boolean(enabled);
+    if (state.chronology) {
+      state.focusId = "";
+      state.query = "";
+      els.search.value = "";
+      els.searchResults.replaceChildren();
+      clearElementHighlights();
+      applyFilters({ relayout: false });
+    }
+    runLayout({ fit: true });
+    updateModeLabel();
+    writeUrlState();
   }
 
   function renderSearchResults(query) {
@@ -678,8 +754,9 @@
 
     els.profileTags.replaceChildren();
     [
-      person.categoryLabel,
+      person.category === "alumni" ? "" : person.categoryLabel,
       person.era,
+      person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
       person.title && person.title !== person.role ? person.title : "",
     ].filter(Boolean).forEach((value) => {
       const tag = document.createElement("span");
@@ -739,6 +816,133 @@
     updateModeLabel("Lineage trace");
   }
 
+  function lineageLayoutPositions(nodes) {
+    const rows = new Map();
+    const nodeIds = new Set(nodes.map((node) => node.id()));
+    const connections = new Map(nodes.map((node) => [node.id(), new Set()]));
+    nodes.forEach((node) => {
+      const layout = node.data("layout") || {};
+      const generation = Number(layout.generation);
+      const fallback = Number(layout.rank);
+      const rowKey = Number.isFinite(generation) ? generation : fallback;
+      const key = Number.isFinite(rowKey) ? rowKey : 0;
+      if (!rows.has(key)) rows.set(key, []);
+      rows.get(key).push(node);
+    });
+
+    visibleElements().edges().forEach((edge) => {
+      const source = edge.data("source");
+      const target = edge.data("target");
+      if (!nodeIds.has(source) || !nodeIds.has(target)) return;
+      connections.get(source).add(target);
+      connections.get(target).add(source);
+    });
+
+    const sortedRows = [...rows.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([key, row]) => ({ key, row }));
+    const rowGap = 190;
+    const xGap = 250;
+    const yOffset = (sortedRows.length - 1) * rowGap / 2;
+    const positions = new Map();
+    const fallbackOrder = new Map();
+
+    sortedRows.forEach(({ row }) => {
+      row.sort((a, b) => {
+        const aLayout = a.data("layout") || {};
+        const bLayout = b.data("layout") || {};
+        const aAnchor = Number(aLayout.branchAnchor);
+        const bAnchor = Number(bLayout.branchAnchor);
+        const anchorDelta = (Number.isFinite(aAnchor) ? aAnchor : 0) - (Number.isFinite(bAnchor) ? bAnchor : 0);
+        if (anchorDelta !== 0) return anchorDelta;
+        const rowDelta = Number(aLayout.rowOrder || 0) - Number(bLayout.rowOrder || 0);
+        if (rowDelta !== 0) return rowDelta;
+        return a.data("name").localeCompare(b.data("name"));
+      });
+      row.forEach((node, index) => fallbackOrder.set(node.id(), index));
+    });
+
+    function neighborAverage(id, neighborOrder) {
+      const indexes = [...(connections.get(id) || [])]
+        .map((neighborId) => neighborOrder.get(neighborId))
+        .filter((index) => Number.isFinite(index));
+      if (!indexes.length) return null;
+      return indexes.reduce((sum, index) => sum + index, 0) / indexes.length;
+    }
+
+    function reorderAgainst(rowIndex, neighborIndex) {
+      const row = sortedRows[rowIndex].row;
+      const neighborOrder = new Map(sortedRows[neighborIndex].row.map((node, index) => [node.id(), index]));
+      row.sort((a, b) => {
+        const aAverage = neighborAverage(a.id(), neighborOrder);
+        const bAverage = neighborAverage(b.id(), neighborOrder);
+        if (aAverage !== null && bAverage !== null && Math.abs(aAverage - bAverage) > 0.001) {
+          return aAverage - bAverage;
+        }
+        if (aAverage !== null && bAverage === null) return -1;
+        if (aAverage === null && bAverage !== null) return 1;
+        return (fallbackOrder.get(a.id()) || 0) - (fallbackOrder.get(b.id()) || 0);
+      });
+    }
+
+    for (let pass = 0; pass < 4; pass += 1) {
+      for (let rowIndex = 1; rowIndex < sortedRows.length; rowIndex += 1) {
+        reorderAgainst(rowIndex, rowIndex - 1);
+      }
+      for (let rowIndex = sortedRows.length - 2; rowIndex >= 0; rowIndex -= 1) {
+        reorderAgainst(rowIndex, rowIndex + 1);
+      }
+    }
+
+    sortedRows.forEach(({ row }, rowIndex) => {
+      const xOffset = (row.length - 1) * xGap / 2;
+      row.forEach((node, nodeIndex) => {
+        positions.set(node.id(), {
+          x: nodeIndex * xGap - xOffset,
+          y: rowIndex * rowGap - yOffset,
+        });
+      });
+    });
+
+    return positions;
+  }
+
+  function relayoutLineage(id = state.selectedId) {
+    if (!id || !state.cy) return;
+    state.focusId = id;
+    state.query = "";
+    state.chronology = false;
+    els.search.value = "";
+    els.searchResults.replaceChildren();
+    els.chronologyToggle.checked = false;
+
+    clearElementHighlights();
+    applyFilters({ relayout: false });
+
+    const lineage = visibleElements();
+    const nodes = visibleNodes().toArray();
+    const positions = lineageLayoutPositions(nodes);
+    state.cy.elements().removeClass("faded lineage path-node path-edge");
+    lineage.addClass("lineage");
+    state.cy.$id(id).removeClass("lineage").addClass("selected");
+
+    state.cy.once("layoutstop", () => {
+      fitGraph(lineage, 96);
+      updateVisibleCount();
+      scheduleMiniMap();
+    });
+    lineage.layout({
+      name: "preset",
+      positions: (node) => positions.get(node.id()) || node.position(),
+      fit: false,
+      animate: !reducedMotion,
+      animationDuration: 520,
+      animationEasing: "ease-out-cubic",
+    }).run();
+    updateModeLabel("Relayout lineage");
+    writeUrlState();
+  }
+
   function focusBranch(id = state.selectedId) {
     if (!id) return;
     state.focusId = state.focusId === id ? "" : id;
@@ -754,15 +958,9 @@
 
   function clearAll() {
     state.focusId = "";
-    state.category = "";
-    state.era = "";
-    state.role = "";
     state.query = "";
     els.search.value = "";
     els.searchResults.replaceChildren();
-    els.eraFilter.value = "";
-    els.roleFilter.value = "";
-    els.categoryFilter.value = "";
     clearElementHighlights();
     applyFilters({ relayout: true });
   }
@@ -811,13 +1009,7 @@
   function clearAllFiltersWithoutLayout() {
     state.focusId = "";
     state.query = "";
-    state.era = "";
-    state.role = "";
-    state.category = "";
     els.search.value = "";
-    els.eraFilter.value = "";
-    els.roleFilter.value = "";
-    els.categoryFilter.value = "";
     state.cy.elements().removeClass("is-hidden");
     updateVisibleCount();
     writeUrlState();
@@ -886,7 +1078,12 @@
       circle.setAttribute("cx", offsetX + (position.x - bb.x1) * scale);
       circle.setAttribute("cy", offsetY + (position.y - bb.y1) * scale);
       circle.setAttribute("r", node.hasClass("selected") ? "3.1" : "2.1");
-      circle.setAttribute("fill", categoryColors[node.data("category")] || "#68707a");
+      const fill = node.data("fillColor") || categoryColors[node.data("category")] || "#68707a";
+      circle.setAttribute("fill", fill);
+      if (fill === "#ffffff") {
+        circle.setAttribute("stroke", "#9aa3ad");
+        circle.setAttribute("stroke-width", "0.8");
+      }
       circle.setAttribute("opacity", node.hasClass("faded") ? "0.28" : "0.78");
       group.append(circle);
     });
@@ -946,14 +1143,13 @@
 
   function attachEvents() {
     els.search.addEventListener("input", scheduleFilterApply);
-    els.eraFilter.addEventListener("change", () => applyFilters({ relayout: true }));
-    els.roleFilter.addEventListener("change", () => applyFilters({ relayout: true }));
-    els.categoryFilter.addEventListener("change", () => applyFilters({ relayout: true }));
-    els.clearButton.addEventListener("click", clearAll);
+    els.universityColorToggle.addEventListener("change", () => setColorMode(els.universityColorToggle.checked));
+    els.chronologyToggle.addEventListener("change", () => setChronologyMode(els.chronologyToggle.checked));
     els.fitButton.addEventListener("click", () => fitGraph(visibleElements(), 68));
     els.focusButton.addEventListener("click", () => focusBranch());
     els.traceButton.addEventListener("click", () => traceLineage());
     els.focusBranchButton.addEventListener("click", () => focusBranch());
+    els.relayoutLineageButton.addEventListener("click", () => relayoutLineage());
     els.shareButton.addEventListener("click", copyShareLink);
     els.miniMap.addEventListener("click", panFromMiniMap);
 

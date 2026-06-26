@@ -139,6 +139,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisee": "Prof Advisor",
                 "advisor": "",
                 "title": "Professor",
+                "university": "Carnegie Mellon University",
                 "year": 1999,
             },
             {
@@ -146,6 +147,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisee": "Student One",
                 "advisor": "Prof Advisor",
                 "title": "PhD",
+                "university": "Example University",
                 "year": 2024,
             },
             {
@@ -153,6 +155,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisee": "Student Two",
                 "advisor": "Prof Advisor; ILL Request",
                 "title": "MS",
+                "university": "",
                 "year": 2025,
             },
         ]
@@ -172,6 +175,10 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student One"]["role"] == "PhD alumni"
     assert people_by_name["Student Two"]["role"] == "MS alumni"
     assert people_by_name["Student Two"]["category"] == "follow-up"
+    assert people_by_name["Prof Advisor"]["universityLabel"] == "Carnegie Mellon University"
+    assert people_by_name["Student One"]["universityLabel"] == "Example University"
+    assert people_by_name["Student Two"]["universityLabel"] == "Unknown university"
+    assert people_by_name["Prof Advisor"]["chronologyYear"] == 1999
     assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is False
     assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True
     assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
@@ -191,6 +198,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
                 "advisee": "Root Mentor",
                 "advisor": "",
                 "title": "PhD",
+                "university": "",
                 "year": 1950,
             },
             {
@@ -198,6 +206,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
                 "advisee": "Advisor Alpha",
                 "advisor": "Root Mentor",
                 "title": "PhD",
+                "university": "",
                 "year": 1975,
             },
             {
@@ -205,6 +214,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
                 "advisee": "Advisor Gamma",
                 "advisor": "Root Mentor",
                 "title": "PhD",
+                "university": "",
                 "year": 1980,
             },
             {
@@ -212,6 +222,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
                 "advisee": "Faculty Beta",
                 "advisor": "Advisor Alpha",
                 "title": "Professor",
+                "university": "CMU",
                 "year": 2005,
             },
             {
@@ -219,6 +230,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
                 "advisee": "Faculty Delta",
                 "advisor": "Advisor Gamma",
                 "title": "Professor",
+                "university": "CMU",
                 "year": 2010,
             },
             {
@@ -226,6 +238,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
                 "advisee": "Disconnected Old",
                 "advisor": "",
                 "title": "PhD",
+                "university": "",
                 "year": 1960,
             },
             {
@@ -233,6 +246,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
                 "advisee": "Disconnected New",
                 "advisor": "",
                 "title": "PhD",
+                "university": "",
                 "year": 2020,
             },
         ]
@@ -261,11 +275,41 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
     assert abs(gamma["x"] - delta["x"]) < abs(gamma["x"] - beta["x"])
     assert min(beta["x"], delta["x"]) <= root["x"] <= max(beta["x"], delta["x"])
     assert abs(people_by_name["Disconnected Old"]["layout"]["x"] - people_by_name["Disconnected New"]["layout"]["x"]) >= 178
+    assert people_by_name["Root Mentor"]["chronologyYear"] == 1950
     for edge in payload["edges"]:
         advisor = people_by_name[edge["advisorName"]]["layout"]
         advisee = people_by_name[edge["adviseeName"]]["layout"]
         assert advisor["y"] < advisee["y"]
     assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
+
+
+def test_unknown_chronology_year_uses_recent_advisee() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "generation": 0,
+                "advisee": "Recent Student",
+                "advisor": "Unknown Mentor",
+                "title": "PhD",
+                "year": 2020,
+            },
+            {
+                "generation": 0,
+                "advisee": "Older Student",
+                "advisor": "Unknown Mentor",
+                "title": "PhD",
+                "year": 2000,
+            },
+        ]
+    )
+
+    people, edges, explicit_none, explicit_ill, skipped_rows = build_graph(df)
+    impute_years(people)
+    payload = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
+    people_by_name = {node["name"]: node for node in payload["nodes"]}
+
+    assert people_by_name["Unknown Mentor"]["year"] is None
+    assert people_by_name["Unknown Mentor"]["chronologyYear"] == 2015
 
 
 def test_cli_preserves_literal_none_advisor_token(tmp_path) -> None:

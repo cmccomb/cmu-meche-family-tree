@@ -49,35 +49,22 @@
         <label for="searchInput">Search people</label>
         <div class="search-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
-          <input id="searchInput" type="search" list="peopleOptions" autocomplete="off" placeholder="Name, role, or year">
+          <input id="searchInput" type="search" list="peopleOptions" autocomplete="off" placeholder="Name, university, or year">
           <datalist id="peopleOptions"></datalist>
         </div>
         <div id="searchResults" class="search-results" aria-live="polite"></div>
       </section>
 
-      <section class="control-group filter-grid">
-        <label for="eraFilter">Era</label>
-        <select id="eraFilter">
-          <option value="">All eras</option>
-        </select>
-
-        <label for="roleFilter">Role</label>
-        <select id="roleFilter">
-          <option value="">All roles</option>
-        </select>
-
-        <label for="categoryFilter">Lineage status</label>
-        <select id="categoryFilter">
-          <option value="">All statuses</option>
-        </select>
-      </section>
-
-      <section class="control-group">
-        <div class="group-heading">
-          <h2>Guided views</h2>
-          <button id="clearButton" type="button">Clear</button>
-        </div>
-        <div id="guidedChips" class="chip-list"></div>
+      <section class="control-group display-options">
+        <h2>Display</h2>
+        <label class="toggle-row" for="universityColorToggle">
+          <span>Color by university</span>
+          <input id="universityColorToggle" type="checkbox">
+        </label>
+        <label class="toggle-row" for="chronologyToggle">
+          <span>Chronological y-axis</span>
+          <input id="chronologyToggle" type="checkbox">
+        </label>
       </section>
 
       <section class="control-group stats-strip" aria-label="Graph summary">
@@ -131,6 +118,7 @@
         <div class="profile-actions">
           <button id="traceButton" type="button">Trace lineage</button>
           <button id="focusBranchButton" type="button">Focus branch</button>
+          <button id="relayoutLineageButton" type="button">Relayout lineage</button>
         </div>
         <section class="relation-block">
           <h3>Advisors</h3>
