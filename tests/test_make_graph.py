@@ -174,14 +174,16 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student Two"]["category"] == "follow-up"
     assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is False
     assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True
-    assert people_by_name["Prof Advisor"]["layout"]["radius"] < people_by_name["Student One"]["layout"]["radius"]
+    assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
+    assert payload["meta"]["layout"]["rankDirection"] == "top-to-bottom"
+    assert people_by_name["Prof Advisor"]["layout"]["y"] < people_by_name["Student One"]["layout"]["y"]
 
     edge = payload["edges"][0]
     assert edge["source"] == people_by_name["Prof Advisor"]["id"]
     assert edge["target"] == people_by_name["Student One"]["id"]
 
 
-def test_layout_places_lineages_on_outward_radial_shells() -> None:
+def test_layout_places_lineages_on_layered_tree_rows() -> None:
     df = pd.DataFrame(
         [
             {
@@ -251,21 +253,19 @@ def test_layout_places_lineages_on_outward_radial_shells() -> None:
     assert delta["facultySink"] is False
     assert beta["facultyPerimeter"] is True
     assert delta["facultyPerimeter"] is True
-    assert alpha["radius"] < beta["radius"]
-    assert gamma["radius"] < delta["radius"]
-    assert root["radius"] < alpha["radius"]
-    assert root["radius"] < gamma["radius"]
-    assert beta["radius"] > root["radius"]
-    assert delta["radius"] > root["radius"]
-    assert (
-        people_by_name["Disconnected Old"]["layout"]["radius"]
-        < people_by_name["Disconnected New"]["layout"]["radius"]
-    )
+    assert alpha["y"] < beta["y"]
+    assert gamma["y"] < delta["y"]
+    assert root["y"] < alpha["y"]
+    assert root["y"] < gamma["y"]
+    assert abs(alpha["x"] - beta["x"]) < abs(alpha["x"] - delta["x"])
+    assert abs(gamma["x"] - delta["x"]) < abs(gamma["x"] - beta["x"])
+    assert min(beta["x"], delta["x"]) <= root["x"] <= max(beta["x"], delta["x"])
+    assert abs(people_by_name["Disconnected Old"]["layout"]["x"] - people_by_name["Disconnected New"]["layout"]["x"]) >= 178
     for edge in payload["edges"]:
         advisor = people_by_name[edge["advisorName"]]["layout"]
         advisee = people_by_name[edge["adviseeName"]]["layout"]
-        assert advisor["radius"] < advisee["radius"]
-    assert payload["meta"]["layout"]["name"] == "advisor-radial-shell"
+        assert advisor["y"] < advisee["y"]
+    assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
 
 
 def test_cli_preserves_literal_none_advisor_token(tmp_path) -> None:

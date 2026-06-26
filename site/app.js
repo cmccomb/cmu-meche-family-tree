@@ -10,6 +10,14 @@
     "follow-up": "#d45f16",
   };
 
+  const nodePalette = {
+    "cmu-faculty": { fill: "#b00", border: "#ffffff", text: "#ffffff" },
+    "alumni": { fill: "#ffffff", border: "#4f7cac", text: "#1c1f23" },
+    "unknown-lineage": { fill: "#3e8c69", border: "#ffffff", text: "#ffffff" },
+    "missing-advisor": { fill: "#f6d486", border: "#9b6810", text: "#1c1f23" },
+    "follow-up": { fill: "#d45f16", border: "#ffffff", text: "#ffffff" },
+  };
+
   const els = {
     appShell: document.getElementById("appShell"),
     cy: document.getElementById("cy"),
@@ -184,20 +192,24 @@
   function cytoscapeElements(graph) {
     const nodes = graph.nodes.map((person) => {
       const degree = Number(person.degree || 0);
-      const size = Math.max(42, Math.min(78, 38 + Math.sqrt(degree + 1) * 9));
+      const isFaculty = person.category === "cmu-faculty";
+      const boxWidth = Math.max(isFaculty ? 148 : 132, Math.min(172, 124 + Math.sqrt(degree + 1) * 11));
+      const boxHeight = isFaculty ? 58 : 52;
+      const palette = nodePalette[person.category] || nodePalette.alumni;
       const layout = person.layout || {};
       const x = Number(layout.x);
       const y = Number(layout.y);
       const position = Number.isFinite(x) && Number.isFinite(y) ? { x, y } : undefined;
-      const labelHalign = Number.isFinite(x) && x < 0 ? "left" : "right";
-      const labelMarginX = labelHalign === "left" ? -11 : 11;
       return {
         data: {
           ...person,
           label: `${person.name}\n${person.yearLabel || ""}`,
-          labelHalign,
-          labelMarginX,
-          size,
+          boxWidth,
+          boxHeight,
+          labelMaxWidth: boxWidth - 18,
+          fillColor: palette.fill,
+          borderColor: palette.border,
+          labelColor: palette.text,
         },
         position,
       };
@@ -225,24 +237,23 @@
         {
           selector: "node",
           style: {
-            width: "data(size)",
-            height: "data(size)",
-            "background-color": "#4f7cac",
-            "border-width": 2,
-            "border-color": "#ffffff",
+            shape: "round-rectangle",
+            width: "data(boxWidth)",
+            height: "data(boxHeight)",
+            "background-color": "data(fillColor)",
+            "border-width": 2.5,
+            "border-color": "data(borderColor)",
             label: "data(label)",
             "text-wrap": "wrap",
-            "text-max-width": 132,
+            "text-max-width": "data(labelMaxWidth)",
             "text-valign": "center",
-            "text-halign": "data(labelHalign)",
-            "text-margin-x": "data(labelMarginX)",
-            color: "#1c1f23",
+            "text-halign": "center",
+            color: "data(labelColor)",
             "font-family": "Inter, system-ui, sans-serif",
             "font-size": 10,
             "font-weight": "bold",
             "line-height": 1.15,
-            "text-outline-width": 3,
-            "text-outline-color": "#ffffff",
+            "text-outline-width": 0,
             "min-zoomed-font-size": 7,
             "overlay-padding": 6,
             "transition-property": "background-color, border-color, opacity, width, height",
@@ -252,35 +263,32 @@
         {
           selector: 'node[category = "cmu-faculty"]',
           style: {
-            "background-color": categoryColors["cmu-faculty"],
-            width: "mapData(degree, 0, 16, 54, 86)",
-            height: "mapData(degree, 0, 16, 54, 86)",
+            "font-size": 10.5,
+            "font-weight": "bold",
           },
         },
         {
           selector: 'node[category = "unknown-lineage"]',
-          style: { "background-color": categoryColors["unknown-lineage"] },
+          style: { "border-width": 2.5 },
         },
         {
           selector: 'node[category = "missing-advisor"]',
-          style: {
-            "background-color": categoryColors["missing-advisor"],
-          },
+          style: { "border-width": 2.5 },
         },
         {
           selector: 'node[category = "follow-up"]',
-          style: { "background-color": categoryColors["follow-up"] },
+          style: { "border-width": 2.5 },
         },
         {
           selector: "edge",
           style: {
-            width: 1.15,
+            width: 1.25,
             "curve-style": "straight",
-            "line-color": "#aeb7c2",
-            "target-arrow-color": "#aeb7c2",
+            "line-color": "#a6b1bd",
+            "target-arrow-color": "#a6b1bd",
             "target-arrow-shape": "triangle",
-            "arrow-scale": 0.8,
-            opacity: 0.72,
+            "arrow-scale": 0.7,
+            opacity: 0.64,
             "transition-property": "line-color, opacity, width",
             "transition-duration": reducedMotion ? 0 : 160,
           },

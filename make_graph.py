@@ -14,7 +14,7 @@ name or as multiple names separated by semicolons, commas, or line breaks.
 
 The script writes a JSON file consumed by the browser-based explorer. Graph
 filtering, search, path finding, and branch focus happen in JavaScript, while
-the exported data preserves a stable advisor-sensitive radial layout.
+the exported data preserves a stable advisor-sensitive layered tree layout.
 """
 
 from __future__ import annotations
@@ -135,6 +135,7 @@ def build_graph(
         advisors, has_none_flag, has_ill_flag = split_advisors_with_flags(r.get("advisor", ""))
         advisee = clean_name(r["advisee"])
         year: Optional[int] = to_int_or_none(r.get("year", None))
+        source_generation = to_int_or_none(r.get("generation", None))
         cmu = is_cmu_faculty_marker(r.get("generation", None))
         title = None if pd.isna(r.get("title", None)) else str(r.get("title", None)).strip()
         if title == "":
@@ -145,17 +146,28 @@ def build_graph(
             continue
 
         if advisee not in people:
-            people[advisee] = {"year": year, "cmu": cmu, "title": title}
+            people[advisee] = {
+                "year": year,
+                "cmu": cmu,
+                "title": title,
+                "generation": source_generation,
+            }
         else:
             if people[advisee]["year"] is None and year is not None:
                 people[advisee]["year"] = year
             people[advisee]["cmu"] = bool(people[advisee]["cmu"]) or cmu
             if not people[advisee]["title"] and title:
                 people[advisee]["title"] = title
+            existing_generation = to_int_or_none(people[advisee].get("generation"))
+            if source_generation is not None:
+                people[advisee]["generation"] = max(
+                    existing_generation if existing_generation is not None else source_generation,
+                    source_generation,
+                )
 
         for advisor in advisors:
             if advisor not in people:
-                people[advisor] = {"year": None, "cmu": False, "title": None}
+                people[advisor] = {"year": None, "cmu": False, "title": None, "generation": None}
             edges.append((advisor, advisee))
 
         if has_none_flag:
@@ -385,117 +397,123 @@ def _lineage_ordered_faculty(
     return ordered
 
 
-def _normalize_angle(angle: float) -> float:
-    return angle % math.tau
+def _source_generation(attrs: Dict[str, Optional[object]]) -> Optional[int]:
+    return to_int_or_none(attrs.get("generation"))
 
 
-def _centered_angle(angle: float) -> float:
-    return (angle + math.pi) % math.tau - math.pi
-
-
-def _angle_for_index(index: int, total: int) -> float:
-    if total <= 1:
-        return -math.pi / 2
-    return (index / total) * math.tau - math.pi / 2
-
-
-def _circular_mean(angles: Iterable[float], fallback: float = -math.pi / 2) -> float:
-    angles = list(angles)
-    if not angles:
-        return fallback
-    x = sum(math.cos(angle) for angle in angles)
-    y = sum(math.sin(angle) for angle in angles)
-    if abs(x) < 1e-7 and abs(y) < 1e-7:
-        return fallback
-    return math.atan2(y, x)
-
-
-def _stable_unit(name: str) -> float:
-    digest = hashlib.sha1(name.encode("utf-8")).hexdigest()[:8]
-    return int(digest, 16) / 0xFFFFFFFF
-
-
-def _temporal_rank(
-    year: Optional[int],
-    known_years: List[int],
-    max_rank: int,
-) -> Optional[int]:
-    if year is None or not known_years or max_rank <= 0:
-        return None
-    low = known_years[0]
-    high = known_years[-1]
-    if high == low:
-        return max_rank // 2
-    fraction = (year - low) / (high - low)
-    return max(0, min(max_rank, round(fraction * max_rank)))
-
-
-def _rank_nodes(
+def _infer_tree_generations(
     people: Dict[str, Dict[str, Optional[object]]],
     edges: Iterable[Tuple[str, str]],
-) -> Tuple[Dict[str, int], Dict[str, float], int, Dict[str, Set[str]]]:
+) -> Dict[str, int]:
+    """Infer top-to-bottom tree layers from source generations and edges."""
     names = sorted(people, key=str.casefold)
-    incoming, outgoing = _relation_maps(names, edges)
     graph = nx.DiGraph()
     graph.add_nodes_from(names)
     graph.add_edges_from((advisor, advisee) for advisor, advisee in edges if advisor in people and advisee in people)
+
     components = list(nx.strongly_connected_components(graph))
     condensed = nx.condensation(graph, scc=components)
     component_for_name = condensed.graph.get("mapping", {})
-    component_members = {
-        component: set(condensed.nodes[component].get("members", set()))
-        for component in condensed.nodes
+
+    component_generation: Dict[int, Optional[int]] = {}
+    for component in condensed.nodes:
+        members = condensed.nodes[component].get("members", set())
+        known_generations = [
+            generation
+            for generation in (_source_generation(people[name]) for name in members)
+            if generation is not None
+        ]
+        component_generation[component] = max(known_generations) if known_generations else None
+
+    # Advisor -> student edges should always move downward. Source generations
+    # are mostly already adjacent, but this pass fixes missing advisor-only
+    # nodes and inconsistent duplicate depths without dropping relationships.
+    for component in reversed(list(nx.topological_sort(condensed))):
+        inferred = component_generation[component]
+        generation = inferred if inferred is not None else 0
+        for successor in condensed.successors(component):
+            successor_generation = component_generation.get(successor)
+            generation = max(generation, (successor_generation if successor_generation is not None else 0) + 1)
+        component_generation[component] = generation
+
+    return {
+        name: int(component_generation[component_for_name[name]] or 0)
+        for name in names
     }
-    component_base_rank = {component: 0 for component in condensed.nodes}
-    for component in nx.topological_sort(condensed):
-        for successor in condensed.successors(component):
-            component_base_rank[successor] = max(
-                component_base_rank[successor],
-                component_base_rank[component] + 1,
-            )
 
-    faculty = sorted(
-        (name for name in names if people[name].get("cmu", False)),
-        key=str.casefold,
-    )
-    known_years = sorted(
-        year for year in (_known_year(attrs) for attrs in people.values()) if year is not None
-    )
-    downstream_faculty = _downstream_faculty_sets(incoming, faculty) if faculty else {name: set() for name in names}
 
-    structural_outer = max(component_base_rank.values(), default=0)
-    temporal_outer = max(5, structural_outer)
-    faculty_floor = temporal_outer if faculty else 0
+def _component_downstream_faculty(
+    names: Iterable[str],
+    edges: Iterable[Tuple[str, str]],
+    downstream_faculty: Dict[str, Set[str]],
+) -> Tuple[Dict[str, int], Dict[int, Set[str]]]:
+    graph = nx.Graph()
+    graph.add_nodes_from(names)
+    graph.add_edges_from(edges)
 
-    component_rank: Dict[int, int] = {}
-    for component, members in component_members.items():
-        rank = component_base_rank[component]
-        years = [_known_year(people[name]) for name in members]
-        known_component_years = sorted(year for year in years if year is not None)
-        median_year = (
-            known_component_years[len(known_component_years) // 2]
-            if known_component_years
-            else None
-        )
-        year_rank = _temporal_rank(median_year, known_years, temporal_outer)
-        is_isolated = condensed.in_degree(component) == 0 and condensed.out_degree(component) == 0
-        if is_isolated and year_rank is not None:
-            rank = year_rank
-        if any(people[name].get("cmu", False) for name in members):
-            rank = max(rank, faculty_floor)
-        component_rank[component] = rank
+    component_by_name: Dict[str, int] = {}
+    faculty_by_component: Dict[int, Set[str]] = {}
+    components = list(nx.connected_components(graph))
+    for index, component in enumerate(components):
+        faculty_set: Set[str] = set()
+        for name in component:
+            component_by_name[name] = index
+            faculty_set.update(downstream_faculty.get(name, set()))
+        faculty_by_component[index] = faculty_set
 
-    # The condensation graph is acyclic, so this produces the minimum outward
-    # ranks that satisfy all non-cyclic advisor edges.
-    for component in nx.topological_sort(condensed):
-        for successor in condensed.successors(component):
-            component_rank[successor] = max(component_rank[successor], component_rank[component] + 1)
+    return component_by_name, faculty_by_component
 
-    ranks = {name: component_rank[component_for_name[name]] for name in names}
 
-    outer_rank = max(ranks.values(), default=0)
-    temporal_offsets = {name: 0.0 for name in names}
-    return ranks, temporal_offsets, outer_rank, downstream_faculty
+def _resolve_layer_positions(
+    row: List[str],
+    target_x: Dict[str, float],
+    min_gap: float,
+) -> Dict[str, float]:
+    """Place a row near target x positions while enforcing node separation."""
+    if not row:
+        return {}
+
+    ordered = sorted(row, key=lambda name: (target_x[name], name.casefold()))
+    clusters = [
+        {
+            "items": [name],
+            "target_sum": target_x[name],
+        }
+        for name in ordered
+    ]
+
+    def cluster_center(cluster: Dict[str, object]) -> float:
+        return float(cluster["target_sum"]) / len(cluster["items"])  # type: ignore[arg-type]
+
+    def cluster_bounds(cluster: Dict[str, object]) -> Tuple[float, float]:
+        count = len(cluster["items"])  # type: ignore[arg-type]
+        center = cluster_center(cluster)
+        half_width = min_gap * (count - 1) / 2
+        return center - half_width, center + half_width
+
+    index = 0
+    while index < len(clusters) - 1:
+        left = clusters[index]
+        right = clusters[index + 1]
+        _, left_right = cluster_bounds(left)
+        right_left, _ = cluster_bounds(right)
+        if left_right + min_gap > right_left:
+            left["items"].extend(right["items"])  # type: ignore[union-attr]
+            left["target_sum"] = float(left["target_sum"]) + float(right["target_sum"])
+            clusters.pop(index + 1)
+            index = max(0, index - 1)
+        else:
+            index += 1
+
+    positions: Dict[str, float] = {}
+    for cluster in clusters:
+        items = cluster["items"]  # type: ignore[assignment]
+        center = cluster_center(cluster)
+        start = center - min_gap * (len(items) - 1) / 2
+        for item_index, name in enumerate(items):
+            positions[name] = start + item_index * min_gap
+
+    return positions
 
 
 def build_layout(
@@ -504,170 +522,87 @@ def build_layout(
 ) -> Dict[str, Dict[str, object]]:
     """Build stable tree coordinates for the browser explorer.
 
-    The layout is radial and outward-directed: old roots sit near the center,
-    advisor-to-advisee edges move to larger radii, and broad lineages occupy
-    contiguous angular wedges instead of strict horizontal layers.
+    The layout is a layered advisor tree: older ancestors are placed in upper
+    rows, CMU faculty lineages are grouped into stable horizontal branches, and
+    each advisor sits near the barycenter of downstream faculty descendants.
     """
+    edge_list = list(edges)
     names = sorted(people, key=str.casefold)
-    ranks, _, outer_rank, downstream_faculty = _rank_nodes(people, edges)
+    generations = _infer_tree_generations(people, edge_list)
+    max_generation = max(generations.values(), default=0)
     faculty = sorted(
         (name for name in names if people[name].get("cmu", False)),
         key=str.casefold,
     )
-    incoming, outgoing = _relation_maps(names, edges)
+    incoming, outgoing = _relation_maps(names, edge_list)
+    downstream_faculty = _downstream_faculty_sets(incoming, faculty) if faculty else {name: set() for name in names}
     ordered_faculty = _lineage_ordered_faculty(names, people, incoming, outgoing, downstream_faculty, faculty)
     faculty_order = {name: idx for idx, name in enumerate(ordered_faculty)}
 
-    def branch_sort_key(name: str) -> Tuple[int, float, int, str]:
-        reachable = sorted(downstream_faculty.get(name, set()), key=lambda fac: faculty_order.get(fac, 10_000))
+    component_by_name, faculty_by_component = _component_downstream_faculty(names, edge_list, downstream_faculty)
+    fallback_components = sorted(
+        set(component_by_name.values()),
+        key=lambda component: (
+            0 if faculty_by_component.get(component) else 1,
+            min((generations.get(name, 0) for name, value in component_by_name.items() if value == component), default=0),
+            min((name.casefold() for name, value in component_by_name.items() if value == component), default=""),
+        ),
+    )
+    component_order = {component: index for index, component in enumerate(fallback_components)}
+
+    def branch_anchor(name: str) -> float:
+        reachable = downstream_faculty.get(name, set())
+        if not reachable:
+            reachable = faculty_by_component.get(component_by_name.get(name, -1), set())
+        reachable = {faculty_name for faculty_name in reachable if faculty_name in faculty_order}
         if reachable:
-            anchor = sum(faculty_order[fac] for fac in reachable) / len(reachable)
-            return (0, anchor, _known_year(people[name]) or 9999, name.casefold())
-        return (1, float(ranks.get(name, 0)), _known_year(people[name]) or 9999, name.casefold())
-
-    anchors = {name for name in names if not outgoing.get(name)}
-    anchors.update(faculty)
-    if not anchors:
-        anchors.update(names)
-
-    ordered_anchors: List[str] = []
-    emitted_anchors: Set[str] = set()
-
-    def emit_anchor_order(name: str, visiting: Set[str]) -> None:
-        if name in visiting:
-            return
-        visiting.add(name)
-        if name in anchors and name not in emitted_anchors:
-            emitted_anchors.add(name)
-            ordered_anchors.append(name)
-        for child in sorted(outgoing.get(name, []), key=branch_sort_key):
-            emit_anchor_order(child, visiting)
-        visiting.remove(name)
-
-    roots = sorted((name for name in names if not incoming.get(name)), key=branch_sort_key)
-    for root in roots:
-        emit_anchor_order(root, set())
-    for name in sorted(names, key=branch_sort_key):
-        emit_anchor_order(name, set())
-
-    for name in sorted(anchors - emitted_anchors, key=str.casefold):
-        ordered_anchors.append(name)
-
-    angles: Dict[str, float] = {
-        name: _angle_for_index(index, len(ordered_anchors))
-        for index, name in enumerate(ordered_anchors)
-    }
-
-    for _ in range(len(names)):
-        changed = False
-        for name in sorted(names, key=lambda node: (-ranks.get(node, 0), node.casefold())):
-            if name in angles:
-                continue
-            linked_angles = [angles[child] for child in outgoing.get(name, []) if child in angles]
-            if not linked_angles:
-                linked_angles = [angles[advisor] for advisor in incoming.get(name, []) if advisor in angles]
-            if linked_angles:
-                angles[name] = _circular_mean(linked_angles)
-                changed = True
-        if not changed:
-            break
-
-    for name in names:
-        if name not in angles:
-            angles[name] = _normalize_angle(_stable_unit(name) * math.tau - math.pi / 2)
-
-    fixed_angles = set(ordered_anchors)
-    for _ in range(8):
-        next_angles = angles.copy()
-        for name in names:
-            if name in fixed_angles:
-                continue
-            linked_angles: List[float] = []
-            linked_angles.extend(angles[advisor] for advisor in incoming.get(name, []) if advisor in angles)
-            for child in outgoing.get(name, []):
-                if child in angles:
-                    linked_angles.extend([angles[child], angles[child]])
-            if linked_angles:
-                next_angles[name] = _circular_mean(linked_angles, angles[name])
-        angles = next_angles
+            return sum(faculty_order[faculty_name] for faculty_name in reachable) / len(reachable)
+        return len(ordered_faculty) + component_order.get(component_by_name.get(name, -1), 0)
 
     rows: Dict[int, List[str]] = defaultdict(list)
-    for name, rank in ranks.items():
-        rows[rank].append(name)
+    for name, generation in generations.items():
+        rows[generation].append(name)
 
     ordered_rows: Dict[int, List[str]] = {}
+    target_x: Dict[str, float] = {}
+    anchor_gap = 246.0
+    row_gap = 168.0
+    min_node_gap = 178.0
+    faculty_center = (max(1, len(ordered_faculty)) - 1) / 2
+
+    for name in names:
+        target_x[name] = (branch_anchor(name) - faculty_center) * anchor_gap
+
+    x_positions: Dict[str, float] = {}
     for rank in sorted(rows):
         ordered_rows[rank] = sorted(
             rows[rank],
             key=lambda name: (
-                _normalize_angle(angles[name]),
+                branch_anchor(name),
                 _known_year(people[name]) or 9999,
                 name.casefold(),
             ),
         )
-
-    layout_graph = nx.DiGraph()
-    layout_graph.add_nodes_from(names)
-    layout_graph.add_edges_from((advisor, advisee) for advisor, advisee in edges if advisor in people and advisee in people)
-    shells = [ordered_rows[rank] for rank in range(outer_rank + 1) if ordered_rows.get(rank)]
-    if shells:
-        shell_positions = nx.shell_layout(layout_graph, nlist=shells, scale=1, center=(0, 0))
-        library_positions = {
-            name: [float(position[0]), float(position[1])]
-            for name, position in shell_positions.items()
-        }
-        for name, position in library_positions.items():
-            x = float(position[0])
-            y = float(position[1])
-            if math.isfinite(x) and math.isfinite(y) and (abs(x) > 1e-9 or abs(y) > 1e-9):
-                angles[name] = math.atan2(y, x)
-
-    base_radius = 118.0
-    ring_gap = 112.0
-    lane_gap = 104.0
-    min_arc_gap = 52.0
-    node_radii: Dict[str, float] = {}
-    previous_outer_radius = 0.0
-    for rank in sorted(rows):
-        row = ordered_rows[rank]
-        count = max(1, len(row))
-        lane_count = max(1, math.ceil(count / 42))
-        lane_sizes = [sum(1 for index in range(count) if index % lane_count == lane) for lane in range(lane_count)]
-        lane_radii: List[float] = []
-        rank_base = base_radius if previous_outer_radius == 0 else previous_outer_radius + ring_gap
-        for lane, lane_size in enumerate(lane_sizes):
-            radius_for_count = (max(1, lane_size) * min_arc_gap) / math.tau
-            min_radius = rank_base + lane * lane_gap
-            if lane_radii:
-                min_radius = max(min_radius, lane_radii[-1] + lane_gap)
-            lane_radii.append(max(min_radius, radius_for_count))
-        for index, name in enumerate(row):
-            node_radii[name] = lane_radii[index % lane_count]
-        previous_outer_radius = max(lane_radii)
+        x_positions.update(_resolve_layer_positions(ordered_rows[rank], target_x, min_node_gap))
 
     layout: Dict[str, Dict[str, object]] = {}
-    for rank in sorted(ordered_rows):
-        row = ordered_rows[rank]
+    for generation in sorted(ordered_rows):
+        row = ordered_rows[generation]
+        top_rank = max_generation - generation
         for index, name in enumerate(row):
-            angle = _centered_angle(angles[name])
-            radius = node_radii[name]
-            x = radius * math.cos(angle)
-            y = radius * math.sin(angle)
+            x = x_positions.get(name, target_x[name])
+            y = (top_rank - max_generation / 2) * row_gap
             layout[name] = {
                 "x": round(x, 2),
                 "y": round(y, 2),
-                "rank": rank,
-                "radius": round(radius, 2),
-                "angle": round(math.degrees(angle), 2),
+                "rank": int(top_rank),
+                "generation": int(generation),
+                "sourceGeneration": _source_generation(people[name]),
+                "branchAnchor": round(branch_anchor(name), 3),
                 "rowOrder": index,
                 "facultySink": False,
-                "facultyPerimeter": bool(name in faculty and rank >= max(0, outer_rank - 1)),
+                "facultyPerimeter": bool(name in faculty),
             }
-
-    if faculty:
-        row = sorted(faculty, key=lambda name: _normalize_angle(angles[name]))
-        for index, name in enumerate(row):
-            layout[name]["rowOrder"] = index
 
     return layout
 
@@ -767,8 +702,8 @@ def build_graph_data(
             "missingAdvisorCount": sum(1 for node in nodes if node["category"] == "missing-advisor"),
             "yearRange": [years[0], years[-1]] if years else None,
             "layout": {
-                "name": "advisor-radial-shell",
-                "rankDirection": "outward",
+                "name": "advisor-layered-tree",
+                "rankDirection": "top-to-bottom",
                 "facultySink": False,
             },
         },

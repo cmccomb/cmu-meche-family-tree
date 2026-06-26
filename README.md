@@ -13,9 +13,9 @@ tree from a CSV export and serves it as a browser-based explorer.
   - `year`
 - Handles multiple advisors in one cell, separated by `;`, `,`, or newlines.
 - Writes `graph-data.json` for the static JavaScript app.
-- Exports a stable advisor-sensitive radial layout with older ancestors toward
-  the center, current CMU MechE faculty near the perimeter, and advisor links
-  directed outward.
+- Exports a stable advisor-sensitive layered layout with older ancestors above
+  their descendants, CMU MechE branches grouped horizontally, and advisor links
+  directed top-to-bottom.
 - Renders the tree in the browser with Cytoscape.js using those coordinates.
 - Supports search, filters, guided views, selected-person profiles, lineage
   tracing, branch focus, path finding, mini-map navigation, and shareable URLs.
