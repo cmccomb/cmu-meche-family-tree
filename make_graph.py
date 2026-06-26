@@ -13,13 +13,14 @@ the year the advisee received that degree. Advisors can be listed as a single
 name or as multiple names separated by semicolons, commas, or line breaks.
 
 The script writes a JSON file consumed by the browser-based explorer. Graph
-layout, filtering, search, path finding, and branch focus now happen in
-JavaScript rather than Graphviz.
+filtering, search, path finding, and branch focus happen in JavaScript, while
+the exported data preserves a Graphviz-like advisor-sensitive tree layout.
 """
 
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict, deque
 import hashlib
 import json
 import math
@@ -269,6 +270,279 @@ def _sort_roles(roles: Iterable[str]) -> List[str]:
     return leading + rest
 
 
+def _known_year(attrs: Dict[str, Optional[object]]) -> Optional[int]:
+    year = attrs.get("year")
+    if not isinstance(year, int):
+        year = to_int_or_none(year)
+    return year if isinstance(year, int) and year >= 0 else None
+
+
+def _relation_maps(
+    names: Iterable[str],
+    edges: Iterable[Tuple[str, str]],
+) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    incoming: Dict[str, List[str]] = {name: [] for name in names}
+    outgoing: Dict[str, List[str]] = {name: [] for name in names}
+    for advisor, advisee in edges:
+        outgoing[advisor].append(advisee)
+        incoming[advisee].append(advisor)
+    for rels in (incoming, outgoing):
+        for linked in rels.values():
+            linked.sort(key=str.casefold)
+    return incoming, outgoing
+
+
+def _distance_to_faculty(
+    incoming: Dict[str, List[str]],
+    faculty: List[str],
+) -> Dict[str, int]:
+    distances = {name: 0 for name in faculty}
+    queue: deque[str] = deque(faculty)
+    while queue:
+        node = queue.popleft()
+        for advisor in incoming.get(node, []):
+            candidate = distances[node] + 1
+            if advisor not in distances or candidate < distances[advisor]:
+                distances[advisor] = candidate
+                queue.append(advisor)
+    return distances
+
+
+def _downstream_faculty_sets(
+    incoming: Dict[str, List[str]],
+    faculty: List[str],
+) -> Dict[str, Set[str]]:
+    downstream = {name: set() for name in incoming}
+    queue: deque[str] = deque(faculty)
+    for name in faculty:
+        downstream[name].add(name)
+    while queue:
+        node = queue.popleft()
+        for advisor in incoming.get(node, []):
+            before = len(downstream[advisor])
+            downstream[advisor].update(downstream[node])
+            if len(downstream[advisor]) != before:
+                queue.append(advisor)
+    return downstream
+
+
+def _root_depths(
+    names: Iterable[str],
+    incoming: Dict[str, List[str]],
+    outgoing: Dict[str, List[str]],
+) -> Dict[str, int]:
+    node_names = list(names)
+    indegree = {name: len(incoming.get(name, [])) for name in node_names}
+    depths = {name: 0 for name in node_names}
+    queue: deque[str] = deque(sorted((name for name in node_names if indegree[name] == 0), key=str.casefold))
+    seen = 0
+    while queue:
+        node = queue.popleft()
+        seen += 1
+        for advisee in outgoing.get(node, []):
+            depths[advisee] = max(depths[advisee], depths[node] + 1)
+            indegree[advisee] -= 1
+            if indegree[advisee] == 0:
+                queue.append(advisee)
+
+    if seen == len(node_names):
+        return depths
+
+    # Cycles are not expected in advisor data, but keep deterministic depths
+    # rather than failing the build when the source sheet has a loop.
+    for _ in range(len(node_names)):
+        changed = False
+        for advisor in sorted(node_names, key=str.casefold):
+            for advisee in outgoing.get(advisor, []):
+                candidate = depths[advisor] + 1
+                if candidate > depths[advisee]:
+                    depths[advisee] = candidate
+                    changed = True
+        if not changed:
+            break
+    return depths
+
+
+def _temporal_rank(
+    year: Optional[int],
+    known_years: List[int],
+    max_rank: int,
+) -> Optional[int]:
+    if year is None or not known_years or max_rank <= 0:
+        return None
+    low = known_years[0]
+    high = known_years[-1]
+    if high == low:
+        return max_rank // 2
+    fraction = (year - low) / (high - low)
+    return max(0, min(max_rank, round(fraction * max_rank)))
+
+
+def _rank_nodes(
+    people: Dict[str, Dict[str, Optional[object]]],
+    edges: Iterable[Tuple[str, str]],
+) -> Tuple[Dict[str, int], Dict[str, float], int, Dict[str, Set[str]]]:
+    names = sorted(people, key=str.casefold)
+    incoming, outgoing = _relation_maps(names, edges)
+    faculty = sorted(
+        (name for name in names if people[name].get("cmu", False)),
+        key=str.casefold,
+    )
+    known_years = sorted(
+        year for year in (_known_year(attrs) for attrs in people.values()) if year is not None
+    )
+    root_depths = _root_depths(names, incoming, outgoing)
+
+    if faculty:
+        distances = _distance_to_faculty(incoming, faculty)
+        max_distance = max(distances.values(), default=0)
+        max_depth = max(root_depths.values(), default=0)
+        bottom_rank = max(2, max_distance, max_depth)
+        ranks: Dict[str, int] = {}
+        for name in names:
+            if name in faculty:
+                ranks[name] = bottom_rank
+                continue
+            if name in distances:
+                ranks[name] = max(0, bottom_rank - distances[name])
+                continue
+            year_rank = _temporal_rank(_known_year(people[name]), known_years, bottom_rank - 1)
+            ranks[name] = year_rank if year_rank is not None else min(root_depths[name], bottom_rank - 1)
+            ranks[name] = min(ranks[name], bottom_rank - 1)
+        downstream_faculty = _downstream_faculty_sets(incoming, faculty)
+    else:
+        bottom_rank = max(1, max(root_depths.values(), default=0))
+        ranks = {}
+        for name in names:
+            year_rank = _temporal_rank(_known_year(people[name]), known_years, bottom_rank)
+            ranks[name] = year_rank if year_rank is not None else root_depths[name]
+        downstream_faculty = {name: set() for name in names}
+
+    for _ in range(len(names)):
+        changed = False
+        for advisor, advisee in edges:
+            if advisor not in ranks or advisee not in ranks:
+                continue
+            if faculty and advisor in faculty and advisee not in faculty:
+                continue
+            if ranks[advisor] >= ranks[advisee]:
+                if faculty and advisee in faculty:
+                    next_rank = min(ranks[advisor], bottom_rank - 1)
+                    if next_rank != ranks[advisor]:
+                        ranks[advisor] = next_rank
+                        changed = True
+                elif not faculty or ranks[advisor] < bottom_rank - 1:
+                    next_rank = min(bottom_rank - 1 if faculty else bottom_rank, ranks[advisor] + 1)
+                    if next_rank > ranks[advisee]:
+                        ranks[advisee] = next_rank
+                        changed = True
+        if not changed:
+            break
+
+    temporal_offsets: Dict[str, float] = {}
+    for name in names:
+        if faculty and name in faculty:
+            temporal_offsets[name] = 0.0
+            continue
+        year_rank = _temporal_rank(_known_year(people[name]), known_years, bottom_rank)
+        if year_rank is None or bottom_rank <= 0:
+            temporal_offsets[name] = 0.0
+            continue
+        temporal_offsets[name] = max(-0.32, min(0.32, (year_rank - ranks[name]) * 0.18))
+
+    return ranks, temporal_offsets, bottom_rank, downstream_faculty
+
+
+def build_layout(
+    people: Dict[str, Dict[str, Optional[object]]],
+    edges: Iterable[Tuple[str, str]],
+) -> Dict[str, Dict[str, object]]:
+    """Build stable tree coordinates for the browser explorer.
+
+    The layout is intentionally rank-based, echoing the earlier Graphviz
+    output: advisor links define the broad top-to-bottom structure, known years
+    nudge non-faculty within their rank, and current CMU faculty are pinned to
+    a shared sink row.
+    """
+    names = sorted(people, key=str.casefold)
+    ranks, temporal_offsets, bottom_rank, downstream_faculty = _rank_nodes(people, edges)
+    faculty = sorted(
+        (name for name in names if people[name].get("cmu", False)),
+        key=str.casefold,
+    )
+    faculty_order = {name: idx for idx, name in enumerate(faculty)}
+    horizontal_spacing = 230
+    vertical_spacing = 175
+    no_faculty_offset = len(faculty) + 1
+    incoming, _ = _relation_maps(names, edges)
+
+    anchors: Dict[str, float] = {}
+    unresolved: List[str] = []
+    for name in names:
+        if name in faculty_order:
+            anchors[name] = float(faculty_order[name])
+            continue
+        reachable = sorted(downstream_faculty.get(name, set()), key=str.casefold)
+        if reachable:
+            anchors[name] = sum(faculty_order[fac] for fac in reachable) / len(reachable)
+            continue
+        unresolved.append(name)
+
+    for _ in range(len(names)):
+        remaining: List[str] = []
+        changed = False
+        for name in unresolved:
+            advisor_anchors = [anchors[advisor] for advisor in incoming.get(name, []) if advisor in anchors]
+            if advisor_anchors:
+                anchors[name] = sum(advisor_anchors) / len(advisor_anchors)
+                changed = True
+            else:
+                remaining.append(name)
+        unresolved = remaining
+        if not changed:
+            break
+
+    for name in unresolved:
+        year = _known_year(people[name])
+        anchors[name] = no_faculty_offset + (0 if year is None else year / 10000)
+        no_faculty_offset += 1
+
+    rows: Dict[int, List[str]] = defaultdict(list)
+    for name, rank in ranks.items():
+        rows[rank].append(name)
+
+    layout: Dict[str, Dict[str, object]] = {}
+    for rank in sorted(rows):
+        row = sorted(
+            rows[rank],
+            key=lambda name: (
+                anchors[name],
+                _known_year(people[name]) or 9999,
+                name.casefold(),
+            ),
+        )
+        previous_x: Optional[float] = None
+        for index, name in enumerate(row):
+            x = anchors[name] * horizontal_spacing
+            if previous_x is not None and x - previous_x < horizontal_spacing * 0.72:
+                x = previous_x + horizontal_spacing * 0.72
+            previous_x = x
+            layout[name] = {
+                "x": round(x, 2),
+                "y": round((rank + temporal_offsets.get(name, 0.0)) * vertical_spacing, 2),
+                "rank": rank,
+                "rowOrder": index,
+                "facultySink": bool(faculty and name in faculty_order and rank == bottom_rank),
+            }
+
+    if faculty:
+        row = sorted(faculty, key=lambda name: layout[name]["x"])
+        for index, name in enumerate(row):
+            layout[name]["rowOrder"] = index
+
+    return layout
+
+
 def build_graph_data(
     people: Dict[str, Dict[str, Optional[object]]],
     edges: Iterable[Tuple[str, str]],
@@ -286,6 +560,7 @@ def build_graph_data(
     explicit_none = explicit_none & set(renderable_people)
     explicit_ill = explicit_ill & set(renderable_people)
     roots = find_roots(renderable_people, renderable_edges, explicit_none, explicit_ill)
+    layout_by_name = build_layout(renderable_people, renderable_edges)
 
     ids_by_name = {name: stable_person_id(name) for name in sorted(renderable_people)}
     degree_counts = {name: 0 for name in renderable_people}
@@ -316,6 +591,7 @@ def build_graph_data(
                 "categoryLabel": CATEGORY_LABELS[category],
                 "cmu": bool(attrs.get("cmu", False)),
                 "degree": degree_counts[name],
+                "layout": layout_by_name[name],
                 "flags": {
                     "explicitNone": name in explicit_none,
                     "illRequest": name in explicit_ill,
@@ -361,6 +637,11 @@ def build_graph_data(
             "followUpCount": sum(1 for node in nodes if node["category"] == "follow-up"),
             "missingAdvisorCount": sum(1 for node in nodes if node["category"] == "missing-advisor"),
             "yearRange": [years[0], years[-1]] if years else None,
+            "layout": {
+                "name": "advisor-temporal-sink",
+                "rankDirection": "TB",
+                "facultySink": True,
+            },
         },
         "filters": {
             "eras": eras,

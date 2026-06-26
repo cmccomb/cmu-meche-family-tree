@@ -1,6 +1,6 @@
-import pandas as pd
-
 import json
+
+import pandas as pd
 
 from make_graph import build_graph, build_graph_data, impute_years, is_cmu_faculty_marker, main
 
@@ -146,10 +146,93 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student One"]["role"] == "PhD alumni"
     assert people_by_name["Student Two"]["role"] == "MS alumni"
     assert people_by_name["Student Two"]["category"] == "follow-up"
+    assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
 
     edge = payload["edges"][0]
     assert edge["source"] == people_by_name["Prof Advisor"]["id"]
     assert edge["target"] == people_by_name["Student One"]["id"]
+
+
+def test_layout_pins_current_faculty_to_temporal_sink_row() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "generation": "",
+                "advisee": "Root Mentor",
+                "advisor": "",
+                "title": "PhD",
+                "year": 1950,
+            },
+            {
+                "generation": "",
+                "advisee": "Advisor Alpha",
+                "advisor": "Root Mentor",
+                "title": "PhD",
+                "year": 1975,
+            },
+            {
+                "generation": "",
+                "advisee": "Advisor Gamma",
+                "advisor": "Root Mentor",
+                "title": "PhD",
+                "year": 1980,
+            },
+            {
+                "generation": 0,
+                "advisee": "Faculty Beta",
+                "advisor": "Advisor Alpha",
+                "title": "Professor",
+                "year": 2005,
+            },
+            {
+                "generation": 0,
+                "advisee": "Faculty Delta",
+                "advisor": "Advisor Gamma",
+                "title": "Professor",
+                "year": 2010,
+            },
+            {
+                "generation": "",
+                "advisee": "Disconnected Old",
+                "advisor": "",
+                "title": "PhD",
+                "year": 1960,
+            },
+            {
+                "generation": "",
+                "advisee": "Disconnected New",
+                "advisor": "",
+                "title": "PhD",
+                "year": 2020,
+            },
+        ]
+    )
+
+    people, edges, explicit_none, explicit_ill, skipped_rows = build_graph(df)
+    impute_years(people)
+    payload = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
+    people_by_name = {node["name"]: node for node in payload["nodes"]}
+
+    beta = people_by_name["Faculty Beta"]["layout"]
+    delta = people_by_name["Faculty Delta"]["layout"]
+    alpha = people_by_name["Advisor Alpha"]["layout"]
+    gamma = people_by_name["Advisor Gamma"]["layout"]
+    root = people_by_name["Root Mentor"]["layout"]
+
+    assert beta["facultySink"] is True
+    assert delta["facultySink"] is True
+    assert beta["rank"] == delta["rank"]
+    assert beta["y"] == delta["y"]
+    assert alpha["y"] < beta["y"]
+    assert gamma["y"] < delta["y"]
+    assert root["y"] < alpha["y"]
+    assert root["y"] < gamma["y"]
+    assert beta["x"] < root["x"] < delta["x"]
+    assert (
+        people_by_name["Disconnected Old"]["layout"]["y"]
+        < people_by_name["Disconnected New"]["layout"]["y"]
+    )
+    assert payload["meta"]["layout"]["name"] == "advisor-temporal-sink"
 
 
 def test_cli_preserves_literal_none_advisor_token(tmp_path) -> None:

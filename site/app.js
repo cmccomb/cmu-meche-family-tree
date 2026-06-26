@@ -185,12 +185,17 @@
     const nodes = graph.nodes.map((person) => {
       const degree = Number(person.degree || 0);
       const size = Math.max(42, Math.min(78, 38 + Math.sqrt(degree + 1) * 9));
+      const layout = person.layout || {};
+      const x = Number(layout.x);
+      const y = Number(layout.y);
+      const position = Number.isFinite(x) && Number.isFinite(y) ? { x, y } : undefined;
       return {
         data: {
           ...person,
           label: `${person.name}\n${person.yearLabel || ""}`,
           size,
         },
+        position,
       };
     });
 
@@ -349,6 +354,24 @@
     return roots.reduce((collection, node) => collection.union(node), state.cy.collection());
   }
 
+  function nodeLayoutPosition(node) {
+    const layout = node.data("layout") || {};
+    const x = Number(layout.x);
+    const y = Number(layout.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+  }
+
+  function hasPresetLayout(nodes) {
+    return Boolean(
+      state.graph &&
+      state.graph.meta &&
+      state.graph.meta.layout &&
+      nodes.length > 0 &&
+      nodes.toArray().every((node) => nodeLayoutPosition(node))
+    );
+  }
+
   function fitGraph(eles = visibleElements(), padding = 64) {
     if (!state.cy || eles.length === 0) return;
     if (reducedMotion) {
@@ -367,19 +390,28 @@
     const nodes = visibleNodes();
     if (!state.cy || nodes.length === 0) return;
     const roots = visibleRootCollection();
-    const options = {
-      name: "breadthfirst",
-      directed: true,
-      roots,
-      spacingFactor: 1.16,
-      avoidOverlap: true,
-      nodeDimensionsIncludeLabels: true,
-      padding: 72,
-      fit: false,
-      animate: !reducedMotion,
-      animationDuration: 560,
-      animationEasing: "ease-out-cubic",
-    };
+    const options = hasPresetLayout(nodes)
+      ? {
+          name: "preset",
+          positions: (node) => nodeLayoutPosition(node) || node.position(),
+          fit: false,
+          animate: !reducedMotion,
+          animationDuration: 520,
+          animationEasing: "ease-out-cubic",
+        }
+      : {
+          name: "breadthfirst",
+          directed: true,
+          roots,
+          spacingFactor: 1.16,
+          avoidOverlap: true,
+          nodeDimensionsIncludeLabels: true,
+          padding: 72,
+          fit: false,
+          animate: !reducedMotion,
+          animationDuration: 560,
+          animationEasing: "ease-out-cubic",
+        };
 
     state.cy.once("layoutstop", () => {
       if (fit) fitGraph(visibleElements(), 68);
