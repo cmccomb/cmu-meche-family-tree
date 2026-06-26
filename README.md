@@ -11,6 +11,7 @@ tree from a CSV export and serves it as a browser-based explorer.
   - `advisor`
   - `title`
   - `university` (optional, used for university coloring)
+  - `country` (optional, otherwise inferred from university when possible)
   - `year`
 - Handles multiple advisors in one cell, separated by `;`, `,`, or newlines.
 - Writes `graph-data.json` for the static JavaScript app.

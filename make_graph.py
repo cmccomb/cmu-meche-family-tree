@@ -25,6 +25,7 @@ import hashlib
 import json
 import math
 import re
+import unicodedata
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -42,6 +43,78 @@ CATEGORY_LABELS = {
     "missing-advisor": "No advisor recorded",
     "follow-up": "Follow-up needed",
 }
+
+COUNTRY_ALIASES = {
+    "america": "United States",
+    "england": "United Kingdom",
+    "great britain": "United Kingdom",
+    "the netherlands": "Netherlands",
+    "uk": "United Kingdom",
+    "u.k.": "United Kingdom",
+    "united states": "United States",
+    "united states of america": "United States",
+    "us": "United States",
+    "u.s.": "United States",
+    "usa": "United States",
+    "u.s.a.": "United States",
+}
+
+COUNTRY_NAMES = {
+    "Australia",
+    "Austria",
+    "Belgium",
+    "Canada",
+    "China",
+    "Denmark",
+    "France",
+    "Germany",
+    "India",
+    "Israel",
+    "Italy",
+    "Japan",
+    "Netherlands",
+    "Norway",
+    "Russia",
+    "Spain",
+    "Sweden",
+    "Switzerland",
+    "United Kingdom",
+    "United States",
+}
+
+COUNTRY_PATTERNS: List[Tuple[str, str]] = [
+    (
+        r"\b(mit|harvard|yale|stanford|carnegie mellon|uc berkeley|berkeley|"
+        r"university of michig|uiuc|illinois|brown|cornell|johns hopkins|"
+        r"princeton|northwestern|university of pennsylvania|georgia tech|"
+        r"ut austin|university of texas|university of minnesota|"
+        r"university of wisconsin|university of delaware|arizona state|"
+        r"university of virginia|cu boulder|case western|purdue|caltech|"
+        r"columbia|university of chicago)\b",
+        "United States",
+    ),
+    (r"\b(louvain|leuven|liege|ghent|gent|universite catholique de louvain)\b", "Belgium"),
+    (r"\b(basel|zurich|geneve|lausanne|epfl|eth)\b", "Switzerland"),
+    (r"\b(wien|vienna|graz|innsbruck)\b", "Austria"),
+    (r"\b(uppsala|lund|stockholm|kth)\b", "Sweden"),
+    (r"\b(new brunswick|toronto|mcgill|waterloo|british columbia|alberta|mcmaster)\b", "Canada"),
+    (
+        r"\b(universitat|universitaet|leipzig|gottingen|goettingen|halle|"
+        r"wittenberg|tubingen|tuebingen|jena|heidelberg|berlin|konigsberg|"
+        r"koenigsberg|helmstedt|erlangen|karlsruhe|munich|muenchen|freiburg)\b",
+        "Germany",
+    ),
+    (r"\b(cambridge|oxford|trinity college|imperial|ucl|edinburgh|manchester)\b", "United Kingdom"),
+    (r"\b(universita|padova|padua|firenze|pisa|bologna|torino|roma|milan|milano)\b", "Italy"),
+    (r"\b(universiteit|leiden|utrecht|delft|amsterdam|groningen)\b", "Netherlands"),
+    (r"\b(universite|ecole|sorbonne|paris|orsay|montaigu|polytechnique)\b", "France"),
+    (r"\b(tokyo|kyoto|osaka|tohoku|waseda|nagoya|technion)\b", "Japan"),
+    (r"\b(peking|tsinghua|beijing|sjtu|shanghai jiao tong|hong kong)\b", "China"),
+    (r"\b(moscow|st petersburg|saint petersburg)\b", "Russia"),
+    (r"\b(copenhagen|aarhus)\b", "Denmark"),
+    (r"\b(oslo|bergen)\b", "Norway"),
+    (r"\b(madrid|barcelona)\b", "Spain"),
+]
 
 
 def norm(s: str) -> str:
@@ -117,6 +190,51 @@ def primary_university(value: Optional[object]) -> str:
     return parts[0] if parts else text
 
 
+def _ascii_key(value: object) -> str:
+    """Return an accent-insensitive matching key."""
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = re.sub(r"[^a-zA-Z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip().casefold()
+
+
+def _canonical_country(value: object) -> Optional[str]:
+    """Normalize explicit country text when it is a known country label."""
+    text = clean_optional_text(value)
+    if not text:
+        return None
+    key = _ascii_key(text).strip(".")
+    if key in COUNTRY_ALIASES:
+        return COUNTRY_ALIASES[key]
+    for country in COUNTRY_NAMES:
+        if key == _ascii_key(country):
+            return country
+    return None
+
+
+def country_for_university(university: Optional[object], explicit_country: Optional[object] = None) -> str:
+    """Infer a country label from explicit country data or university text."""
+    country = _canonical_country(explicit_country)
+    if country:
+        return country
+
+    university_label = primary_university(university)
+    if university_label == "Unknown university":
+        return "Unknown country"
+
+    parts = [part.strip() for part in str(university_label).split(",") if part.strip()]
+    if len(parts) > 1:
+        country = _canonical_country(parts[-1])
+        if country:
+            return country
+
+    key = _ascii_key(university_label)
+    for pattern, country_label in COUNTRY_PATTERNS:
+        if re.search(pattern, key):
+            return country_label
+    return "Unknown country"
+
+
 def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
     """Split advisor cells into names and detect special source flags."""
     if val is None or pd.isna(val):
@@ -158,6 +276,7 @@ def build_graph(
         if title == "":
             title = None
         university = clean_optional_text(r.get("university", None))
+        country = clean_optional_text(r.get("country", None))
 
         if advisee is None:
             skipped_rows += 1
@@ -170,6 +289,7 @@ def build_graph(
                 "title": title,
                 "generation": source_generation,
                 "university": university,
+                "country": country,
             }
         else:
             if people[advisee]["year"] is None and year is not None:
@@ -179,6 +299,8 @@ def build_graph(
                 people[advisee]["title"] = title
             if not people[advisee].get("university") and university:
                 people[advisee]["university"] = university
+            if not people[advisee].get("country") and country:
+                people[advisee]["country"] = country
             existing_generation = to_int_or_none(people[advisee].get("generation"))
             if source_generation is not None:
                 people[advisee]["generation"] = max(
@@ -194,6 +316,7 @@ def build_graph(
                     "title": None,
                     "generation": None,
                     "university": None,
+                    "country": None,
                 }
             edges.append((advisor, advisee))
 
@@ -748,6 +871,7 @@ def build_graph_data(
         category = category_for_person(name, attrs, roots, explicit_none, explicit_ill)
         university = clean_optional_text(attrs.get("university"))
         university_label = primary_university(university)
+        country_label = country_for_university(university, attrs.get("country"))
         chronology_year = chronology_years.get(name)
         nodes.append(
             {
@@ -759,6 +883,7 @@ def build_graph_data(
                 "title": attrs.get("title"),
                 "university": university,
                 "universityLabel": university_label,
+                "countryLabel": country_label,
                 "role": role,
                 "era": era,
                 "category": category,

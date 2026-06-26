@@ -148,6 +148,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisor": "Root Mentor",
                 "title": "Professor",
                 "university": "Carnegie Mellon University",
+                "country": "",
                 "year": 1999,
             },
             {
@@ -156,6 +157,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisor": "Root Mentor",
                 "title": "PhD",
                 "university": "Example University",
+                "country": "Canada",
                 "year": 2024,
             },
             {
@@ -164,6 +166,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisor": "Root Mentor; ILL Request",
                 "title": "MS",
                 "university": "",
+                "country": "",
                 "year": 2025,
             },
         ]
@@ -186,6 +189,9 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Prof Advisor"]["universityLabel"] == "Carnegie Mellon University"
     assert people_by_name["Student One"]["universityLabel"] == "Example University"
     assert people_by_name["Student Two"]["universityLabel"] == "Unknown university"
+    assert people_by_name["Prof Advisor"]["countryLabel"] == "United States"
+    assert people_by_name["Student One"]["countryLabel"] == "Canada"
+    assert people_by_name["Student Two"]["countryLabel"] == "Unknown country"
     assert people_by_name["Prof Advisor"]["chronologyYear"] == 1999
     assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
     assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True
