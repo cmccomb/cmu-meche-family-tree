@@ -2,7 +2,6 @@
   const DATA_URL = "graph-data.json";
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const COLOR_BUCKET_LIMIT = 18;
-  const CMU_BUCKET = "CMU";
   const OTHER_BUCKET = "Other";
   const NULL_BUCKET = "Unknown / none";
   const COLOR_MODES = new Set(["category", "university", "country", "continent"]);
@@ -69,7 +68,6 @@
   ];
 
   const specialBucketColors = {
-    [CMU_BUCKET]: "#bb0000",
     [OTHER_BUCKET]: "#dfe3e8",
     [NULL_BUCKET]: "#9aa3ad",
   };
@@ -218,14 +216,10 @@
     return luminance > 0.58 ? "#1c1f23" : "#ffffff";
   }
 
-  function isCmuUniversity(label) {
-    return /\bcmu\b|carnegie mellon/i.test(String(label || ""));
-  }
-
   function universityBucketSource(person) {
     const label = person.universityLabel || "Unknown university";
-    if (isCmuUniversity(label)) return CMU_BUCKET;
     if (label === "Unknown university") return NULL_BUCKET;
+    if (/\bcmu\b|carnegie mellon/i.test(label)) return "Carnegie Mellon University";
     return label;
   }
 
@@ -252,7 +246,7 @@
     return specialBucketColors[label] || bucketPalette[index % bucketPalette.length];
   }
 
-  function buildBucketEntries(graph, sourceForPerson, { includeCmu = false, pinnedLabels = [] } = {}) {
+  function buildBucketEntries(graph, sourceForPerson, { pinnedLabels = [] } = {}) {
     const counts = new Map();
     graph.nodes.forEach((person) => incrementCount(counts, sourceForPerson(person)));
 
@@ -260,14 +254,6 @@
     let paletteIndex = 0;
     let covered = 0;
     const pinned = new Set(pinnedLabels.filter((label) => label && label !== OTHER_BUCKET && label !== NULL_BUCKET));
-
-    if (includeCmu) {
-      const cmuCount = counts.get(CMU_BUCKET) || 0;
-      entries.push({ label: CMU_BUCKET, count: cmuCount, color: bucketColor(CMU_BUCKET, paletteIndex) });
-      covered += cmuCount;
-      counts.delete(CMU_BUCKET);
-      pinned.delete(CMU_BUCKET);
-    }
 
     const nullCount = counts.get(NULL_BUCKET) || 0;
     counts.delete(NULL_BUCKET);
@@ -326,7 +312,7 @@
     model.colorBuckets.university = buildBucketEntries(
       graph,
       universityBucketSource,
-      { includeCmu: true, pinnedLabels: currentFacultyUniversityBuckets(graph) }
+      { pinnedLabels: currentFacultyUniversityBuckets(graph) }
     );
     model.colorBuckets.country = buildBucketEntries(graph, countryBucketSource);
     model.colorBuckets.continent = buildContinentEntries(graph);
