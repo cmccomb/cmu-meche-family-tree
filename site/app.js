@@ -4,7 +4,7 @@
   const COLOR_BUCKET_LIMIT = 18;
   const CMU_BUCKET = "CMU";
   const OTHER_BUCKET = "Other";
-  const COLOR_MODES = new Set(["category", "university", "country"]);
+  const COLOR_MODES = new Set(["category", "university", "country", "continent"]);
 
   const categoryColors = {
     "cmu-faculty": "#b00",
@@ -47,6 +47,28 @@
     [CMU_BUCKET]: "#bb0000",
     [OTHER_BUCKET]: "#dfe3e8",
   };
+
+  const continentPalette = {
+    "Africa": "#8f5aa3",
+    "Asia": "#d45f16",
+    "Europe": "#2f6f9f",
+    "North America": "#3e8c69",
+    "Oceania": "#c28a16",
+    "South America": "#a14f76",
+    "Antarctica": "#607d9c",
+    [OTHER_BUCKET]: specialBucketColors[OTHER_BUCKET],
+  };
+
+  const continentOrder = [
+    "Africa",
+    "Asia",
+    "Europe",
+    "North America",
+    "Oceania",
+    "South America",
+    "Antarctica",
+    OTHER_BUCKET,
+  ];
 
   const els = {
     appShell: document.getElementById("appShell"),
@@ -107,8 +129,8 @@
     rootIds: [],
     miniTransform: null,
     chronologyRange: null,
-    colorBuckets: { university: [], country: [] },
-    colorBucketMaps: { university: new Map(), country: new Map() },
+    colorBuckets: { university: [], country: [], continent: [] },
+    colorBucketMaps: { university: new Map(), country: new Map(), continent: new Map() },
   };
 
   let filterTimer = 0;
@@ -146,6 +168,7 @@
       person.university,
       person.universityLabel,
       person.countryLabel,
+      person.continentLabel,
       person.role,
       person.era,
       person.categoryLabel,
@@ -182,6 +205,11 @@
     const label = person.countryLabel || "Unknown country";
     if (label === "Unknown country") return OTHER_BUCKET;
     return label;
+  }
+
+  function continentBucketSource(person) {
+    const label = person.continentLabel || OTHER_BUCKET;
+    return label === "Unknown continent" ? OTHER_BUCKET : label;
   }
 
   function incrementCount(counts, label) {
@@ -229,11 +257,25 @@
     return entries;
   }
 
+  function buildContinentEntries(graph) {
+    const counts = new Map();
+    graph.nodes.forEach((person) => incrementCount(counts, continentBucketSource(person)));
+    return continentOrder
+      .map((label) => ({
+        label,
+        count: counts.get(label) || 0,
+        color: continentPalette[label] || specialBucketColors[OTHER_BUCKET],
+      }))
+      .filter((entry) => entry.count > 0 || (entry.label === OTHER_BUCKET && counts.has(OTHER_BUCKET)));
+  }
+
   function buildColorBuckets(graph) {
     model.colorBuckets.university = buildBucketEntries(graph, universityBucketSource, { includeCmu: true });
     model.colorBuckets.country = buildBucketEntries(graph, countryBucketSource);
+    model.colorBuckets.continent = buildContinentEntries(graph);
     model.colorBucketMaps.university = new Map(model.colorBuckets.university.map((entry) => [entry.label, entry]));
     model.colorBucketMaps.country = new Map(model.colorBuckets.country.map((entry) => [entry.label, entry]));
+    model.colorBucketMaps.continent = new Map(model.colorBuckets.continent.map((entry) => [entry.label, entry]));
   }
 
   function bucketEntry(mode, label) {
@@ -243,8 +285,13 @@
   }
 
   function colorsForPerson(person) {
-    if (state.colorMode === "university" || state.colorMode === "country") {
-      const label = state.colorMode === "university" ? person.universityColorBucket : person.countryColorBucket;
+    if (state.colorMode === "university" || state.colorMode === "country" || state.colorMode === "continent") {
+      const labelByMode = {
+        university: person.universityColorBucket,
+        country: person.countryColorBucket,
+        continent: person.continentColorBucket,
+      };
+      const label = labelByMode[state.colorMode];
       const entry = bucketEntry(state.colorMode, label);
       const fill = entry ? entry.color : specialBucketColors[OTHER_BUCKET];
       const isOther = !entry || entry.label === OTHER_BUCKET;
@@ -312,8 +359,10 @@
     graph.nodes.forEach((person) => {
       const universityEntry = bucketEntry("university", universityBucketSource(person));
       const countryEntry = bucketEntry("country", countryBucketSource(person));
+      const continentEntry = bucketEntry("continent", continentBucketSource(person));
       person.universityColorBucket = universityEntry ? universityEntry.label : OTHER_BUCKET;
       person.countryColorBucket = countryEntry ? countryEntry.label : OTHER_BUCKET;
+      person.continentColorBucket = continentEntry ? continentEntry.label : OTHER_BUCKET;
       person.searchText = searchableText(person);
       model.peopleById.set(person.id, person);
       model.peopleByName.set(person.name.toLowerCase(), person.id);
@@ -894,7 +943,7 @@
   function renderLegend(graph) {
     els.legend.replaceChildren();
 
-    if (state.colorMode === "university" || state.colorMode === "country") {
+    if (state.colorMode === "university" || state.colorMode === "country" || state.colorMode === "continent") {
       model.colorBuckets[state.colorMode].forEach((entry) => {
         const item = document.createElement("span");
         item.className = "legend-item";
@@ -1025,6 +1074,7 @@
       person.era,
       person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
       person.countryLabel && person.countryLabel !== "Unknown country" ? person.countryLabel : "",
+      person.continentLabel && person.continentLabel !== OTHER_BUCKET ? person.continentLabel : "",
       person.title && person.title !== person.role ? person.title : "",
     ].filter(Boolean).forEach((value) => {
       const tag = document.createElement("span");

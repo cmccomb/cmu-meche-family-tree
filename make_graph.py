@@ -82,6 +82,29 @@ COUNTRY_NAMES = {
     "United States",
 }
 
+CONTINENT_BY_COUNTRY = {
+    "Australia": "Oceania",
+    "Austria": "Europe",
+    "Belgium": "Europe",
+    "Canada": "North America",
+    "China": "Asia",
+    "Denmark": "Europe",
+    "France": "Europe",
+    "Germany": "Europe",
+    "India": "Asia",
+    "Israel": "Asia",
+    "Italy": "Europe",
+    "Japan": "Asia",
+    "Netherlands": "Europe",
+    "Norway": "Europe",
+    "Russia": "Europe",
+    "Spain": "Europe",
+    "Sweden": "Europe",
+    "Switzerland": "Europe",
+    "United Kingdom": "Europe",
+    "United States": "North America",
+}
+
 COUNTRY_PATTERNS: List[Tuple[str, str]] = [
     (
         r"\b(mit|harvard|yale|stanford|carnegie mellon|uc berkeley|berkeley|"
@@ -233,6 +256,14 @@ def country_for_university(university: Optional[object], explicit_country: Optio
         if re.search(pattern, key):
             return country_label
     return "Unknown country"
+
+
+def continent_for_country(country: Optional[object]) -> str:
+    """Return a continent label for supported country values."""
+    country_label = _canonical_country(country)
+    if not country_label:
+        return "Other"
+    return CONTINENT_BY_COUNTRY.get(country_label, "Other")
 
 
 def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
@@ -872,6 +903,7 @@ def build_graph_data(
         university = clean_optional_text(attrs.get("university"))
         university_label = primary_university(university)
         country_label = country_for_university(university, attrs.get("country"))
+        continent_label = continent_for_country(country_label)
         chronology_year = chronology_years.get(name)
         nodes.append(
             {
@@ -884,6 +916,7 @@ def build_graph_data(
                 "university": university,
                 "universityLabel": university_label,
                 "countryLabel": country_label,
+                "continentLabel": continent_label,
                 "role": role,
                 "era": era,
                 "category": category,

@@ -20,8 +20,9 @@ tree from a CSV export and serves it as a browser-based explorer.
   and faculty-to-faculty advisor links allowed to run left-to-right.
 - Renders the tree in the browser with Cytoscape.js using those coordinates.
 - Supports search, selected-person profiles, lineage tracing, branch focus,
-  focused-lineage relayout, path finding, mini-map navigation, university
-  coloring, chronological vertical scaling, and shareable URLs.
+  focused-lineage relayout, path finding, mini-map navigation, university,
+  country, and continent coloring, chronological vertical scaling, and
+  shareable URLs.
 
 Special advisor tokens:
 
