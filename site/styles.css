@@ -801,10 +801,7 @@ a:focus-visible {
   }
 
   .mini-panel {
-    left: 12px;
-    right: 12px;
-    bottom: 56px;
-    width: auto;
+    display: none;
   }
 
   .graph-status {

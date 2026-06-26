@@ -189,10 +189,14 @@
       const x = Number(layout.x);
       const y = Number(layout.y);
       const position = Number.isFinite(x) && Number.isFinite(y) ? { x, y } : undefined;
+      const labelHalign = Number.isFinite(x) && x < 0 ? "left" : "right";
+      const labelMarginX = labelHalign === "left" ? -11 : 11;
       return {
         data: {
           ...person,
           label: `${person.name}\n${person.yearLabel || ""}`,
+          labelHalign,
+          labelMarginX,
           size,
         },
         position,
@@ -230,8 +234,8 @@
             "text-wrap": "wrap",
             "text-max-width": 132,
             "text-valign": "center",
-            "text-halign": "right",
-            "text-margin-x": 10,
+            "text-halign": "data(labelHalign)",
+            "text-margin-x": "data(labelMarginX)",
             color: "#1c1f23",
             "font-family": "Inter, system-ui, sans-serif",
             "font-size": 10,
@@ -270,8 +274,8 @@
         {
           selector: "edge",
           style: {
-            width: 1.35,
-            "curve-style": "bezier",
+            width: 1.15,
+            "curve-style": "straight",
             "line-color": "#aeb7c2",
             "target-arrow-color": "#aeb7c2",
             "target-arrow-shape": "triangle",

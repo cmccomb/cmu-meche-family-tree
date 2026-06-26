@@ -14,7 +14,7 @@ name or as multiple names separated by semicolons, commas, or line breaks.
 
 The script writes a JSON file consumed by the browser-based explorer. Graph
 filtering, search, path finding, and branch focus happen in JavaScript, while
-the exported data preserves a Graphviz-like advisor-sensitive tree layout.
+the exported data preserves a stable advisor-sensitive radial layout.
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import pandas as pd
+import networkx as nx
 
 
 PLACEHOLDER_TOKENS: Set[str] = {"none", "n/a", "na", "nan", "null", "unknown", "-"}
@@ -174,8 +175,29 @@ def build_graph(
             if advisor not in placeholder_nodes and student not in placeholder_nodes
         ]
 
-    edges = list(dict.fromkeys(edges))
+    edges = _drop_reciprocal_edges(list(dict.fromkeys(edges)), people)
     return people, edges, explicit_none, explicit_ill_request, skipped_rows
+
+
+def _drop_reciprocal_edges(
+    edges: List[Tuple[str, str]],
+    people: Dict[str, Dict[str, Optional[object]]],
+) -> List[Tuple[str, str]]:
+    """Collapse mutual advisor pairs to the older-to-newer direction."""
+    edge_set = set(edges)
+    dropped: Set[Tuple[str, str]] = set()
+    for advisor, advisee in edges:
+        reverse = (advisee, advisor)
+        if reverse not in edge_set or (advisor, advisee) in dropped or reverse in dropped:
+            continue
+        advisor_year = _known_year(people.get(advisor, {}))
+        advisee_year = _known_year(people.get(advisee, {}))
+        if advisor_year is not None and advisee_year is not None and advisor_year != advisee_year:
+            drop = (advisor, advisee) if advisor_year > advisee_year else reverse
+        else:
+            drop = max((advisor, advisee), reverse, key=lambda edge: (edge[0].casefold(), edge[1].casefold()))
+        dropped.add(drop)
+    return [edge for edge in edges if edge not in dropped]
 
 
 def impute_years(people: Dict[str, Dict[str, Optional[object]]], placeholder: int = -1) -> None:
@@ -292,22 +314,6 @@ def _relation_maps(
     return incoming, outgoing
 
 
-def _distance_to_faculty(
-    incoming: Dict[str, List[str]],
-    faculty: List[str],
-) -> Dict[str, int]:
-    distances = {name: 0 for name in faculty}
-    queue: deque[str] = deque(faculty)
-    while queue:
-        node = queue.popleft()
-        for advisor in incoming.get(node, []):
-            candidate = distances[node] + 1
-            if advisor not in distances or candidate < distances[advisor]:
-                distances[advisor] = candidate
-                queue.append(advisor)
-    return distances
-
-
 def _downstream_faculty_sets(
     incoming: Dict[str, List[str]],
     faculty: List[str],
@@ -326,41 +332,87 @@ def _downstream_faculty_sets(
     return downstream
 
 
-def _root_depths(
-    names: Iterable[str],
+def _lineage_ordered_faculty(
+    names: List[str],
+    people: Dict[str, Dict[str, Optional[object]]],
     incoming: Dict[str, List[str]],
     outgoing: Dict[str, List[str]],
-) -> Dict[str, int]:
-    node_names = list(names)
-    indegree = {name: len(incoming.get(name, [])) for name in node_names}
-    depths = {name: 0 for name in node_names}
-    queue: deque[str] = deque(sorted((name for name in node_names if indegree[name] == 0), key=str.casefold))
-    seen = 0
-    while queue:
-        node = queue.popleft()
-        seen += 1
-        for advisee in outgoing.get(node, []):
-            depths[advisee] = max(depths[advisee], depths[node] + 1)
-            indegree[advisee] -= 1
-            if indegree[advisee] == 0:
-                queue.append(advisee)
+    downstream_faculty: Dict[str, Set[str]],
+    faculty: List[str],
+) -> List[str]:
+    """Order current faculty so nearby angular wedges share ancestors."""
+    faculty_set = set(faculty)
+    emitted: Set[str] = set()
+    ordered: List[str] = []
 
-    if seen == len(node_names):
-        return depths
+    def branch_sort_key(name: str) -> Tuple[int, int, str, str]:
+        reachable = downstream_faculty.get(name, set()) & faculty_set
+        years = [_known_year(people[fac]) for fac in reachable]
+        known_years = [year for year in years if year is not None]
+        lineage_name = min((fac.casefold() for fac in reachable), default=name.casefold())
+        own_year = _known_year(people[name])
+        return (
+            0 if reachable or name in faculty_set else 1,
+            min(known_years) if known_years else (own_year if own_year is not None else 9999),
+            lineage_name,
+            name.casefold(),
+        )
 
-    # Cycles are not expected in advisor data, but keep deterministic depths
-    # rather than failing the build when the source sheet has a loop.
-    for _ in range(len(node_names)):
-        changed = False
-        for advisor in sorted(node_names, key=str.casefold):
-            for advisee in outgoing.get(advisor, []):
-                candidate = depths[advisor] + 1
-                if candidate > depths[advisee]:
-                    depths[advisee] = candidate
-                    changed = True
-        if not changed:
-            break
-    return depths
+    def visit(name: str, visiting: Set[str]) -> None:
+        if name in visiting:
+            return
+        visiting.add(name)
+        if name in faculty_set and name not in emitted:
+            emitted.add(name)
+            ordered.append(name)
+        children = [
+            child
+            for child in outgoing.get(name, [])
+            if child in faculty_set or downstream_faculty.get(child)
+        ]
+        for child in sorted(children, key=branch_sort_key):
+            visit(child, visiting)
+        visiting.remove(name)
+
+    roots = sorted((name for name in names if not incoming.get(name)), key=branch_sort_key)
+    for root in roots:
+        visit(root, set())
+    for name in sorted(names, key=branch_sort_key):
+        visit(name, set())
+
+    for name in sorted(faculty_set - emitted, key=str.casefold):
+        ordered.append(name)
+    return ordered
+
+
+def _normalize_angle(angle: float) -> float:
+    return angle % math.tau
+
+
+def _centered_angle(angle: float) -> float:
+    return (angle + math.pi) % math.tau - math.pi
+
+
+def _angle_for_index(index: int, total: int) -> float:
+    if total <= 1:
+        return -math.pi / 2
+    return (index / total) * math.tau - math.pi / 2
+
+
+def _circular_mean(angles: Iterable[float], fallback: float = -math.pi / 2) -> float:
+    angles = list(angles)
+    if not angles:
+        return fallback
+    x = sum(math.cos(angle) for angle in angles)
+    y = sum(math.sin(angle) for angle in angles)
+    if abs(x) < 1e-7 and abs(y) < 1e-7:
+        return fallback
+    return math.atan2(y, x)
+
+
+def _stable_unit(name: str) -> float:
+    digest = hashlib.sha1(name.encode("utf-8")).hexdigest()[:8]
+    return int(digest, 16) / 0xFFFFFFFF
 
 
 def _temporal_rank(
@@ -384,6 +436,24 @@ def _rank_nodes(
 ) -> Tuple[Dict[str, int], Dict[str, float], int, Dict[str, Set[str]]]:
     names = sorted(people, key=str.casefold)
     incoming, outgoing = _relation_maps(names, edges)
+    graph = nx.DiGraph()
+    graph.add_nodes_from(names)
+    graph.add_edges_from((advisor, advisee) for advisor, advisee in edges if advisor in people and advisee in people)
+    components = list(nx.strongly_connected_components(graph))
+    condensed = nx.condensation(graph, scc=components)
+    component_for_name = condensed.graph.get("mapping", {})
+    component_members = {
+        component: set(condensed.nodes[component].get("members", set()))
+        for component in condensed.nodes
+    }
+    component_base_rank = {component: 0 for component in condensed.nodes}
+    for component in nx.topological_sort(condensed):
+        for successor in condensed.successors(component):
+            component_base_rank[successor] = max(
+                component_base_rank[successor],
+                component_base_rank[component] + 1,
+            )
+
     faculty = sorted(
         (name for name in names if people[name].get("cmu", False)),
         key=str.casefold,
@@ -391,66 +461,41 @@ def _rank_nodes(
     known_years = sorted(
         year for year in (_known_year(attrs) for attrs in people.values()) if year is not None
     )
-    root_depths = _root_depths(names, incoming, outgoing)
+    downstream_faculty = _downstream_faculty_sets(incoming, faculty) if faculty else {name: set() for name in names}
 
-    if faculty:
-        distances = _distance_to_faculty(incoming, faculty)
-        max_distance = max(distances.values(), default=0)
-        max_depth = max(root_depths.values(), default=0)
-        bottom_rank = max(2, max_distance, max_depth)
-        ranks: Dict[str, int] = {}
-        for name in names:
-            if name in faculty:
-                ranks[name] = bottom_rank
-                continue
-            if name in distances:
-                ranks[name] = max(0, bottom_rank - distances[name])
-                continue
-            year_rank = _temporal_rank(_known_year(people[name]), known_years, bottom_rank - 1)
-            ranks[name] = year_rank if year_rank is not None else min(root_depths[name], bottom_rank - 1)
-            ranks[name] = min(ranks[name], bottom_rank - 1)
-        downstream_faculty = _downstream_faculty_sets(incoming, faculty)
-    else:
-        bottom_rank = max(1, max(root_depths.values(), default=0))
-        ranks = {}
-        for name in names:
-            year_rank = _temporal_rank(_known_year(people[name]), known_years, bottom_rank)
-            ranks[name] = year_rank if year_rank is not None else root_depths[name]
-        downstream_faculty = {name: set() for name in names}
+    structural_outer = max(component_base_rank.values(), default=0)
+    temporal_outer = max(5, structural_outer)
+    faculty_floor = temporal_outer if faculty else 0
 
-    for _ in range(len(names)):
-        changed = False
-        for advisor, advisee in edges:
-            if advisor not in ranks or advisee not in ranks:
-                continue
-            if faculty and advisor in faculty and advisee not in faculty:
-                continue
-            if ranks[advisor] >= ranks[advisee]:
-                if faculty and advisee in faculty:
-                    next_rank = min(ranks[advisor], bottom_rank - 1)
-                    if next_rank != ranks[advisor]:
-                        ranks[advisor] = next_rank
-                        changed = True
-                elif not faculty or ranks[advisor] < bottom_rank - 1:
-                    next_rank = min(bottom_rank - 1 if faculty else bottom_rank, ranks[advisor] + 1)
-                    if next_rank > ranks[advisee]:
-                        ranks[advisee] = next_rank
-                        changed = True
-        if not changed:
-            break
+    component_rank: Dict[int, int] = {}
+    for component, members in component_members.items():
+        rank = component_base_rank[component]
+        years = [_known_year(people[name]) for name in members]
+        known_component_years = sorted(year for year in years if year is not None)
+        median_year = (
+            known_component_years[len(known_component_years) // 2]
+            if known_component_years
+            else None
+        )
+        year_rank = _temporal_rank(median_year, known_years, temporal_outer)
+        is_isolated = condensed.in_degree(component) == 0 and condensed.out_degree(component) == 0
+        if is_isolated and year_rank is not None:
+            rank = year_rank
+        if any(people[name].get("cmu", False) for name in members):
+            rank = max(rank, faculty_floor)
+        component_rank[component] = rank
 
-    temporal_offsets: Dict[str, float] = {}
-    for name in names:
-        if faculty and name in faculty:
-            temporal_offsets[name] = 0.0
-            continue
-        year_rank = _temporal_rank(_known_year(people[name]), known_years, bottom_rank)
-        if year_rank is None or bottom_rank <= 0:
-            temporal_offsets[name] = 0.0
-            continue
-        temporal_offsets[name] = max(-0.32, min(0.32, (year_rank - ranks[name]) * 0.18))
+    # The condensation graph is acyclic, so this produces the minimum outward
+    # ranks that satisfy all non-cyclic advisor edges.
+    for component in nx.topological_sort(condensed):
+        for successor in condensed.successors(component):
+            component_rank[successor] = max(component_rank[successor], component_rank[component] + 1)
 
-    return ranks, temporal_offsets, bottom_rank, downstream_faculty
+    ranks = {name: component_rank[component_for_name[name]] for name in names}
+
+    outer_rank = max(ranks.values(), default=0)
+    temporal_offsets = {name: 0.0 for name in names}
+    return ranks, temporal_offsets, outer_rank, downstream_faculty
 
 
 def build_layout(
@@ -459,84 +504,168 @@ def build_layout(
 ) -> Dict[str, Dict[str, object]]:
     """Build stable tree coordinates for the browser explorer.
 
-    The layout is intentionally rank-based, echoing the earlier Graphviz
-    output: advisor links define the broad top-to-bottom structure, known years
-    nudge non-faculty within their rank, and current CMU faculty are pinned to
-    a shared sink row.
+    The layout is radial and outward-directed: old roots sit near the center,
+    advisor-to-advisee edges move to larger radii, and broad lineages occupy
+    contiguous angular wedges instead of strict horizontal layers.
     """
     names = sorted(people, key=str.casefold)
-    ranks, temporal_offsets, bottom_rank, downstream_faculty = _rank_nodes(people, edges)
+    ranks, _, outer_rank, downstream_faculty = _rank_nodes(people, edges)
     faculty = sorted(
         (name for name in names if people[name].get("cmu", False)),
         key=str.casefold,
     )
-    faculty_order = {name: idx for idx, name in enumerate(faculty)}
-    horizontal_spacing = 230
-    vertical_spacing = 175
-    no_faculty_offset = len(faculty) + 1
-    incoming, _ = _relation_maps(names, edges)
+    incoming, outgoing = _relation_maps(names, edges)
+    ordered_faculty = _lineage_ordered_faculty(names, people, incoming, outgoing, downstream_faculty, faculty)
+    faculty_order = {name: idx for idx, name in enumerate(ordered_faculty)}
 
-    anchors: Dict[str, float] = {}
-    unresolved: List[str] = []
-    for name in names:
-        if name in faculty_order:
-            anchors[name] = float(faculty_order[name])
-            continue
-        reachable = sorted(downstream_faculty.get(name, set()), key=str.casefold)
+    def branch_sort_key(name: str) -> Tuple[int, float, int, str]:
+        reachable = sorted(downstream_faculty.get(name, set()), key=lambda fac: faculty_order.get(fac, 10_000))
         if reachable:
-            anchors[name] = sum(faculty_order[fac] for fac in reachable) / len(reachable)
-            continue
-        unresolved.append(name)
+            anchor = sum(faculty_order[fac] for fac in reachable) / len(reachable)
+            return (0, anchor, _known_year(people[name]) or 9999, name.casefold())
+        return (1, float(ranks.get(name, 0)), _known_year(people[name]) or 9999, name.casefold())
+
+    anchors = {name for name in names if not outgoing.get(name)}
+    anchors.update(faculty)
+    if not anchors:
+        anchors.update(names)
+
+    ordered_anchors: List[str] = []
+    emitted_anchors: Set[str] = set()
+
+    def emit_anchor_order(name: str, visiting: Set[str]) -> None:
+        if name in visiting:
+            return
+        visiting.add(name)
+        if name in anchors and name not in emitted_anchors:
+            emitted_anchors.add(name)
+            ordered_anchors.append(name)
+        for child in sorted(outgoing.get(name, []), key=branch_sort_key):
+            emit_anchor_order(child, visiting)
+        visiting.remove(name)
+
+    roots = sorted((name for name in names if not incoming.get(name)), key=branch_sort_key)
+    for root in roots:
+        emit_anchor_order(root, set())
+    for name in sorted(names, key=branch_sort_key):
+        emit_anchor_order(name, set())
+
+    for name in sorted(anchors - emitted_anchors, key=str.casefold):
+        ordered_anchors.append(name)
+
+    angles: Dict[str, float] = {
+        name: _angle_for_index(index, len(ordered_anchors))
+        for index, name in enumerate(ordered_anchors)
+    }
 
     for _ in range(len(names)):
-        remaining: List[str] = []
         changed = False
-        for name in unresolved:
-            advisor_anchors = [anchors[advisor] for advisor in incoming.get(name, []) if advisor in anchors]
-            if advisor_anchors:
-                anchors[name] = sum(advisor_anchors) / len(advisor_anchors)
+        for name in sorted(names, key=lambda node: (-ranks.get(node, 0), node.casefold())):
+            if name in angles:
+                continue
+            linked_angles = [angles[child] for child in outgoing.get(name, []) if child in angles]
+            if not linked_angles:
+                linked_angles = [angles[advisor] for advisor in incoming.get(name, []) if advisor in angles]
+            if linked_angles:
+                angles[name] = _circular_mean(linked_angles)
                 changed = True
-            else:
-                remaining.append(name)
-        unresolved = remaining
         if not changed:
             break
 
-    for name in unresolved:
-        year = _known_year(people[name])
-        anchors[name] = no_faculty_offset + (0 if year is None else year / 10000)
-        no_faculty_offset += 1
+    for name in names:
+        if name not in angles:
+            angles[name] = _normalize_angle(_stable_unit(name) * math.tau - math.pi / 2)
+
+    fixed_angles = set(ordered_anchors)
+    for _ in range(8):
+        next_angles = angles.copy()
+        for name in names:
+            if name in fixed_angles:
+                continue
+            linked_angles: List[float] = []
+            linked_angles.extend(angles[advisor] for advisor in incoming.get(name, []) if advisor in angles)
+            for child in outgoing.get(name, []):
+                if child in angles:
+                    linked_angles.extend([angles[child], angles[child]])
+            if linked_angles:
+                next_angles[name] = _circular_mean(linked_angles, angles[name])
+        angles = next_angles
 
     rows: Dict[int, List[str]] = defaultdict(list)
     for name, rank in ranks.items():
         rows[rank].append(name)
 
-    layout: Dict[str, Dict[str, object]] = {}
+    ordered_rows: Dict[int, List[str]] = {}
     for rank in sorted(rows):
-        row = sorted(
+        ordered_rows[rank] = sorted(
             rows[rank],
             key=lambda name: (
-                anchors[name],
+                _normalize_angle(angles[name]),
                 _known_year(people[name]) or 9999,
                 name.casefold(),
             ),
         )
-        previous_x: Optional[float] = None
+
+    layout_graph = nx.DiGraph()
+    layout_graph.add_nodes_from(names)
+    layout_graph.add_edges_from((advisor, advisee) for advisor, advisee in edges if advisor in people and advisee in people)
+    shells = [ordered_rows[rank] for rank in range(outer_rank + 1) if ordered_rows.get(rank)]
+    if shells:
+        shell_positions = nx.shell_layout(layout_graph, nlist=shells, scale=1, center=(0, 0))
+        library_positions = {
+            name: [float(position[0]), float(position[1])]
+            for name, position in shell_positions.items()
+        }
+        for name, position in library_positions.items():
+            x = float(position[0])
+            y = float(position[1])
+            if math.isfinite(x) and math.isfinite(y) and (abs(x) > 1e-9 or abs(y) > 1e-9):
+                angles[name] = math.atan2(y, x)
+
+    base_radius = 118.0
+    ring_gap = 112.0
+    lane_gap = 104.0
+    min_arc_gap = 52.0
+    node_radii: Dict[str, float] = {}
+    previous_outer_radius = 0.0
+    for rank in sorted(rows):
+        row = ordered_rows[rank]
+        count = max(1, len(row))
+        lane_count = max(1, math.ceil(count / 42))
+        lane_sizes = [sum(1 for index in range(count) if index % lane_count == lane) for lane in range(lane_count)]
+        lane_radii: List[float] = []
+        rank_base = base_radius if previous_outer_radius == 0 else previous_outer_radius + ring_gap
+        for lane, lane_size in enumerate(lane_sizes):
+            radius_for_count = (max(1, lane_size) * min_arc_gap) / math.tau
+            min_radius = rank_base + lane * lane_gap
+            if lane_radii:
+                min_radius = max(min_radius, lane_radii[-1] + lane_gap)
+            lane_radii.append(max(min_radius, radius_for_count))
         for index, name in enumerate(row):
-            x = anchors[name] * horizontal_spacing
-            if previous_x is not None and x - previous_x < horizontal_spacing * 0.72:
-                x = previous_x + horizontal_spacing * 0.72
-            previous_x = x
+            node_radii[name] = lane_radii[index % lane_count]
+        previous_outer_radius = max(lane_radii)
+
+    layout: Dict[str, Dict[str, object]] = {}
+    for rank in sorted(ordered_rows):
+        row = ordered_rows[rank]
+        for index, name in enumerate(row):
+            angle = _centered_angle(angles[name])
+            radius = node_radii[name]
+            x = radius * math.cos(angle)
+            y = radius * math.sin(angle)
             layout[name] = {
                 "x": round(x, 2),
-                "y": round((rank + temporal_offsets.get(name, 0.0)) * vertical_spacing, 2),
+                "y": round(y, 2),
                 "rank": rank,
+                "radius": round(radius, 2),
+                "angle": round(math.degrees(angle), 2),
                 "rowOrder": index,
-                "facultySink": bool(faculty and name in faculty_order and rank == bottom_rank),
+                "facultySink": False,
+                "facultyPerimeter": bool(name in faculty and rank >= max(0, outer_rank - 1)),
             }
 
     if faculty:
-        row = sorted(faculty, key=lambda name: layout[name]["x"])
+        row = sorted(faculty, key=lambda name: _normalize_angle(angles[name]))
         for index, name in enumerate(row):
             layout[name]["rowOrder"] = index
 
@@ -638,9 +767,9 @@ def build_graph_data(
             "missingAdvisorCount": sum(1 for node in nodes if node["category"] == "missing-advisor"),
             "yearRange": [years[0], years[-1]] if years else None,
             "layout": {
-                "name": "advisor-temporal-sink",
-                "rankDirection": "TB",
-                "facultySink": True,
+                "name": "advisor-radial-shell",
+                "rankDirection": "outward",
+                "facultySink": False,
             },
         },
         "filters": {

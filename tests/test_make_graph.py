@@ -105,6 +105,32 @@ def test_generation_marker_treats_blank_as_nonfaculty() -> None:
     assert not is_cmu_faculty_marker("true")
 
 
+def test_reciprocal_advisor_edges_keep_older_to_newer_direction() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "generation": "",
+                "advisee": "Older Mentor",
+                "advisor": "Newer Scholar",
+                "title": "PhD",
+                "year": 1970,
+            },
+            {
+                "generation": "",
+                "advisee": "Newer Scholar",
+                "advisor": "Older Mentor",
+                "title": "PhD",
+                "year": 1990,
+            },
+        ]
+    )
+
+    _, edges, _, _, _ = build_graph(df)
+
+    assert ("Older Mentor", "Newer Scholar") in edges
+    assert ("Newer Scholar", "Older Mentor") not in edges
+
+
 def test_build_graph_data_exports_browser_payload() -> None:
     df = pd.DataFrame(
         [
@@ -146,14 +172,16 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student One"]["role"] == "PhD alumni"
     assert people_by_name["Student Two"]["role"] == "MS alumni"
     assert people_by_name["Student Two"]["category"] == "follow-up"
-    assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
+    assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is False
+    assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True
+    assert people_by_name["Prof Advisor"]["layout"]["radius"] < people_by_name["Student One"]["layout"]["radius"]
 
     edge = payload["edges"][0]
     assert edge["source"] == people_by_name["Prof Advisor"]["id"]
     assert edge["target"] == people_by_name["Student One"]["id"]
 
 
-def test_layout_pins_current_faculty_to_temporal_sink_row() -> None:
+def test_layout_places_lineages_on_outward_radial_shells() -> None:
     df = pd.DataFrame(
         [
             {
@@ -219,20 +247,25 @@ def test_layout_pins_current_faculty_to_temporal_sink_row() -> None:
     gamma = people_by_name["Advisor Gamma"]["layout"]
     root = people_by_name["Root Mentor"]["layout"]
 
-    assert beta["facultySink"] is True
-    assert delta["facultySink"] is True
-    assert beta["rank"] == delta["rank"]
-    assert beta["y"] == delta["y"]
-    assert alpha["y"] < beta["y"]
-    assert gamma["y"] < delta["y"]
-    assert root["y"] < alpha["y"]
-    assert root["y"] < gamma["y"]
-    assert beta["x"] < root["x"] < delta["x"]
+    assert beta["facultySink"] is False
+    assert delta["facultySink"] is False
+    assert beta["facultyPerimeter"] is True
+    assert delta["facultyPerimeter"] is True
+    assert alpha["radius"] < beta["radius"]
+    assert gamma["radius"] < delta["radius"]
+    assert root["radius"] < alpha["radius"]
+    assert root["radius"] < gamma["radius"]
+    assert beta["radius"] > root["radius"]
+    assert delta["radius"] > root["radius"]
     assert (
-        people_by_name["Disconnected Old"]["layout"]["y"]
-        < people_by_name["Disconnected New"]["layout"]["y"]
+        people_by_name["Disconnected Old"]["layout"]["radius"]
+        < people_by_name["Disconnected New"]["layout"]["radius"]
     )
-    assert payload["meta"]["layout"]["name"] == "advisor-temporal-sink"
+    for edge in payload["edges"]:
+        advisor = people_by_name[edge["advisorName"]]["layout"]
+        advisee = people_by_name[edge["adviseeName"]]["layout"]
+        assert advisor["radius"] < advisee["radius"]
+    assert payload["meta"]["layout"]["name"] == "advisor-radial-shell"
 
 
 def test_cli_preserves_literal_none_advisor_token(tmp_path) -> None:
