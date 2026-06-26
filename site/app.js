@@ -94,6 +94,7 @@
     focusId: "",
     colorMode: "category",
     chronology: false,
+    lineageRelayoutId: "",
   };
 
   const model = {
@@ -532,6 +533,180 @@
     return state.chronology ? chronologyLayoutPosition(node) : nodeLayoutPosition(node);
   }
 
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function layoutPositionFromBase(node, basePositions) {
+    return basePositions && basePositions.has(node.id())
+      ? basePositions.get(node.id())
+      : nodeLayoutPosition(node) || node.position();
+  }
+
+  function visibleConnections(nodes) {
+    const nodeIds = new Set(nodes.map((node) => node.id()));
+    const connections = new Map(nodes.map((node) => [node.id(), new Set()]));
+    visibleElements().edges().forEach((edge) => {
+      const source = edge.data("source");
+      const target = edge.data("target");
+      if (!nodeIds.has(source) || !nodeIds.has(target)) return;
+      connections.get(source).add(target);
+      connections.get(target).add(source);
+    });
+    return connections;
+  }
+
+  function resolveHorizontalPositions(items, minGap) {
+    const ordered = [...items].sort((a, b) => a.target - b.target || a.name.localeCompare(b.name));
+    const clusters = ordered.map((item) => ({ items: [item], targetSum: item.target }));
+
+    function center(cluster) {
+      return cluster.targetSum / cluster.items.length;
+    }
+
+    function bounds(cluster) {
+      const halfWidth = minGap * (cluster.items.length - 1) / 2;
+      const clusterCenter = center(cluster);
+      return [clusterCenter - halfWidth, clusterCenter + halfWidth];
+    }
+
+    let index = 0;
+    while (index < clusters.length - 1) {
+      const left = clusters[index];
+      const right = clusters[index + 1];
+      const [, leftRight] = bounds(left);
+      const [rightLeft] = bounds(right);
+      if (leftRight + minGap > rightLeft) {
+        left.items.push(...right.items);
+        left.targetSum += right.targetSum;
+        clusters.splice(index + 1, 1);
+        index = Math.max(0, index - 1);
+      } else {
+        index += 1;
+      }
+    }
+
+    const positions = new Map();
+    clusters.forEach((cluster) => {
+      const start = center(cluster) - minGap * (cluster.items.length - 1) / 2;
+      cluster.items
+        .sort((a, b) => a.target - b.target || a.name.localeCompare(b.name))
+        .forEach((item, itemIndex) => {
+          positions.set(item.id, start + itemIndex * minGap);
+        });
+    });
+    return positions;
+  }
+
+  function chronologicalLayoutPositions(nodes, basePositions = null) {
+    const withYears = nodes
+      .map((node) => ({ node, year: numericChronologyYear(node.data("chronologyYear")) }))
+      .filter((item) => item.year !== null);
+    if (!withYears.length) {
+      return basePositions || new Map(nodes.map((node) => [node.id(), nodeLayoutPosition(node) || node.position()]));
+    }
+
+    const years = withYears.map((item) => item.year);
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const yearRange = Math.max(1, maxYear - minYear);
+    const targetHeight = clamp(nodes.length * 15, 2200, 9000);
+    const yScale = clamp(targetHeight / yearRange, 4.5, 12);
+    const yearCenter = (minYear + maxYear) / 2;
+
+    const baseById = new Map();
+    nodes.forEach((node) => {
+      baseById.set(node.id(), layoutPositionFromBase(node, basePositions));
+    });
+
+    const baseXs = [...baseById.values()].map((position) => position.x);
+    const minBaseX = Math.min(...baseXs);
+    const maxBaseX = Math.max(...baseXs);
+    const baseCenterX = (minBaseX + maxBaseX) / 2;
+    const baseWidth = Math.max(1, maxBaseX - minBaseX);
+    const targetWidth = clamp(nodes.length * 20, nodes.length < 240 ? 1800 : 4200, nodes.length < 240 ? 5600 : 7600);
+    const xScale = Math.min(1, targetWidth / baseWidth);
+    const connections = visibleConnections(nodes);
+
+    const positions = new Map();
+    nodes.forEach((node) => {
+      const base = baseById.get(node.id());
+      const year = numericChronologyYear(node.data("chronologyYear"));
+      positions.set(node.id(), {
+        x: (base.x - baseCenterX) * xScale,
+        y: year === null ? base.y : (year - yearCenter) * yScale,
+      });
+    });
+
+    for (let pass = 0; pass < 3; pass += 1) {
+      const nextX = new Map();
+      nodes.forEach((node) => {
+        const neighborXs = [...(connections.get(node.id()) || [])]
+          .map((id) => positions.get(id))
+          .filter(Boolean)
+          .map((position) => position.x);
+        const current = positions.get(node.id());
+        if (!neighborXs.length) {
+          nextX.set(node.id(), current.x);
+          return;
+        }
+        const neighborAverage = neighborXs.reduce((sum, x) => sum + x, 0) / neighborXs.length;
+        nextX.set(node.id(), current.x * 0.68 + neighborAverage * 0.32);
+      });
+      nextX.forEach((x, id) => {
+        positions.get(id).x = x;
+      });
+    }
+
+    const bands = new Map();
+    nodes.forEach((node) => {
+      const position = positions.get(node.id());
+      const key = Math.round(position.y / 68);
+      if (!bands.has(key)) bands.set(key, []);
+      bands.get(key).push({
+        id: node.id(),
+        name: node.data("name") || node.id(),
+        target: position.x,
+      });
+    });
+    bands.forEach((items) => {
+      const resolved = resolveHorizontalPositions(items, 150);
+      resolved.forEach((x, id) => {
+        positions.get(id).x = x;
+      });
+    });
+
+    const placed = [];
+    nodes
+      .slice()
+      .sort((a, b) => {
+        const aPosition = positions.get(a.id());
+        const bPosition = positions.get(b.id());
+        return aPosition.y - bPosition.y || aPosition.x - bPosition.x || a.data("name").localeCompare(b.data("name"));
+      })
+      .forEach((node) => {
+        const position = positions.get(node.id());
+        const shiftStep = 165;
+        const shifts = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5].map((slot) => slot * shiftStep);
+        const shift = shifts.find((candidate) => (
+          placed.every((other) => (
+            Math.abs(other.y - position.y) >= 58 || Math.abs(other.x - (position.x + candidate)) >= 146
+          ))
+        )) || 0;
+        position.x += shift;
+        placed.push(position);
+      });
+
+    return positions;
+  }
+
+  function preparedLayoutPositions(nodes) {
+    const nodeArray = nodes.toArray();
+    const basePositions = state.lineageRelayoutId ? lineageLayoutPositions(nodeArray) : null;
+    if (state.chronology) return chronologicalLayoutPositions(nodeArray, basePositions);
+    return basePositions;
+  }
+
   function hasPresetLayout(nodes) {
     return Boolean(
       state.graph &&
@@ -560,10 +735,15 @@
     const nodes = visibleNodes();
     if (!state.cy || nodes.length === 0) return;
     const roots = visibleRootCollection();
+    const presetPositions = preparedLayoutPositions(nodes);
     const options = hasPresetLayout(nodes)
       ? {
           name: "preset",
-          positions: (node) => activeLayoutPosition(node) || node.position(),
+          positions: (node) => (
+            presetPositions && presetPositions.has(node.id())
+              ? presetPositions.get(node.id())
+              : activeLayoutPosition(node) || node.position()
+          ),
           fit: false,
           animate: !reducedMotion,
           animationDuration: 520,
@@ -674,6 +854,10 @@
       els.modeLabel.textContent = text;
       return;
     }
+    if (state.lineageRelayoutId) {
+      els.modeLabel.textContent = state.chronology ? "Relayout lineage + chronology" : "Relayout lineage";
+      return;
+    }
     if (state.focusId) {
       const person = model.peopleById.get(state.focusId);
       els.modeLabel.textContent = person ? `Focused: ${person.name}` : "Focused branch";
@@ -767,7 +951,6 @@
   function setChronologyMode(enabled) {
     state.chronology = Boolean(enabled);
     if (state.chronology) {
-      state.focusId = "";
       state.query = "";
       els.search.value = "";
       els.searchResults.replaceChildren();
@@ -891,6 +1074,7 @@
 
   function traceLineage(id = state.selectedId) {
     if (!id || !state.cy) return;
+    state.lineageRelayoutId = "";
     clearElementHighlights();
     const node = state.cy.$id(id);
     const lineage = node.predecessors().union(node.successors()).union(node);
@@ -995,18 +1179,18 @@
   function relayoutLineage(id = state.selectedId) {
     if (!id || !state.cy) return;
     state.focusId = id;
+    state.lineageRelayoutId = id;
     state.query = "";
-    state.chronology = false;
     els.search.value = "";
     els.searchResults.replaceChildren();
-    els.chronologyToggle.checked = false;
 
     clearElementHighlights();
     applyFilters({ relayout: false });
 
     const lineage = visibleElements();
     const nodes = visibleNodes().toArray();
-    const positions = lineageLayoutPositions(nodes);
+    const basePositions = lineageLayoutPositions(nodes);
+    const positions = state.chronology ? chronologicalLayoutPositions(nodes, basePositions) : basePositions;
     state.cy.elements().removeClass("faded lineage path-node path-edge");
     lineage.addClass("lineage");
     state.cy.$id(id).removeClass("lineage").addClass("selected");
@@ -1024,12 +1208,13 @@
       animationDuration: 520,
       animationEasing: "ease-out-cubic",
     }).run();
-    updateModeLabel("Relayout lineage");
+    updateModeLabel(state.chronology ? "Relayout lineage + chronology" : "Relayout lineage");
     writeUrlState();
   }
 
   function focusBranch(id = state.selectedId) {
     if (!id) return;
+    state.lineageRelayoutId = "";
     state.focusId = state.focusId === id ? "" : id;
     if (state.focusId) {
       state.query = "";
@@ -1043,6 +1228,7 @@
 
   function clearAll() {
     state.focusId = "";
+    state.lineageRelayoutId = "";
     state.query = "";
     els.search.value = "";
     els.searchResults.replaceChildren();
@@ -1073,6 +1259,7 @@
   }
 
   function highlightPath(pathIds) {
+    state.lineageRelayoutId = "";
     clearAllFiltersWithoutLayout();
     clearElementHighlights();
     const pathSet = new Set(pathIds);
@@ -1093,6 +1280,7 @@
 
   function clearAllFiltersWithoutLayout() {
     state.focusId = "";
+    state.lineageRelayoutId = "";
     state.query = "";
     els.search.value = "";
     state.cy.elements().removeClass("is-hidden");
