@@ -5,11 +5,10 @@ permissions:
   pages: write
   id-token: write
 
-# This workflow installs dependencies, generates the family tree from the
-# configured CSV, and deploys the result through the GitHub Pages workflow
-# artifact pipeline.  The workflow expects a repository
-# secret named `CSV_URL` containing the URL of the published CSV (e.g.
-# `https://docs.google.com/spreadsheets/d/…/export?format=csv`).
+# This workflow installs dependencies, generates browser-consumable family
+# tree JSON from the configured CSV, and deploys the static explorer through
+# the GitHub Pages workflow artifact pipeline.  The workflow expects a
+# repository secret named `CSV_URL` containing the URL of the published CSV.
 
 on:
   push:
@@ -33,19 +32,16 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y graphviz
-
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Generate family tree
+      - name: Generate family tree data
         env:
           CSV_URL: ${{ secrets.CSV_URL }}
         run: |
           rm -rf docs
           mkdir -p docs
-          python make_graph.py --csv "$CSV_URL" --output-basename docs/cmu_meche_family_tree
+          python make_graph.py --csv "$CSV_URL" --output-json docs/graph-data.json
 
       - name: Create build marker
         run: |
@@ -69,7 +65,7 @@ jobs:
             -e "s|__BUILD_COMMIT__|${BUILD_COMMIT}|g" \
             -e "s|__BUILD_AT_UTC__|${BUILD_AT_UTC}|g" \
             site/index.html > docs/index.html
-          cp site/zoom.html docs/zoom.html
+          cp site/app.js site/styles.css site/zoom.html docs/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

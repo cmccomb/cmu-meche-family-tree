@@ -4,113 +4,168 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CMU MechE Family Tree</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #17211f;
-      --muted: #5d6b66;
-      --paper: #fbfaf5;
-      --accent: #0f766e;
-      --ring: rgba(15, 118, 110, 0.22);
-    }
-    body {
-      margin: 2rem;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 32rem),
-        var(--paper);
-      font-family: Georgia, "Times New Roman", serif;
-    }
-    h1 { margin-bottom: 0.35rem; }
-    p { color: var(--muted); line-height: 1.5; }
-    a { color: var(--accent); }
-    figure { margin: 1.5rem 0; }
-    .tree-link {
-      position: relative;
-      display: block;
-      overflow: hidden;
-      border: 1px solid rgba(23, 33, 31, 0.14);
-      border-radius: 18px;
-      background: white;
-      box-shadow: 0 18px 48px rgba(23, 33, 31, 0.12);
-      cursor: zoom-in;
-    }
-    .tree-link img {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-      transition: transform 180ms ease, filter 180ms ease;
-    }
-    .tree-link::before {
-      content: "";
-      position: absolute;
-      right: 1.25rem;
-      top: 1.25rem;
-      z-index: 2;
-      width: 3.25rem;
-      height: 3.25rem;
-      border: 3px solid white;
-      border-radius: 50%;
-      background:
-        linear-gradient(45deg, transparent 58%, white 59%, white 70%, transparent 71%),
-        rgba(15, 118, 110, 0.88);
-      box-shadow: 0 12px 32px rgba(23, 33, 31, 0.26);
-      opacity: 0;
-      transform: translateY(-0.4rem) scale(0.92);
-      transition: opacity 180ms ease, transform 180ms ease;
-    }
-    .tree-link::after {
-      content: "Open zoomable tree";
-      position: absolute;
-      right: 1.25rem;
-      top: 5rem;
-      z-index: 2;
-      padding: 0.45rem 0.7rem;
-      border-radius: 999px;
-      color: white;
-      background: rgba(23, 33, 31, 0.82);
-      font: 700 0.85rem/1.1 system-ui, sans-serif;
-      opacity: 0;
-      transform: translateY(-0.4rem);
-      transition: opacity 180ms ease, transform 180ms ease;
-    }
-    .tree-link:hover img,
-    .tree-link:focus-visible img {
-      filter: saturate(1.04) contrast(1.02);
-      transform: scale(1.006);
-    }
-    .tree-link:hover::before,
-    .tree-link:hover::after,
-    .tree-link:focus-visible::before,
-    .tree-link:focus-visible::after {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-    .tree-link:focus-visible {
-      outline: 4px solid var(--ring);
-      outline-offset: 4px;
-    }
-  </style>
+  <meta name="description" content="Explore CMU Mechanical Engineering advisor-student academic lineages.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.4/dist/cytoscape.min.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <h1>CMU MechE Academic Family Tree</h1>
-  <p>This graph is generated automatically from a publicly shared CSV. It shows advisor-advisee relationships for Mechanical Engineering faculty at Carnegie Mellon University.</p>
-  <figure>
-    <a class="tree-link" href="zoom.html" aria-label="Open zoomable CMU MechE family tree">
-      <picture>
-        <source srcset="cmu_meche_family_tree.svg" type="image/svg+xml">
-        <img src="cmu_meche_family_tree.png" alt="CMU MechE Family Tree">
-      </picture>
-    </a>
-  </figure>
-  <p><strong>Build</strong>: <code>__BUILD_COMMIT__</code> at <code>__BUILD_AT_UTC__</code>.</p>
-  <p>
-    Download:
-    <a href="cmu_meche_family_tree.svg">SVG</a> | 
-    <a href="cmu_meche_family_tree.png">PNG</a> | 
-    <a href="zoom.html">Zoomable view</a>
-  </p>
-  <p>For more details on how this graph is built, see the <a href="../README.md">README</a> on the main branch.</p>
+  <div class="app-shell no-selection" id="appShell">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="CMU MechE family tree home">
+        <span class="brand-mark">CMU</span>
+        <span>
+          <span class="brand-title">MechE Family Tree</span>
+          <span class="brand-subtitle">Academic lineages across advisors, faculty, and graduates</span>
+        </span>
+      </a>
+      <div class="top-actions" aria-label="Graph actions">
+        <button class="icon-button" id="fitButton" type="button" title="Fit graph" aria-label="Fit graph">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/><path d="M9 9h6v6H9z"/></svg>
+          <span>Fit</span>
+        </button>
+        <button class="icon-button" id="focusButton" type="button" title="Focus selected branch" aria-label="Focus selected branch">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M19.1 4.9l-2.8 2.8M7.7 16.3l-2.8 2.8"/></svg>
+          <span>Focus</span>
+        </button>
+        <button class="icon-button" id="pathButton" type="button" title="Find path" aria-label="Find path">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7a3 3 0 1 0 0 .1"/><path d="M19 17a3 3 0 1 0 0 .1"/><path d="M8 7h3a4 4 0 0 1 0 8H8"/><path d="M13 15h3"/></svg>
+          <span>Path</span>
+        </button>
+        <button class="icon-button" id="shareButton" type="button" title="Copy share link" aria-label="Copy share link">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8"/><path d="M15 6h3a6 6 0 0 1 0 12h-3"/><path d="M9 18H6A6 6 0 0 1 6 6h3"/></svg>
+          <span>Share</span>
+        </button>
+        <a class="icon-button" href="graph-data.json" download title="Download graph data" aria-label="Download graph data">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          <span>Data</span>
+        </a>
+      </div>
+    </header>
+
+    <aside class="control-rail" aria-label="Explore family tree">
+      <section class="control-group">
+        <label for="searchInput">Search people</label>
+        <div class="search-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+          <input id="searchInput" type="search" list="peopleOptions" autocomplete="off" placeholder="Name, role, or year">
+          <datalist id="peopleOptions"></datalist>
+        </div>
+        <div id="searchResults" class="search-results" aria-live="polite"></div>
+      </section>
+
+      <section class="control-group filter-grid">
+        <label for="eraFilter">Era</label>
+        <select id="eraFilter">
+          <option value="">All eras</option>
+        </select>
+
+        <label for="roleFilter">Role</label>
+        <select id="roleFilter">
+          <option value="">All roles</option>
+        </select>
+
+        <label for="categoryFilter">Lineage status</label>
+        <select id="categoryFilter">
+          <option value="">All statuses</option>
+        </select>
+      </section>
+
+      <section class="control-group">
+        <div class="group-heading">
+          <h2>Guided views</h2>
+          <button id="clearButton" type="button">Clear</button>
+        </div>
+        <div id="guidedChips" class="chip-list"></div>
+      </section>
+
+      <section class="control-group stats-strip" aria-label="Graph summary">
+        <div>
+          <strong id="nodeCount">0</strong>
+          <span>people</span>
+        </div>
+        <div>
+          <strong id="edgeCount">0</strong>
+          <span>links</span>
+        </div>
+        <div>
+          <strong id="facultyCount">0</strong>
+          <span>faculty</span>
+        </div>
+      </section>
+    </aside>
+
+    <main class="graph-stage">
+      <div id="cy" aria-label="Interactive advisor-student family tree"></div>
+      <div id="loadingOverlay" class="loading-overlay">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Loading family tree</span>
+      </div>
+      <div class="graph-status" aria-live="polite">
+        <span id="visibleCount">0 visible</span>
+        <span id="modeLabel">Explore</span>
+      </div>
+      <div class="mini-panel" aria-label="Graph overview">
+        <svg id="miniMap" viewBox="0 0 220 132" role="img" aria-label="Mini map"></svg>
+        <div id="legend" class="legend"></div>
+      </div>
+    </main>
+
+    <aside class="profile-panel" aria-label="Selected person">
+      <div id="emptyProfile" class="empty-profile">
+        <span class="profile-avatar" aria-hidden="true">CMU</span>
+        <h2>No person selected</h2>
+        <p>Use search or select a node.</p>
+      </div>
+
+      <div id="profileContent" class="profile-content" hidden>
+        <div class="profile-header">
+          <span id="profileAvatar" class="profile-avatar" aria-hidden="true"></span>
+          <div>
+            <h2 id="profileName"></h2>
+            <p id="profileMeta"></p>
+          </div>
+        </div>
+        <div id="profileTags" class="tag-list"></div>
+        <div class="profile-actions">
+          <button id="traceButton" type="button">Trace lineage</button>
+          <button id="focusBranchButton" type="button">Focus branch</button>
+        </div>
+        <section class="relation-block">
+          <h3>Advisors</h3>
+          <div id="advisorList" class="relation-list"></div>
+        </section>
+        <section class="relation-block">
+          <h3>Students</h3>
+          <div id="studentList" class="relation-list"></div>
+        </section>
+      </div>
+
+      <footer class="build-meta">
+        <span>Build</span>
+        <code>__BUILD_COMMIT__</code>
+        <span>at</span>
+        <code>__BUILD_AT_UTC__</code>
+      </footer>
+    </aside>
+  </div>
+
+  <dialog id="pathDialog" class="path-dialog">
+    <form method="dialog" id="pathForm">
+      <div class="dialog-header">
+        <h2>Find path</h2>
+        <button class="ghost-button" value="cancel" type="submit" aria-label="Close path finder">Close</button>
+      </div>
+      <label for="pathFrom">From</label>
+      <input id="pathFrom" list="peopleOptions" autocomplete="off" placeholder="Starting person">
+      <label for="pathTo">To</label>
+      <input id="pathTo" list="peopleOptions" autocomplete="off" placeholder="Destination person">
+      <menu>
+        <button id="runPathButton" type="button">Find path</button>
+      </menu>
+      <p id="pathStatus" class="path-status" aria-live="polite"></p>
+    </form>
+  </dialog>
 </body>
 </html>
