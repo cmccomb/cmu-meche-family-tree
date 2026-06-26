@@ -424,6 +424,31 @@ def _lineage_ordered_faculty(
     return ordered
 
 
+def _faculty_left_to_right_order(
+    ordered_faculty: List[str],
+    edges: Iterable[Tuple[str, str]],
+) -> List[str]:
+    """Keep faculty advisor links left-to-right when faculty share a row."""
+    faculty_set = set(ordered_faculty)
+    graph = nx.DiGraph()
+    graph.add_nodes_from(ordered_faculty)
+    graph.add_edges_from(
+        (advisor, advisee)
+        for advisor, advisee in edges
+        if advisor in faculty_set and advisee in faculty_set
+    )
+    if not nx.is_directed_acyclic_graph(graph):
+        return ordered_faculty
+
+    original_order = {name: index for index, name in enumerate(ordered_faculty)}
+    return list(
+        nx.lexicographical_topological_sort(
+            graph,
+            key=lambda name: (original_order.get(name, len(original_order)), name.casefold()),
+        )
+    )
+
+
 def _source_generation(attrs: Dict[str, Optional[object]]) -> Optional[int]:
     return to_int_or_none(attrs.get("generation"))
 
@@ -555,15 +580,26 @@ def build_layout(
     """
     edge_list = list(edges)
     names = sorted(people, key=str.casefold)
-    generations = _infer_tree_generations(people, edge_list)
-    max_generation = max(generations.values(), default=0)
     faculty = sorted(
         (name for name in names if people[name].get("cmu", False)),
         key=str.casefold,
     )
+    faculty_set = set(faculty)
+    vertical_edges = [
+        (advisor, advisee)
+        for advisor, advisee in edge_list
+        if not (advisor in faculty_set and advisee in faculty_set)
+    ]
+    generations = _infer_tree_generations(people, vertical_edges)
+    for name in faculty:
+        generations[name] = 0
+    max_generation = max(generations.values(), default=0)
     incoming, outgoing = _relation_maps(names, edge_list)
     downstream_faculty = _downstream_faculty_sets(incoming, faculty) if faculty else {name: set() for name in names}
-    ordered_faculty = _lineage_ordered_faculty(names, people, incoming, outgoing, downstream_faculty, faculty)
+    ordered_faculty = _faculty_left_to_right_order(
+        _lineage_ordered_faculty(names, people, incoming, outgoing, downstream_faculty, faculty),
+        edge_list,
+    )
     faculty_order = {name: idx for idx, name in enumerate(ordered_faculty)}
 
     component_by_name, faculty_by_component = _component_downstream_faculty(names, edge_list, downstream_faculty)
@@ -578,6 +614,8 @@ def build_layout(
     component_order = {component: index for index, component in enumerate(fallback_components)}
 
     def branch_anchor(name: str) -> float:
+        if name in faculty_order:
+            return float(faculty_order[name])
         reachable = downstream_faculty.get(name, set())
         if not reachable:
             reachable = faculty_by_component.get(component_by_name.get(name, -1), set())
@@ -627,7 +665,7 @@ def build_layout(
                 "sourceGeneration": _source_generation(people[name]),
                 "branchAnchor": round(branch_anchor(name), 3),
                 "rowOrder": index,
-                "facultySink": False,
+                "facultySink": bool(name in faculty_set),
                 "facultyPerimeter": bool(name in faculty),
             }
 
@@ -738,6 +776,10 @@ def build_graph_data(
 
     json_edges = []
     for idx, (advisor, advisee) in enumerate(renderable_edges):
+        faculty_peer = bool(
+            renderable_people[advisor].get("cmu", False)
+            and renderable_people[advisee].get("cmu", False)
+        )
         json_edges.append(
             {
                 "id": f"e{idx}-{ids_by_name[advisor]}-{ids_by_name[advisee]}",
@@ -746,6 +788,8 @@ def build_graph_data(
                 "advisorName": advisor,
                 "adviseeName": advisee,
                 "type": "advisor",
+                "facultyPeer": faculty_peer,
+                "orientation": "left-to-right" if faculty_peer else "top-to-bottom",
             }
         )
 
@@ -776,7 +820,7 @@ def build_graph_data(
             "layout": {
                 "name": "advisor-layered-tree",
                 "rankDirection": "top-to-bottom",
-                "facultySink": False,
+                "facultySink": True,
             },
         },
         "filters": {

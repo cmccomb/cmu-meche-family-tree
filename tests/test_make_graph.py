@@ -135,9 +135,17 @@ def test_build_graph_data_exports_browser_payload() -> None:
     df = pd.DataFrame(
         [
             {
+                "generation": "",
+                "advisee": "Root Mentor",
+                "advisor": "",
+                "title": "PhD",
+                "university": "Example University",
+                "year": 1970,
+            },
+            {
                 "generation": 0,
                 "advisee": "Prof Advisor",
-                "advisor": "",
+                "advisor": "Root Mentor",
                 "title": "Professor",
                 "university": "Carnegie Mellon University",
                 "year": 1999,
@@ -145,7 +153,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
             {
                 "generation": 1,
                 "advisee": "Student One",
-                "advisor": "Prof Advisor",
+                "advisor": "Root Mentor",
                 "title": "PhD",
                 "university": "Example University",
                 "year": 2024,
@@ -153,7 +161,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
             {
                 "generation": "",
                 "advisee": "Student Two",
-                "advisor": "Prof Advisor; ILL Request",
+                "advisor": "Root Mentor; ILL Request",
                 "title": "MS",
                 "university": "",
                 "year": 2025,
@@ -165,10 +173,10 @@ def test_build_graph_data_exports_browser_payload() -> None:
     impute_years(people)
     payload = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
 
-    assert payload["meta"]["nodeCount"] == 3
-    assert payload["meta"]["edgeCount"] == 2
+    assert payload["meta"]["nodeCount"] == 4
+    assert payload["meta"]["edgeCount"] == 3
     assert payload["meta"]["facultyCount"] == 1
-    assert payload["filters"]["eras"] == ["1980-1999", "2020-present"]
+    assert payload["filters"]["eras"] == ["Before 1980", "1980-1999", "2020-present"]
 
     people_by_name = {node["name"]: node for node in payload["nodes"]}
     assert people_by_name["Prof Advisor"]["category"] == "cmu-faculty"
@@ -179,15 +187,20 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student One"]["universityLabel"] == "Example University"
     assert people_by_name["Student Two"]["universityLabel"] == "Unknown university"
     assert people_by_name["Prof Advisor"]["chronologyYear"] == 1999
-    assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is False
+    assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
     assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True
     assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
     assert payload["meta"]["layout"]["rankDirection"] == "top-to-bottom"
-    assert people_by_name["Prof Advisor"]["layout"]["y"] < people_by_name["Student One"]["layout"]["y"]
+    assert payload["meta"]["layout"]["facultySink"] is True
+    assert people_by_name["Root Mentor"]["layout"]["y"] < people_by_name["Prof Advisor"]["layout"]["y"]
+    assert people_by_name["Root Mentor"]["layout"]["y"] < people_by_name["Student One"]["layout"]["y"]
 
-    edge = payload["edges"][0]
-    assert edge["source"] == people_by_name["Prof Advisor"]["id"]
-    assert edge["target"] == people_by_name["Student One"]["id"]
+    edge_by_pair = {(edge["advisorName"], edge["adviseeName"]): edge for edge in payload["edges"]}
+    edge = edge_by_pair[("Root Mentor", "Prof Advisor")]
+    assert edge["source"] == people_by_name["Root Mentor"]["id"]
+    assert edge["target"] == people_by_name["Prof Advisor"]["id"]
+    assert edge["facultyPeer"] is False
+    assert edge["orientation"] == "top-to-bottom"
 
 
 def test_layout_places_lineages_on_layered_tree_rows() -> None:
@@ -263,8 +276,8 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
     gamma = people_by_name["Advisor Gamma"]["layout"]
     root = people_by_name["Root Mentor"]["layout"]
 
-    assert beta["facultySink"] is False
-    assert delta["facultySink"] is False
+    assert beta["facultySink"] is True
+    assert delta["facultySink"] is True
     assert beta["facultyPerimeter"] is True
     assert delta["facultyPerimeter"] is True
     assert alpha["y"] < beta["y"]
@@ -279,8 +292,60 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
     for edge in payload["edges"]:
         advisor = people_by_name[edge["advisorName"]]["layout"]
         advisee = people_by_name[edge["adviseeName"]]["layout"]
-        assert advisor["y"] < advisee["y"]
+        if edge["facultyPeer"]:
+            assert advisor["y"] == advisee["y"]
+            assert advisor["x"] < advisee["x"]
+            assert edge["orientation"] == "left-to-right"
+        else:
+            assert advisor["y"] < advisee["y"]
     assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
+
+
+def test_faculty_advising_faculty_share_bottom_row_left_to_right() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "generation": "",
+                "advisee": "Root Mentor",
+                "advisor": "",
+                "title": "PhD",
+                "year": 1970,
+            },
+            {
+                "generation": 0,
+                "advisee": "Faculty Advisor",
+                "advisor": "Root Mentor",
+                "title": "Professor",
+                "year": 2000,
+            },
+            {
+                "generation": 0,
+                "advisee": "Faculty Advisee",
+                "advisor": "Faculty Advisor",
+                "title": "Professor",
+                "year": 2010,
+            },
+        ]
+    )
+
+    people, edges, explicit_none, explicit_ill, skipped_rows = build_graph(df)
+    impute_years(people)
+    payload = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
+    people_by_name = {node["name"]: node for node in payload["nodes"]}
+    edge_by_pair = {(edge["advisorName"], edge["adviseeName"]): edge for edge in payload["edges"]}
+
+    root = people_by_name["Root Mentor"]["layout"]
+    faculty_advisor = people_by_name["Faculty Advisor"]["layout"]
+    faculty_advisee = people_by_name["Faculty Advisee"]["layout"]
+    faculty_edge = edge_by_pair[("Faculty Advisor", "Faculty Advisee")]
+
+    assert faculty_advisor["facultySink"] is True
+    assert faculty_advisee["facultySink"] is True
+    assert faculty_advisor["y"] == faculty_advisee["y"]
+    assert root["y"] < faculty_advisor["y"]
+    assert faculty_advisor["x"] < faculty_advisee["x"]
+    assert faculty_edge["facultyPeer"] is True
+    assert faculty_edge["orientation"] == "left-to-right"
 
 
 def test_unknown_chronology_year_uses_recent_advisee() -> None:
