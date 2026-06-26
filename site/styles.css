@@ -326,6 +326,60 @@ a:focus-visible {
   margin: 0;
 }
 
+.display-field {
+  display: grid;
+  gap: 6px;
+}
+
+.display-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 820;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.segmented-control label {
+  margin: 0 !important;
+}
+
+.segmented-control input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented-control span {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 820;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.segmented-control input:checked + span {
+  color: #fff;
+  background: var(--accent);
+}
+
+.segmented-control input:focus-visible + span {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .toggle-row {
   display: flex !important;
   align-items: center;
@@ -461,7 +515,9 @@ a:focus-visible {
   position: absolute;
   right: 16px;
   bottom: 16px;
-  width: 248px;
+  width: 292px;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -499,6 +555,7 @@ a:focus-visible {
   width: 9px;
   height: 9px;
   border-radius: 50%;
+  border: 1px solid transparent;
   flex: 0 0 auto;
 }
 

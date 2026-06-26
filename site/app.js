@@ -1,6 +1,10 @@
 (() => {
   const DATA_URL = "graph-data.json";
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const COLOR_BUCKET_LIMIT = 18;
+  const CMU_BUCKET = "CMU";
+  const OTHER_BUCKET = "Other";
+  const COLOR_MODES = new Set(["category", "university", "country"]);
 
   const categoryColors = {
     "cmu-faculty": "#b00",
@@ -18,8 +22,7 @@
     "follow-up": { fill: "#d45f16", border: "#ffffff", text: "#ffffff" },
   };
 
-  const universityPalette = [
-    "#bb0000",
+  const bucketPalette = [
     "#2f6f9f",
     "#3e8c69",
     "#8f5aa3",
@@ -29,7 +32,21 @@
     "#7b6d4f",
     "#a14f76",
     "#5f7f3f",
+    "#8d6b2f",
+    "#4b7f52",
+    "#b84f3e",
+    "#607d9c",
+    "#9b5f8d",
+    "#2f8f7f",
+    "#cc7a00",
+    "#6d7a33",
+    "#6574c4",
   ];
+
+  const specialBucketColors = {
+    [CMU_BUCKET]: "#bb0000",
+    [OTHER_BUCKET]: "#dfe3e8",
+  };
 
   const els = {
     appShell: document.getElementById("appShell"),
@@ -38,7 +55,7 @@
     search: document.getElementById("searchInput"),
     peopleOptions: document.getElementById("peopleOptions"),
     searchResults: document.getElementById("searchResults"),
-    universityColorToggle: document.getElementById("universityColorToggle"),
+    colorModeInputs: [...document.querySelectorAll('input[name="colorMode"]')],
     chronologyToggle: document.getElementById("chronologyToggle"),
     fitButton: document.getElementById("fitButton"),
     focusButton: document.getElementById("focusButton"),
@@ -89,6 +106,8 @@
     rootIds: [],
     miniTransform: null,
     chronologyRange: null,
+    colorBuckets: { university: [], country: [] },
+    colorBucketMaps: { university: new Map(), country: new Map() },
   };
 
   let filterTimer = 0;
@@ -125,6 +144,7 @@
       person.title,
       person.university,
       person.universityLabel,
+      person.countryLabel,
       person.role,
       person.era,
       person.categoryLabel,
@@ -134,15 +154,6 @@
 
   function edgeKey(a, b) {
     return `${a}::${b}`;
-  }
-
-  function stableHash(value) {
-    let hash = 0;
-    const text = String(value || "");
-    for (let index = 0; index < text.length; index += 1) {
-      hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
-    }
-    return hash;
   }
 
   function textColorForBackground(hex) {
@@ -155,18 +166,90 @@
     return luminance > 0.58 ? "#1c1f23" : "#ffffff";
   }
 
-  function universityColor(label) {
-    if (!label || label === "Unknown university") return "#ffffff";
-    return universityPalette[stableHash(label) % universityPalette.length];
+  function isCmuUniversity(label) {
+    return /\bcmu\b|carnegie mellon/i.test(String(label || ""));
+  }
+
+  function universityBucketSource(person) {
+    const label = person.universityLabel || "Unknown university";
+    if (isCmuUniversity(label)) return CMU_BUCKET;
+    if (label === "Unknown university") return OTHER_BUCKET;
+    return label;
+  }
+
+  function countryBucketSource(person) {
+    const label = person.countryLabel || "Unknown country";
+    if (label === "Unknown country") return OTHER_BUCKET;
+    return label;
+  }
+
+  function incrementCount(counts, label) {
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+
+  function sortedCounts(counts) {
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }
+
+  function bucketColor(label, index) {
+    return specialBucketColors[label] || bucketPalette[index % bucketPalette.length];
+  }
+
+  function buildBucketEntries(graph, sourceForPerson, { includeCmu = false } = {}) {
+    const counts = new Map();
+    graph.nodes.forEach((person) => incrementCount(counts, sourceForPerson(person)));
+
+    const entries = [];
+    let paletteIndex = 0;
+    let covered = 0;
+
+    if (includeCmu) {
+      const cmuCount = counts.get(CMU_BUCKET) || 0;
+      entries.push({ label: CMU_BUCKET, count: cmuCount, color: bucketColor(CMU_BUCKET, paletteIndex) });
+      covered += cmuCount;
+      counts.delete(CMU_BUCKET);
+    }
+
+    const otherKnownCount = counts.get(OTHER_BUCKET) || 0;
+    counts.delete(OTHER_BUCKET);
+
+    sortedCounts(counts).slice(0, COLOR_BUCKET_LIMIT).forEach(([label, count]) => {
+      entries.push({ label, count, color: bucketColor(label, paletteIndex) });
+      covered += count;
+      paletteIndex += 1;
+    });
+
+    entries.push({
+      label: OTHER_BUCKET,
+      count: Math.max(0, graph.nodes.length - covered),
+      color: bucketColor(OTHER_BUCKET, paletteIndex),
+      includesUnknown: otherKnownCount > 0,
+    });
+    return entries;
+  }
+
+  function buildColorBuckets(graph) {
+    model.colorBuckets.university = buildBucketEntries(graph, universityBucketSource, { includeCmu: true });
+    model.colorBuckets.country = buildBucketEntries(graph, countryBucketSource);
+    model.colorBucketMaps.university = new Map(model.colorBuckets.university.map((entry) => [entry.label, entry]));
+    model.colorBucketMaps.country = new Map(model.colorBuckets.country.map((entry) => [entry.label, entry]));
+  }
+
+  function bucketEntry(mode, label) {
+    const map = model.colorBucketMaps[mode];
+    if (!map) return null;
+    return map.get(label) || map.get(OTHER_BUCKET) || null;
   }
 
   function colorsForPerson(person) {
-    if (state.colorMode === "university") {
-      const fill = universityColor(person.universityLabel);
-      const isUnknown = fill === "#ffffff";
+    if (state.colorMode === "university" || state.colorMode === "country") {
+      const label = state.colorMode === "university" ? person.universityColorBucket : person.countryColorBucket;
+      const entry = bucketEntry(state.colorMode, label);
+      const fill = entry ? entry.color : specialBucketColors[OTHER_BUCKET];
+      const isOther = !entry || entry.label === OTHER_BUCKET;
       return {
         fill,
-        border: isUnknown ? "#cbd1d8" : "#ffffff",
+        border: isOther ? "#aeb7c2" : "#ffffff",
         text: textColorForBackground(fill),
       };
     }
@@ -185,7 +268,7 @@
     state.selectedId = params.get("person") || "";
     state.query = params.get("q") || "";
     state.focusId = params.get("focus") || "";
-    state.colorMode = params.get("color") === "university" ? "university" : "category";
+    state.colorMode = COLOR_MODES.has(params.get("color")) ? params.get("color") : "category";
     state.chronology = params.get("chrono") === "1";
   }
 
@@ -194,7 +277,7 @@
     if (state.selectedId) params.set("person", state.selectedId);
     if (state.query) params.set("q", state.query);
     if (state.focusId) params.set("focus", state.focusId);
-    if (state.colorMode === "university") params.set("color", "university");
+    if (state.colorMode !== "category") params.set("color", state.colorMode);
     if (state.chronology) params.set("chrono", "1");
     const query = params.toString();
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
@@ -223,8 +306,13 @@
     model.chronologyRange = chronologyYears.length
       ? { min: minYear, max: maxYear, center: (minYear + maxYear) / 2, scale: 10 }
       : null;
+    buildColorBuckets(graph);
 
     graph.nodes.forEach((person) => {
+      const universityEntry = bucketEntry("university", universityBucketSource(person));
+      const countryEntry = bucketEntry("country", countryBucketSource(person));
+      person.universityColorBucket = universityEntry ? universityEntry.label : OTHER_BUCKET;
+      person.countryColorBucket = countryEntry ? countryEntry.label : OTHER_BUCKET;
       person.searchText = searchableText(person);
       model.peopleById.set(person.id, person);
       model.peopleByName.set(person.name.toLowerCase(), person.id);
@@ -613,35 +701,28 @@
     renderLegend(graph);
 
     els.search.value = state.query;
-    els.universityColorToggle.checked = state.colorMode === "university";
+    els.colorModeInputs.forEach((input) => {
+      input.checked = input.value === state.colorMode;
+    });
     els.chronologyToggle.checked = state.chronology;
   }
 
   function renderLegend(graph) {
     els.legend.replaceChildren();
 
-    if (state.colorMode === "university") {
-      const counts = new Map();
-      const sourceNodes = state.cy ? visibleNodes().toArray().map((node) => node.data()) : graph.nodes;
-      sourceNodes.forEach((person) => {
-        const label = person.universityLabel || "Unknown university";
-        counts.set(label, (counts.get(label) || 0) + 1);
+    if (state.colorMode === "university" || state.colorMode === "country") {
+      model.colorBuckets[state.colorMode].forEach((entry) => {
+        const item = document.createElement("span");
+        item.className = "legend-item";
+        const swatch = document.createElement("span");
+        swatch.className = "swatch";
+        swatch.style.background = entry.color;
+        if (entry.label === OTHER_BUCKET) swatch.style.borderColor = "#aeb7c2";
+        const text = document.createElement("span");
+        text.textContent = `${entry.label} (${formatNumber(entry.count)})`;
+        item.append(swatch, text);
+        els.legend.append(item);
       });
-      [...counts.entries()]
-        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-        .slice(0, 8)
-        .forEach(([label]) => {
-          const item = document.createElement("span");
-          item.className = "legend-item";
-          const swatch = document.createElement("span");
-          swatch.className = "swatch";
-          swatch.style.background = universityColor(label);
-          if (label === "Unknown university") swatch.style.border = "1px solid #aeb7c2";
-          const text = document.createElement("span");
-          text.textContent = label;
-          item.append(swatch, text);
-          els.legend.append(item);
-        });
       return;
     }
 
@@ -675,8 +756,11 @@
     writeUrlState();
   }
 
-  function setColorMode(useUniversityColors) {
-    state.colorMode = useUniversityColors ? "university" : "category";
+  function setColorMode(mode) {
+    state.colorMode = COLOR_MODES.has(mode) ? mode : "category";
+    els.colorModeInputs.forEach((input) => {
+      input.checked = input.value === state.colorMode;
+    });
     applyColorMode();
   }
 
@@ -757,6 +841,7 @@
       person.category === "alumni" ? "" : person.categoryLabel,
       person.era,
       person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
+      person.countryLabel && person.countryLabel !== "Unknown country" ? person.countryLabel : "",
       person.title && person.title !== person.role ? person.title : "",
     ].filter(Boolean).forEach((value) => {
       const tag = document.createElement("span");
@@ -1143,7 +1228,11 @@
 
   function attachEvents() {
     els.search.addEventListener("input", scheduleFilterApply);
-    els.universityColorToggle.addEventListener("change", () => setColorMode(els.universityColorToggle.checked));
+    els.colorModeInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        if (input.checked) setColorMode(input.value);
+      });
+    });
     els.chronologyToggle.addEventListener("change", () => setChronologyMode(els.chronologyToggle.checked));
     els.fitButton.addEventListener("click", () => fitGraph(visibleElements(), 68));
     els.focusButton.addEventListener("click", () => focusBranch());

@@ -49,7 +49,7 @@
         <label for="searchInput">Search people</label>
         <div class="search-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
-          <input id="searchInput" type="search" list="peopleOptions" autocomplete="off" placeholder="Name, university, or year">
+          <input id="searchInput" type="search" list="peopleOptions" autocomplete="off" placeholder="Name, university, country">
           <datalist id="peopleOptions"></datalist>
         </div>
         <div id="searchResults" class="search-results" aria-live="polite"></div>
@@ -57,10 +57,23 @@
 
       <section class="control-group display-options">
         <h2>Display</h2>
-        <label class="toggle-row" for="universityColorToggle">
-          <span>Color by university</span>
-          <input id="universityColorToggle" type="checkbox">
-        </label>
+        <div class="display-field">
+          <span class="display-label">Color</span>
+          <div class="segmented-control" role="radiogroup" aria-label="Color mode">
+            <label>
+              <input type="radio" name="colorMode" value="category" checked>
+              <span>Status</span>
+            </label>
+            <label>
+              <input type="radio" name="colorMode" value="university">
+              <span>University</span>
+            </label>
+            <label>
+              <input type="radio" name="colorMode" value="country">
+              <span>Country</span>
+            </label>
+          </div>
+        </div>
         <label class="toggle-row" for="chronologyToggle">
           <span>Chronological y-axis</span>
           <input id="chronologyToggle" type="checkbox">
