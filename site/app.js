@@ -999,9 +999,10 @@
 
   function renderLegend(graph) {
     els.legend.replaceChildren();
+    const people = legendPeople(graph);
 
     if (state.colorMode === "university" || state.colorMode === "country" || state.colorMode === "continent") {
-      model.colorBuckets[state.colorMode].forEach((entry) => {
+      legendBucketEntries(state.colorMode, people).forEach((entry) => {
         const item = document.createElement("span");
         item.className = "legend-item";
         const swatch = document.createElement("span");
@@ -1016,7 +1017,11 @@
       return;
     }
 
-    graph.filters.categories.filter((category) => category.id !== "alumni").forEach((category) => {
+    const categoryCounts = new Map();
+    people.forEach((person) => incrementCount(categoryCounts, person.category));
+    graph.filters.categories.filter((category) => (
+      category.id !== "alumni" && (categoryCounts.get(category.id) || 0) > 0
+    )).forEach((category) => {
       const item = document.createElement("span");
       item.className = "legend-item";
       const swatch = document.createElement("span");
@@ -1027,6 +1032,28 @@
       item.append(swatch, label);
       els.legend.append(item);
     });
+  }
+
+  function legendPeople(graph) {
+    if (!state.cy) return graph.nodes;
+    return visibleNodes().map((node) => node.data());
+  }
+
+  function legendBucketEntries(mode, people) {
+    const counts = new Map();
+    people.forEach((person) => {
+      const labelByMode = {
+        university: person.universityColorBucket,
+        country: person.countryColorBucket,
+        continent: person.continentColorBucket,
+      };
+      const entry = bucketEntry(mode, labelByMode[mode]);
+      if (entry) incrementCount(counts, entry.label);
+    });
+
+    return model.colorBuckets[mode]
+      .map((entry) => ({ ...entry, count: counts.get(entry.label) || 0 }))
+      .filter((entry) => entry.count > 0);
   }
 
   function applyColorMode() {
@@ -1305,6 +1332,7 @@
     state.cy.once("layoutstop", () => {
       fitGraph(lineage, 96);
       updateVisibleCount();
+      renderLegend(state.graph);
       scheduleMiniMap();
     });
     lineage.layout({
@@ -1392,6 +1420,7 @@
     els.search.value = "";
     state.cy.elements().removeClass("is-hidden");
     updateVisibleCount();
+    renderLegend(state.graph);
     writeUrlState();
   }
 
