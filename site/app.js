@@ -4,6 +4,7 @@
   const COLOR_BUCKET_LIMIT = 18;
   const CMU_BUCKET = "CMU";
   const OTHER_BUCKET = "Other";
+  const NULL_BUCKET = "Unknown / none";
   const COLOR_MODES = new Set(["category", "university", "country", "continent"]);
 
   const categoryColors = {
@@ -70,6 +71,7 @@
   const specialBucketColors = {
     [CMU_BUCKET]: "#bb0000",
     [OTHER_BUCKET]: "#dfe3e8",
+    [NULL_BUCKET]: "#9aa3ad",
   };
 
   const continentPalette = {
@@ -81,6 +83,7 @@
     "South America": "#a14f76",
     "Antarctica": "#607d9c",
     [OTHER_BUCKET]: specialBucketColors[OTHER_BUCKET],
+    [NULL_BUCKET]: specialBucketColors[NULL_BUCKET],
   };
 
   const continentOrder = [
@@ -92,6 +95,7 @@
     "South America",
     "Antarctica",
     OTHER_BUCKET,
+    NULL_BUCKET,
   ];
 
   const els = {
@@ -221,19 +225,19 @@
   function universityBucketSource(person) {
     const label = person.universityLabel || "Unknown university";
     if (isCmuUniversity(label)) return CMU_BUCKET;
-    if (label === "Unknown university") return OTHER_BUCKET;
+    if (label === "Unknown university") return NULL_BUCKET;
     return label;
   }
 
   function countryBucketSource(person) {
     const label = person.countryLabel || "Unknown country";
-    if (label === "Unknown country") return OTHER_BUCKET;
+    if (label === "Unknown country") return NULL_BUCKET;
     return label;
   }
 
   function continentBucketSource(person) {
-    const label = person.continentLabel || OTHER_BUCKET;
-    return label === "Unknown continent" ? OTHER_BUCKET : label;
+    const label = person.continentLabel || NULL_BUCKET;
+    return label === "Unknown continent" ? NULL_BUCKET : label;
   }
 
   function incrementCount(counts, label) {
@@ -255,7 +259,7 @@
     const entries = [];
     let paletteIndex = 0;
     let covered = 0;
-    const pinned = new Set(pinnedLabels.filter((label) => label && label !== OTHER_BUCKET));
+    const pinned = new Set(pinnedLabels.filter((label) => label && label !== OTHER_BUCKET && label !== NULL_BUCKET));
 
     if (includeCmu) {
       const cmuCount = counts.get(CMU_BUCKET) || 0;
@@ -265,7 +269,8 @@
       pinned.delete(CMU_BUCKET);
     }
 
-    const otherKnownCount = counts.get(OTHER_BUCKET) || 0;
+    const nullCount = counts.get(NULL_BUCKET) || 0;
+    counts.delete(NULL_BUCKET);
     counts.delete(OTHER_BUCKET);
 
     const rankedCounts = sortedCounts(counts);
@@ -280,12 +285,21 @@
       paletteIndex += 1;
     });
 
-    entries.push({
-      label: OTHER_BUCKET,
-      count: Math.max(0, graph.nodes.length - covered),
-      color: bucketColor(OTHER_BUCKET, paletteIndex),
-      includesUnknown: otherKnownCount > 0,
-    });
+    const otherCount = Math.max(0, graph.nodes.length - covered - nullCount);
+    if (otherCount > 0) {
+      entries.push({
+        label: OTHER_BUCKET,
+        count: otherCount,
+        color: bucketColor(OTHER_BUCKET, paletteIndex),
+      });
+    }
+    if (nullCount > 0) {
+      entries.push({
+        label: NULL_BUCKET,
+        count: nullCount,
+        color: bucketColor(NULL_BUCKET, paletteIndex),
+      });
+    }
     return entries;
   }
 
@@ -298,14 +312,14 @@
         count: counts.get(label) || 0,
         color: continentPalette[label] || specialBucketColors[OTHER_BUCKET],
       }))
-      .filter((entry) => entry.count > 0 || (entry.label === OTHER_BUCKET && counts.has(OTHER_BUCKET)));
+      .filter((entry) => entry.count > 0);
   }
 
   function currentFacultyUniversityBuckets(graph) {
     return graph.nodes
       .filter((person) => person.category === "cmu-faculty")
       .map((person) => universityBucketSource(person))
-      .filter((label) => label !== OTHER_BUCKET);
+      .filter((label) => label !== OTHER_BUCKET && label !== NULL_BUCKET);
   }
 
   function buildColorBuckets(graph) {
@@ -324,7 +338,7 @@
   function bucketEntry(mode, label) {
     const map = model.colorBucketMaps[mode];
     if (!map) return null;
-    return map.get(label) || map.get(OTHER_BUCKET) || null;
+    return map.get(label) || map.get(OTHER_BUCKET) || map.get(NULL_BUCKET) || null;
   }
 
   function colorsForPerson(person) {
@@ -337,10 +351,10 @@
       const label = labelByMode[state.colorMode];
       const entry = bucketEntry(state.colorMode, label);
       const fill = entry ? entry.color : specialBucketColors[OTHER_BUCKET];
-      const isOther = !entry || entry.label === OTHER_BUCKET;
+      const isSpecialFallback = !entry || entry.label === OTHER_BUCKET || entry.label === NULL_BUCKET;
       return {
         fill,
-        border: isOther ? "#aeb7c2" : "#ffffff",
+        border: isSpecialFallback ? "#aeb7c2" : "#ffffff",
         text: textColorForBackground(fill),
       };
     }
@@ -993,7 +1007,7 @@
         const swatch = document.createElement("span");
         swatch.className = "swatch";
         swatch.style.background = entry.color;
-        if (entry.label === OTHER_BUCKET) swatch.style.borderColor = "#aeb7c2";
+        if (entry.label === OTHER_BUCKET || entry.label === NULL_BUCKET) swatch.style.borderColor = "#aeb7c2";
         const text = document.createElement("span");
         text.textContent = `${entry.label} (${formatNumber(entry.count)})`;
         item.append(swatch, text);
@@ -1117,7 +1131,7 @@
       person.era,
       person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
       person.countryLabel && person.countryLabel !== "Unknown country" ? person.countryLabel : "",
-      person.continentLabel && person.continentLabel !== OTHER_BUCKET ? person.continentLabel : "",
+      person.continentLabel && ![OTHER_BUCKET, NULL_BUCKET].includes(person.continentLabel) ? person.continentLabel : "",
       person.title && person.title !== person.role ? person.title : "",
     ].filter(Boolean).forEach((value) => {
       const tag = document.createElement("span");

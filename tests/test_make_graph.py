@@ -194,7 +194,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student Two"]["countryLabel"] == "Unknown country"
     assert people_by_name["Prof Advisor"]["continentLabel"] == "North America"
     assert people_by_name["Student One"]["continentLabel"] == "North America"
-    assert people_by_name["Student Two"]["continentLabel"] == "Other"
+    assert people_by_name["Student Two"]["continentLabel"] == "Unknown / none"
     assert people_by_name["Prof Advisor"]["chronologyYear"] == 1999
     assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
     assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True

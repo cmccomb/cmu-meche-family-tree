@@ -44,6 +44,8 @@ CATEGORY_LABELS = {
     "follow-up": "Follow-up needed",
 }
 
+NULL_BUCKET_LABEL = "Unknown / none"
+
 COUNTRY_ALIASES = {
     "america": "United States",
     "england": "United Kingdom",
@@ -262,7 +264,7 @@ def continent_for_country(country: Optional[object]) -> str:
     """Return a continent label for supported country values."""
     country_label = _canonical_country(country)
     if not country_label:
-        return "Other"
+        return NULL_BUCKET_LABEL
     return CONTINENT_BY_COUNTRY.get(country_label, "Other")
 
 
