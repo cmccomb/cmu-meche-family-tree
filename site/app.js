@@ -21,6 +21,16 @@
   const CHRONO_COLLISION_SHIFT = 138;
   const CHRONO_SWEEP_PASSES = 4;
   const CHRONO_NEIGHBOR_WEIGHT = 0.74;
+  const PATH_TEMPORAL_SIDE_SPAN_MIN = 300;
+  const PATH_TEMPORAL_SIDE_SPAN_MAX = 560;
+  const PATH_TEMPORAL_SIDE_SPAN_PER_NODE = 18;
+  const PATH_TEMPORAL_APEX_SHOULDER = 110;
+  const PATH_TEMPORAL_RANK_GAP = 132;
+  const PATH_TEMPORAL_PIXELS_PER_NODE = 118;
+  const PATH_TEMPORAL_MIN_TIME_SPAN = 2200;
+  const PATH_TEMPORAL_MAX_TIME_SPAN = 5600;
+  const PATH_TEMPORAL_MIN_YEAR_GAP = 8;
+  const PATH_TEMPORAL_MAX_YEAR_GAP = 18;
   const TIMELINE_CENTURY_STEP = 100;
   const TIMELINE_DECADE_STEP = 10;
   const TIMELINE_DECADE_MIN_SCREEN_GAP = 46;
@@ -1386,8 +1396,8 @@
       parts.push(`${state.currentPathIds.length} people`);
       if (state.chronology) {
         parts.push(isHorizontalLayout() ? "chronological x-axis" : "chronology");
-      } else if (state.pathRelayoutActive && isHorizontalLayout()) {
-        parts.push("horizontal");
+      } else if (state.pathRelayoutActive) {
+        parts.push(isHorizontalLayout() ? "temporal order + horizontal" : "temporal order");
       }
       els.modeLabel.textContent = parts.join(" / ");
       syncViewNavigation();
@@ -2014,6 +2024,93 @@
     return new Map(pathIds.map((id, index) => [id, { x: 0, y: index * gap - offset }]));
   }
 
+  function temporalYearsForPath(pathNodes) {
+    const years = pathNodes.map((node) => numericChronologyYear(node.data("chronologyYear")));
+    if (!years.some((year) => year !== null)) return null;
+
+    return years.map((year, index) => {
+      if (year !== null) return year;
+
+      let previousIndex = index - 1;
+      while (previousIndex >= 0 && years[previousIndex] === null) previousIndex -= 1;
+      let nextIndex = index + 1;
+      while (nextIndex < years.length && years[nextIndex] === null) nextIndex += 1;
+
+      if (previousIndex >= 0 && nextIndex < years.length) {
+        const span = nextIndex - previousIndex;
+        const t = (index - previousIndex) / span;
+        return years[previousIndex] + (years[nextIndex] - years[previousIndex]) * t;
+      }
+      if (previousIndex >= 0) return years[previousIndex] + (index - previousIndex) * 3;
+      return years[nextIndex] - (nextIndex - index) * 3;
+    });
+  }
+
+  function pathTemporalX(index, count, turnIndex, sideSpan) {
+    if (count <= 1) return 0;
+    if (count === 2) return 0;
+    if (turnIndex <= 0) {
+      return (index / Math.max(1, count - 1)) * sideSpan;
+    }
+    if (turnIndex >= count - 1) {
+      return -sideSpan + (index / Math.max(1, count - 1)) * sideSpan;
+    }
+    const shoulder = Math.min(PATH_TEMPORAL_APEX_SHOULDER, sideSpan * 0.34);
+    if (index <= turnIndex) {
+      if (index === turnIndex) return 0;
+      return -sideSpan + (index / Math.max(1, turnIndex - 1)) * (sideSpan - shoulder);
+    }
+    if (index === turnIndex + 1) return shoulder;
+    return shoulder + ((index - turnIndex - 1) / Math.max(1, count - turnIndex - 2)) * (sideSpan - shoulder);
+  }
+
+  function pathTemporalLayoutPositions(pathNodes, { scaled = false } = {}) {
+    const years = temporalYearsForPath(pathNodes);
+    if (!years) return null;
+
+    const count = pathNodes.length;
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const yearRange = Math.max(1, maxYear - minYear);
+    const turnIndex = years.reduce((bestIndex, year, index) => (
+      year < years[bestIndex] ? index : bestIndex
+    ), 0);
+    const sideSpan = clamp(
+      count * PATH_TEMPORAL_SIDE_SPAN_PER_NODE,
+      PATH_TEMPORAL_SIDE_SPAN_MIN,
+      PATH_TEMPORAL_SIDE_SPAN_MAX
+    );
+
+    let yForIndex;
+    if (scaled) {
+      const targetHeight = clamp(
+        count * PATH_TEMPORAL_PIXELS_PER_NODE,
+        PATH_TEMPORAL_MIN_TIME_SPAN,
+        PATH_TEMPORAL_MAX_TIME_SPAN
+      );
+      const yScale = clamp(
+        targetHeight / yearRange,
+        PATH_TEMPORAL_MIN_YEAR_GAP,
+        PATH_TEMPORAL_MAX_YEAR_GAP
+      );
+      const yearCenter = (minYear + maxYear) / 2;
+      yForIndex = (index) => (years[index] - yearCenter) * yScale;
+    } else {
+      const rankByIndex = new Map();
+      years
+        .map((year, index) => ({ year, index }))
+        .sort((a, b) => a.year - b.year || a.index - b.index)
+        .forEach((item, rank) => rankByIndex.set(item.index, rank));
+      const offset = (count - 1) * PATH_TEMPORAL_RANK_GAP / 2;
+      yForIndex = (index) => rankByIndex.get(index) * PATH_TEMPORAL_RANK_GAP - offset;
+    }
+
+    return new Map(pathNodes.map((node, index) => [node.id(), {
+      x: pathTemporalX(index, count, turnIndex, sideSpan),
+      y: yForIndex(index),
+    }]));
+  }
+
   async function relayoutCurrentPath() {
     if (!state.cy || state.currentPathIds.length < 2) return;
     const runId = ++relayoutRun;
@@ -2031,7 +2128,9 @@
     const samePath = state.currentPathIds.join("\u0000") === expectedPathKey;
     if (runId !== relayoutRun || !samePath) return;
     const basePositions = elkPositions || pathLayoutPositions(visiblePathIds);
-    const rawPositions = state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions) : basePositions;
+    const temporalPositions = pathTemporalLayoutPositions(pathNodes, { scaled: state.chronology });
+    const rawPositions = temporalPositions
+      || (state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions) : basePositions);
     const positions = orientPositions(compactStackedPathPositions(rawPositions));
     const visibleEdgeIds = state.currentPathEdgeIds.filter((id) => {
       const edge = state.cy.$id(id);
