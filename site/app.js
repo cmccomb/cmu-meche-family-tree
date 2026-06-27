@@ -20,7 +20,11 @@
   const CHRONO_COLLISION_X_GAP = 132;
   const CHRONO_COLLISION_SHIFT = 138;
   const CHRONO_SWEEP_PASSES = 4;
+  const CHRONO_EDGE_RELAX_PASSES = 3;
   const CHRONO_NEIGHBOR_WEIGHT = 0.74;
+  const CHRONO_BASE_WEIGHT = 0.22;
+  const CHRONO_COLLISION_PADDING_X = 30;
+  const CHRONO_COLLISION_PADDING_Y = 18;
   const PATH_TEMPORAL_SIDE_SPAN_MIN = 300;
   const PATH_TEMPORAL_SIDE_SPAN_MAX = 560;
   const PATH_TEMPORAL_SIDE_SPAN_PER_NODE = 18;
@@ -836,12 +840,16 @@
       : nodeLayoutPosition(node) || node.position();
   }
 
-  function visibleConnections(nodes) {
+  function visibleConnections(nodes, edgeRecords = null) {
     const nodeIds = new Set(nodes.map((node) => node.id()));
     const connections = new Map(nodes.map((node) => [node.id(), new Set()]));
-    visibleElements().edges().forEach((edge) => {
-      const source = edge.data("source");
-      const target = edge.data("target");
+    const records = edgeRecords || visibleElements().edges().toArray().map((edge) => ({
+      source: edge.data("source"),
+      target: edge.data("target"),
+    }));
+    records.forEach((edge) => {
+      const source = edge.source || (edge.data && edge.data("source"));
+      const target = edge.target || (edge.data && edge.data("target"));
       if (!nodeIds.has(source) || !nodeIds.has(target)) return;
       connections.get(source).add(target);
       connections.get(target).add(source);
@@ -857,6 +865,14 @@
     return {
       width: Number.isFinite(dataWidth) ? dataWidth : (Number.isFinite(renderedWidth) ? renderedWidth : 150),
       height: Number.isFinite(dataHeight) ? dataHeight : (Number.isFinite(renderedHeight) ? renderedHeight : 56),
+    };
+  }
+
+  function paddedNodeSizeForChronology(node, paddingX = CHRONO_COLLISION_PADDING_X, paddingY = CHRONO_COLLISION_PADDING_Y) {
+    const { width, height } = nodeSizeForLayout(node);
+    return {
+      width: width + paddingX,
+      height: height + paddingY,
     };
   }
 
@@ -1057,7 +1073,67 @@
     }
   }
 
-  function chronologicalLayoutPositions(nodes, basePositions = null) {
+  function applyChronologyEdgeRelaxation(nodes, positions, baseTargetById, connections) {
+    for (let pass = 0; pass < CHRONO_EDGE_RELAX_PASSES; pass += 1) {
+      const nextX = new Map();
+      nodes.forEach((node) => {
+        const id = node.id();
+        const current = positions.get(id);
+        const neighborXs = [...(connections.get(id) || [])]
+          .map((neighborId) => positions.get(neighborId))
+          .filter(Boolean)
+          .map((position) => position.x);
+        if (!current || !neighborXs.length) {
+          nextX.set(id, current ? current.x : 0);
+          return;
+        }
+        const neighborAverage = neighborXs.reduce((sum, x) => sum + x, 0) / neighborXs.length;
+        const baseTarget = baseTargetById.get(id);
+        const base = Number.isFinite(baseTarget) ? baseTarget : current.x;
+        nextX.set(id, current.x * 0.26 + neighborAverage * 0.52 + base * CHRONO_BASE_WEIGHT);
+      });
+      nextX.forEach((x, id) => {
+        positions.get(id).x = x;
+      });
+      applyChronologyBandSweep(nodes, positions, baseTargetById, connections);
+    }
+  }
+
+  function resolveChronologyCollisions(nodes, positions) {
+    const placed = [];
+    nodes
+      .slice()
+      .sort((a, b) => {
+        const aPosition = positions.get(a.id());
+        const bPosition = positions.get(b.id());
+        return aPosition.y - bPosition.y || aPosition.x - bPosition.x || a.data("name").localeCompare(b.data("name"));
+      })
+      .forEach((node) => {
+        const id = node.id();
+        const position = positions.get(id);
+        const size = paddedNodeSizeForChronology(node);
+        const shiftStep = Math.max(CHRONO_COLLISION_SHIFT, size.width * 0.72);
+        const shifts = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6].map((slot) => slot * shiftStep);
+        const shift = shifts.find((candidate) => (
+          placed.every((other) => (
+            Math.abs(other.y - position.y) >= Math.max(CHRONO_COLLISION_Y_GAP, (other.height + size.height) / 2)
+              || Math.abs(other.x - (position.x + candidate)) >= Math.max(
+                CHRONO_COLLISION_X_GAP,
+                (other.width + size.width) / 2
+              )
+          ))
+        )) || 0;
+        position.x += shift;
+        placed.push({
+          x: position.x,
+          y: position.y,
+          width: size.width,
+          height: size.height,
+        });
+      });
+  }
+
+  function chronologicalLayoutPositions(nodes, basePositions = null, { edgeRecords = null } = {}) {
     const withYears = nodes
       .map((node) => ({ node, year: numericChronologyYear(node.data("chronologyYear")) }))
       .filter((item) => item.year !== null);
@@ -1085,7 +1161,7 @@
     const baseWidth = Math.max(1, maxBaseX - minBaseX);
     const targetWidth = clamp(nodes.length * 20, nodes.length < 240 ? 1800 : 4200, nodes.length < 240 ? 5600 : 7600);
     const xScale = Math.min(1, targetWidth / baseWidth);
-    const connections = visibleConnections(nodes);
+    const connections = visibleConnections(nodes, edgeRecords);
 
     const positions = new Map();
     const baseTargetById = new Map();
@@ -1100,49 +1176,9 @@
       });
     });
 
-    for (let pass = 0; pass < 2; pass += 1) {
-      const nextX = new Map();
-      nodes.forEach((node) => {
-        const neighborXs = [...(connections.get(node.id()) || [])]
-          .map((id) => positions.get(id))
-          .filter(Boolean)
-          .map((position) => position.x);
-        const current = positions.get(node.id());
-        if (!neighborXs.length) {
-          nextX.set(node.id(), current.x);
-          return;
-        }
-        const neighborAverage = neighborXs.reduce((sum, x) => sum + x, 0) / neighborXs.length;
-        nextX.set(node.id(), current.x * 0.68 + neighborAverage * 0.32);
-      });
-      nextX.forEach((x, id) => {
-        positions.get(id).x = x;
-      });
-    }
-
+    applyChronologyEdgeRelaxation(nodes, positions, baseTargetById, connections);
     applyChronologyBandSweep(nodes, positions, baseTargetById, connections);
-
-    const placed = [];
-    nodes
-      .slice()
-      .sort((a, b) => {
-        const aPosition = positions.get(a.id());
-        const bPosition = positions.get(b.id());
-        return aPosition.y - bPosition.y || aPosition.x - bPosition.x || a.data("name").localeCompare(b.data("name"));
-      })
-      .forEach((node) => {
-        const position = positions.get(node.id());
-        const shiftStep = CHRONO_COLLISION_SHIFT;
-        const shifts = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5].map((slot) => slot * shiftStep);
-        const shift = shifts.find((candidate) => (
-          placed.every((other) => (
-            Math.abs(other.y - position.y) >= CHRONO_COLLISION_Y_GAP
-              || Math.abs(other.x - (position.x + candidate)) >= CHRONO_COLLISION_X_GAP
-          ))
-        )) || 0;
-        position.x += shift;
-        placed.push(position);
-      });
+    resolveChronologyCollisions(nodes, positions);
 
     return positions;
   }
@@ -1150,7 +1186,10 @@
   function preparedLayoutPositions(nodes) {
     const nodeArray = nodes.toArray();
     const basePositions = state.lineageRelayoutId ? lineageLayoutPositions(nodeArray) : null;
-    const positions = state.chronology ? chronologicalLayoutPositions(nodeArray, basePositions) : basePositions;
+    const edgeRecords = state.chronology ? visibleEdgeRecordsForNodes(nodeArray) : null;
+    const positions = state.chronology
+      ? chronologicalLayoutPositions(nodeArray, basePositions, { edgeRecords })
+      : basePositions;
     return orientPositions(positions);
   }
 
@@ -1898,10 +1937,13 @@
 
     const lineage = visibleElements();
     const nodes = visibleNodes().toArray();
-    const elkPositions = await elkLayoutPositions(nodes, visibleEdgeRecordsForNodes(nodes));
+    const edgeRecords = visibleEdgeRecordsForNodes(nodes);
+    const elkPositions = await elkLayoutPositions(nodes, edgeRecords);
     if (runId !== relayoutRun || state.lineageRelayoutId !== id) return;
     const basePositions = elkPositions || lineageLayoutPositions(nodes);
-    const rawPositions = state.chronology ? chronologicalLayoutPositions(nodes, basePositions) : basePositions;
+    const rawPositions = state.chronology
+      ? chronologicalLayoutPositions(nodes, basePositions, { edgeRecords })
+      : basePositions;
     const positions = orientPositions(rawPositions);
     state.cy.elements().removeClass("faded lineage path-node path-edge");
     lineage.addClass("lineage");
@@ -2121,6 +2163,23 @@
     }]));
   }
 
+  function chronologyBaseForPath(pathNodes, pathIds, elkPositions) {
+    const temporalPositions = pathTemporalLayoutPositions(pathNodes, { scaled: true });
+    if (!temporalPositions) return elkPositions;
+    if (!elkPositions) return temporalPositions;
+
+    return new Map(pathIds.map((id) => {
+      const temporal = temporalPositions.get(id);
+      const elk = elkPositions.get(id);
+      if (!temporal) return [id, elk];
+      if (!elk) return [id, temporal];
+      return [id, {
+        x: temporal.x * 0.84 + elk.x * 0.16,
+        y: temporal.y,
+      }];
+    }).filter(([, position]) => position));
+  }
+
   async function relayoutCurrentPath() {
     if (!state.cy || state.currentPathIds.length < 2) return;
     const runId = ++relayoutRun;
@@ -2134,13 +2193,16 @@
     const pathNodes = visiblePathIds
       .map((id) => state.cy.$id(id))
       .filter((node) => node.length);
-    const elkPositions = await elkLayoutPositions(pathNodes, pathEdgeRecords(visiblePathIds));
+    const edgeRecords = pathEdgeRecords(visiblePathIds);
+    const elkPositions = await elkLayoutPositions(pathNodes, edgeRecords);
     const samePath = state.currentPathIds.join("\u0000") === expectedPathKey;
     if (runId !== relayoutRun || !samePath) return;
     const basePositions = elkPositions || pathLayoutPositions(visiblePathIds);
-    const temporalPositions = pathTemporalLayoutPositions(pathNodes, { scaled: state.chronology });
+    const temporalPositions = state.chronology
+      ? chronologicalLayoutPositions(pathNodes, chronologyBaseForPath(pathNodes, visiblePathIds, elkPositions || basePositions), { edgeRecords })
+      : pathTemporalLayoutPositions(pathNodes, { scaled: false });
     const rawPositions = temporalPositions
-      || (state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions) : basePositions);
+      || (state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions, { edgeRecords }) : basePositions);
     const positions = orientPositions(compactStackedPathPositions(rawPositions));
     const visibleEdgeIds = state.currentPathEdgeIds.filter((id) => {
       const edge = state.cy.$id(id);
