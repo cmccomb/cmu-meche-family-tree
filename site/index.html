@@ -122,6 +122,7 @@
       <div class="graph-status" aria-live="polite">
         <span id="visibleCount">0 visible</span>
         <span id="modeLabel">Explore</span>
+        <button class="status-action" id="relayoutPathButton" type="button" hidden>Relayout path</button>
       </div>
       <div class="mini-panel" id="miniPanel" aria-label="Graph overview">
         <button class="mini-drag-handle" id="miniPanelHandle" type="button" title="Move legend. Double-click to reset." aria-label="Move legend">
@@ -146,11 +147,13 @@
             <h2 id="profileName"></h2>
             <p id="profileMeta"></p>
           </div>
+          <button class="profile-close" id="profileCloseButton" type="button" aria-label="Close person panel" title="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
         </div>
         <div id="profileTags" class="tag-list"></div>
         <div class="profile-actions">
           <button id="traceButton" type="button">Trace lineage</button>
-          <button id="focusBranchButton" type="button">Focus branch</button>
           <button id="relayoutLineageButton" type="button">Relayout lineage</button>
         </div>
         <section class="relation-block">

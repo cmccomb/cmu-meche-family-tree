@@ -114,6 +114,7 @@
     focusButton: document.getElementById("focusButton"),
     pathButton: document.getElementById("pathButton"),
     shareButton: document.getElementById("shareButton"),
+    relayoutPathButton: document.getElementById("relayoutPathButton"),
     visibleCount: document.getElementById("visibleCount"),
     modeLabel: document.getElementById("modeLabel"),
     nodeCount: document.getElementById("nodeCount"),
@@ -129,10 +130,10 @@
     profileName: document.getElementById("profileName"),
     profileMeta: document.getElementById("profileMeta"),
     profileTags: document.getElementById("profileTags"),
+    profileCloseButton: document.getElementById("profileCloseButton"),
     advisorList: document.getElementById("advisorList"),
     studentList: document.getElementById("studentList"),
     traceButton: document.getElementById("traceButton"),
-    focusBranchButton: document.getElementById("focusBranchButton"),
     relayoutLineageButton: document.getElementById("relayoutLineageButton"),
     pathDialog: document.getElementById("pathDialog"),
     pathFrom: document.getElementById("pathFrom"),
@@ -151,6 +152,9 @@
     layoutOrientation: DEFAULT_ORIENTATION,
     chronology: false,
     lineageRelayoutId: "",
+    currentPathIds: [],
+    currentPathEdgeIds: [],
+    pathRelayoutActive: false,
   };
 
   const model = {
@@ -192,7 +196,15 @@
   }
 
   function compactMeta(person) {
-    return [person.role, person.yearLabel].filter(Boolean).join(" / ");
+    return [displayRole(person.role), person.yearLabel].filter(Boolean).join(" / ");
+  }
+
+  function isUnlistedRole(value) {
+    return normalizeText(value) === "unlisted role";
+  }
+
+  function displayRole(value) {
+    return isUnlistedRole(value) ? "" : value;
   }
 
   function searchableText(person) {
@@ -975,6 +987,13 @@
       els.modeLabel.textContent = text;
       return;
     }
+    if (state.currentPathIds.length) {
+      const parts = [state.pathRelayoutActive ? "Relayout path" : "Path"];
+      parts.push(`${state.currentPathIds.length} people`);
+      if (state.pathRelayoutActive && isHorizontalLayout()) parts.push("horizontal");
+      els.modeLabel.textContent = parts.join(" / ");
+      return;
+    }
     if (state.lineageRelayoutId) {
       const parts = ["Relayout lineage"];
       if (state.chronology) parts.push(isHorizontalLayout() ? "chronological x-axis" : "chronology");
@@ -1128,7 +1147,11 @@
     els.layoutOrientationInputs.forEach((input) => {
       input.checked = input.value === state.layoutOrientation;
     });
-    runLayout({ fit: true });
+    if (state.pathRelayoutActive) {
+      relayoutCurrentPath();
+    } else {
+      runLayout({ fit: true });
+    }
     updateModeLabel();
     writeUrlState();
   }
@@ -1181,6 +1204,18 @@
     }
   }
 
+  function closeProfilePanel() {
+    if (!state.cy) return;
+    state.selectedId = "";
+    state.cy.nodes().removeClass("selected");
+    els.profileContent.hidden = true;
+    els.emptyProfile.hidden = false;
+    els.appShell.classList.add("no-selection");
+    state.cy.resize();
+    scheduleMiniMap();
+    writeUrlState();
+  }
+
   function renderProfile(person) {
     els.emptyProfile.hidden = true;
     els.profileContent.hidden = false;
@@ -1193,11 +1228,10 @@
     els.profileTags.replaceChildren();
     [
       person.category === "alumni" ? "" : person.categoryLabel,
-      person.era,
       person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
       person.countryLabel && person.countryLabel !== "Unknown country" ? person.countryLabel : "",
       person.continentLabel && ![OTHER_BUCKET, NULL_BUCKET].includes(person.continentLabel) ? person.continentLabel : "",
-      person.title && person.title !== person.role ? person.title : "",
+      person.title && !isUnlistedRole(person.title) && person.title !== person.role ? person.title : "",
     ].filter(Boolean).forEach((value) => {
       const tag = document.createElement("span");
       tag.className = "tag";
@@ -1238,9 +1272,21 @@
       });
   }
 
-  function clearElementHighlights() {
+  function setPathActionVisible() {
+    els.relayoutPathButton.hidden = state.currentPathIds.length < 2;
+  }
+
+  function clearPathState() {
+    state.currentPathIds = [];
+    state.currentPathEdgeIds = [];
+    state.pathRelayoutActive = false;
+    setPathActionVisible();
+  }
+
+  function clearElementHighlights({ preservePathState = false } = {}) {
     if (!state.cy) return;
     state.cy.elements().removeClass("faded lineage path-node path-edge");
+    if (!preservePathState) clearPathState();
     updateModeLabel();
   }
 
@@ -1447,9 +1493,54 @@
     }
 
     edgeIds.forEach((id) => state.cy.$id(id).removeClass("faded").addClass("path-edge"));
+    state.currentPathIds = pathIds;
+    state.currentPathEdgeIds = edgeIds;
+    state.pathRelayoutActive = false;
+    setPathActionVisible();
     const pathEles = collectionFromIds([...pathSet, ...edgeIds]);
     fitGraph(pathEles, 118);
     updateModeLabel(`Path: ${pathIds.length} people`);
+  }
+
+  function pathLayoutPositions(pathIds) {
+    const gap = 230;
+    const offset = (pathIds.length - 1) * gap / 2;
+    return new Map(pathIds.map((id, index) => [id, { x: 0, y: index * gap - offset }]));
+  }
+
+  function relayoutCurrentPath() {
+    if (!state.cy || state.currentPathIds.length < 2) return;
+    const visiblePathIds = state.currentPathIds.filter((id) => {
+      const node = state.cy.$id(id);
+      return node.length && !node.hasClass("is-hidden");
+    });
+    if (visiblePathIds.length < 2) return;
+
+    const positions = orientPositions(pathLayoutPositions(visiblePathIds));
+    const visibleEdgeIds = state.currentPathEdgeIds.filter((id) => {
+      const edge = state.cy.$id(id);
+      return edge.length && !edge.hasClass("is-hidden");
+    });
+    const pathEles = collectionFromIds([...visiblePathIds, ...visibleEdgeIds]);
+    state.pathRelayoutActive = true;
+    state.cy.elements().removeClass("lineage");
+    pathEles.nodes().removeClass("faded").addClass("path-node");
+    pathEles.edges().removeClass("faded").addClass("path-edge");
+
+    state.cy.once("layoutstop", () => {
+      fitGraph(pathEles, 118);
+      updateVisibleCount();
+      scheduleMiniMap();
+    });
+    pathEles.layout({
+      name: "preset",
+      positions: (node) => positions.get(node.id()) || node.position(),
+      fit: false,
+      animate: !reducedMotion,
+      animationDuration: 520,
+      animationEasing: "ease-out-cubic",
+    }).run();
+    updateModeLabel();
   }
 
   function clearAllFiltersWithoutLayout() {
@@ -1725,8 +1816,9 @@
     els.fitButton.addEventListener("click", () => fitGraph(visibleElements(), 68));
     els.focusButton.addEventListener("click", () => focusBranch());
     els.traceButton.addEventListener("click", () => traceLineage());
-    els.focusBranchButton.addEventListener("click", () => focusBranch());
     els.relayoutLineageButton.addEventListener("click", () => relayoutLineage());
+    els.profileCloseButton.addEventListener("click", closeProfilePanel);
+    els.relayoutPathButton.addEventListener("click", relayoutCurrentPath);
     els.shareButton.addEventListener("click", copyShareLink);
     els.miniMap.addEventListener("click", panFromMiniMap);
     els.miniPanelHandle.addEventListener("pointerdown", startMiniPanelDrag);
@@ -1752,6 +1844,11 @@
       state.cy.resize();
       clampCurrentMiniPanelPosition();
       scheduleMiniMap();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !state.selectedId || els.pathDialog.open) return;
+      closeProfilePanel();
     });
   }
 
