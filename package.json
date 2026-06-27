@@ -1,0 +1,10 @@
+{
+  "name": "cmu-meche-family-tree",
+  "private": true,
+  "scripts": {
+    "layout:elk": "node scripts/elk_layout.js"
+  },
+  "dependencies": {
+    "elkjs": "^0.11.1"
+  }
+}

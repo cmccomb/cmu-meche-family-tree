@@ -130,6 +130,8 @@
     profileName: document.getElementById("profileName"),
     profileMeta: document.getElementById("profileMeta"),
     profileTags: document.getElementById("profileTags"),
+    sourceBlock: document.getElementById("sourceBlock"),
+    sourceList: document.getElementById("sourceList"),
     profileCloseButton: document.getElementById("profileCloseButton"),
     advisorList: document.getElementById("advisorList"),
     studentList: document.getElementById("studentList"),
@@ -205,6 +207,21 @@
 
   function displayRole(value) {
     return isUnlistedRole(value) ? "" : value;
+  }
+
+  function hostnameForUrl(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return "";
+    }
+  }
+
+  function sourceLabel(source) {
+    const label = String(source.label || "").trim();
+    if (label && label !== "Source") return label;
+    if (String(source.url || "").includes("data/lineage_reports/")) return "Lineage report";
+    return hostnameForUrl(source.url) || "Source";
   }
 
   function searchableText(person) {
@@ -1239,8 +1256,32 @@
       els.profileTags.append(tag);
     });
 
+    renderSources(person.sources || []);
     renderRelations(els.advisorList, model.incoming.get(person.id).map((edge) => edge.source));
     renderRelations(els.studentList, model.outgoing.get(person.id).map((edge) => edge.target));
+  }
+
+  function renderSources(sources) {
+    els.sourceList.replaceChildren();
+    const sourceLinks = Array.isArray(sources)
+      ? sources.filter((source) => source && source.url)
+      : [];
+    els.sourceBlock.hidden = sourceLinks.length === 0;
+    if (!sourceLinks.length) return;
+
+    sourceLinks.forEach((source) => {
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      const label = document.createElement("strong");
+      label.textContent = sourceLabel(source);
+      const host = document.createElement("span");
+      host.textContent = hostnameForUrl(source.url);
+      link.append(label);
+      if (host.textContent) link.append(host);
+      els.sourceList.append(link);
+    });
   }
 
   function renderRelations(container, ids) {

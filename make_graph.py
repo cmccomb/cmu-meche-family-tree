@@ -25,6 +25,7 @@ import hashlib
 import json
 import math
 import re
+import subprocess
 import unicodedata
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -106,6 +107,27 @@ CONTINENT_BY_COUNTRY = {
     "United Kingdom": "Europe",
     "United States": "North America",
 }
+
+SOURCE_COLUMN_LABELS = {
+    "source": "Source",
+    "sources": "Source",
+    "wikipedia": "Wikipedia",
+    "wikipedia url": "Wikipedia",
+    "wikipedia_url": "Wikipedia",
+    "mathematics genealogy project": "MGP",
+    "mathematics_genealogy_project": "MGP",
+    "math genealogy project": "MGP",
+    "math_genealogy_project": "MGP",
+    "math genealogy": "MGP",
+    "math_genealogy": "MGP",
+    "mgp": "MGP",
+    "academic family tree": "Academic Family Tree",
+    "academic_family_tree": "Academic Family Tree",
+    "thesis": "Thesis",
+    "other": "Other",
+}
+
+LOCAL_SOURCE_BASE_URL = "https://github.com/cmccomb/cmu-meche-family-tree/blob/main/"
 
 COUNTRY_PATTERNS: List[Tuple[str, str]] = [
     (
@@ -287,6 +309,82 @@ def split_advisors_with_flags(val: object) -> Tuple[List[str], bool, bool]:
     return advisors, has_none, has_ill
 
 
+def source_url_from_value(value: str, label: str) -> Optional[str]:
+    raw = value.strip()
+    if raw == "":
+        return None
+    if re.match(r"https?://", raw, flags=re.IGNORECASE):
+        return raw
+    if raw.casefold().startswith("www."):
+        return f"https://{raw}"
+    if raw.casefold().startswith("doi:"):
+        doi = raw.split(":", 1)[1].strip()
+        return f"https://doi.org/{doi}" if doi else None
+    if re.match(r"^10\.\d{4,9}/\S+$", raw):
+        return f"https://doi.org/{raw}"
+    if label == "MGP":
+        mgp_id = to_int_or_none(raw)
+        if mgp_id is not None:
+            return f"https://www.mathgenealogy.org/id.php?id={mgp_id}"
+    if raw.startswith("data/") or raw.startswith("docs/") or raw.endswith(".md"):
+        return f"{LOCAL_SOURCE_BASE_URL}{raw.lstrip('/')}"
+    return None
+
+
+def source_entries_from_cell(value: object, label: str) -> List[Dict[str, str]]:
+    if value is None or pd.isna(value):
+        return []
+    raw = str(value).strip()
+    if raw == "" or raw.casefold() in PLACEHOLDER_TOKENS:
+        return []
+
+    parts = [part.strip() for part in re.split(r"[;\n]+", raw) if part.strip()]
+    if len(parts) == 1:
+        parts = [raw]
+
+    entries: List[Dict[str, str]] = []
+    for part in parts:
+        url = source_url_from_value(part, label)
+        if not url:
+            continue
+        entries.append({"label": label, "url": url})
+    return entries
+
+
+def source_entries_from_row(row: pd.Series) -> List[Dict[str, str]]:
+    entries: List[Dict[str, str]] = []
+    for column, value in row.items():
+        label = SOURCE_COLUMN_LABELS.get(str(column).strip().casefold())
+        if not label:
+            continue
+        entries.extend(source_entries_from_cell(value, label))
+    return dedupe_source_entries(entries)
+
+
+def dedupe_source_entries(entries: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
+    deduped: List[Dict[str, str]] = []
+    seen: Set[Tuple[str, str]] = set()
+    for entry in entries:
+        label = str(entry.get("label", "")).strip()
+        url = str(entry.get("url", "")).strip()
+        if not label or not url:
+            continue
+        key = (label.casefold(), url)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append({"label": label, "url": url})
+    return deduped
+
+
+def merge_source_entries(
+    existing: Optional[object],
+    incoming: Iterable[Dict[str, str]],
+) -> List[Dict[str, str]]:
+    base = existing if isinstance(existing, list) else []
+    return dedupe_source_entries([*base, *incoming])
+
+
 def build_graph(
     df: pd.DataFrame,
 ) -> Tuple[
@@ -310,6 +408,7 @@ def build_graph(
             title = None
         university = clean_optional_text(r.get("university", None))
         country = clean_optional_text(r.get("country", None))
+        sources = source_entries_from_row(r)
 
         if advisee is None:
             skipped_rows += 1
@@ -323,6 +422,7 @@ def build_graph(
                 "generation": source_generation,
                 "university": university,
                 "country": country,
+                "sources": sources,
             }
         else:
             if people[advisee]["year"] is None and year is not None:
@@ -334,6 +434,7 @@ def build_graph(
                 people[advisee]["university"] = university
             if not people[advisee].get("country") and country:
                 people[advisee]["country"] = country
+            people[advisee]["sources"] = merge_source_entries(people[advisee].get("sources"), sources)
             existing_generation = to_int_or_none(people[advisee].get("generation"))
             if source_generation is not None:
                 people[advisee]["generation"] = max(
@@ -350,6 +451,7 @@ def build_graph(
                     "generation": None,
                     "university": None,
                     "country": None,
+                    "sources": [],
                 }
             edges.append((advisor, advisee))
 
@@ -724,7 +826,7 @@ def _resolve_layer_positions(
     return positions
 
 
-def build_layout(
+def _build_anchor_layout(
     people: Dict[str, Dict[str, Optional[object]]],
     edges: Iterable[Tuple[str, str]],
 ) -> Dict[str, Dict[str, object]]:
@@ -828,6 +930,282 @@ def build_layout(
     return layout
 
 
+def _layout_node_size(name: str, attrs: Dict[str, Optional[object]], degree: int) -> Tuple[float, float]:
+    """Return the rendered Cytoscape node size used by the browser."""
+    is_faculty = bool(attrs.get("cmu", False))
+    width = max(148.0 if is_faculty else 132.0, min(172.0, 124.0 + math.sqrt(degree + 1) * 11.0))
+    height = 58.0 if is_faculty else 52.0
+    return width, height
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parent
+
+
+def _build_elk_layout(
+    people: Dict[str, Dict[str, Optional[object]]],
+    edges: Iterable[Tuple[str, str]],
+    fallback_layout: Dict[str, Dict[str, object]],
+) -> Dict[str, Dict[str, object]]:
+    names = sorted(people, key=str.casefold)
+    edge_list = list(edges)
+    ids_by_name = {name: stable_person_id(name) for name in names}
+    names_by_id = {node_id: name for name, node_id in ids_by_name.items()}
+    degree_counts = {name: 0 for name in names}
+    for advisor, advisee in edge_list:
+        if advisor in degree_counts:
+            degree_counts[advisor] += 1
+        if advisee in degree_counts:
+            degree_counts[advisee] += 1
+
+    node_records = []
+    for name in sorted(
+        names,
+        key=lambda item: (
+            int(fallback_layout[item].get("rank", 0)),
+            int(fallback_layout[item].get("rowOrder", 0)),
+            item.casefold(),
+        ),
+    ):
+        width, height = _layout_node_size(name, people[name], degree_counts[name])
+        node_records.append(
+            {
+                "id": ids_by_name[name],
+                "name": name,
+                "width": width,
+                "height": height,
+                "facultySink": bool(people[name].get("cmu", False)),
+            }
+        )
+
+    faculty_set = {name for name in names if people[name].get("cmu", False)}
+    edge_records = []
+    for index, (advisor, advisee) in enumerate(edge_list):
+        if advisor not in ids_by_name or advisee not in ids_by_name:
+            continue
+        if advisor in faculty_set and advisee in faculty_set:
+            continue
+        edge_records.append(
+            {
+                "id": f"e{index}",
+                "source": ids_by_name[advisor],
+                "target": ids_by_name[advisee],
+            }
+        )
+
+    script_path = _repo_root() / "scripts" / "elk_layout.js"
+    if not script_path.exists():
+        raise RuntimeError(f"ELK layout script not found: {script_path}")
+
+    request = {"nodes": node_records, "edges": edge_records}
+    try:
+        completed = subprocess.run(
+            ["node", str(script_path)],
+            input=json.dumps(request),
+            text=True,
+            capture_output=True,
+            check=True,
+            cwd=str(_repo_root()),
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("Node.js is required for the ELK layout engine.") from exc
+    except subprocess.CalledProcessError as exc:
+        details = exc.stderr.strip() or exc.stdout.strip() or str(exc)
+        raise RuntimeError(f"ELK layout failed: {details}") from exc
+
+    try:
+        response = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"ELK layout returned invalid JSON: {completed.stdout[:500]}") from exc
+
+    positioned = {
+        names_by_id[item["id"]]: item
+        for item in response.get("nodes", [])
+        if item.get("id") in names_by_id
+    }
+    if set(positioned) != set(names):
+        missing = sorted(set(names) - set(positioned), key=str.casefold)
+        raise RuntimeError(f"ELK layout omitted {len(missing)} nodes: {missing[:5]}")
+
+    rows_by_y: Dict[float, List[str]] = defaultdict(list)
+    for name, item in positioned.items():
+        rows_by_y[round(float(item["y"]), 2)].append(name)
+    y_to_rank = {y: index for index, y in enumerate(sorted(rows_by_y))}
+
+    layout: Dict[str, Dict[str, object]] = {}
+    for y, row in rows_by_y.items():
+        ordered_row = sorted(row, key=lambda item: (float(positioned[item]["x"]), item.casefold()))
+        for row_index, name in enumerate(ordered_row):
+            base = dict(fallback_layout[name])
+            base.update(
+                {
+                    "x": round(float(positioned[name]["x"]), 2),
+                    "y": round(float(positioned[name]["y"]), 2),
+                    "rank": int(y_to_rank[y]),
+                    "rowOrder": row_index,
+                    "layoutEngine": "elk-layered",
+                    "elkWidth": round(float(positioned[name].get("width", 0)), 2),
+                    "elkHeight": round(float(positioned[name].get("height", 0)), 2),
+                }
+            )
+            layout[name] = base
+
+    _bottom_align_faculty_components(layout, people, edge_list)
+    _center_layout(layout)
+    _refresh_rank_and_order(layout)
+    _enforce_row_spacing(layout, min_gap=178.0)
+    _enforce_faculty_peer_order(layout, people, edge_list)
+    _center_layout(layout)
+    _refresh_rank_and_order(layout)
+    return layout
+
+
+def _bottom_align_faculty_components(
+    layout: Dict[str, Dict[str, object]],
+    people: Dict[str, Dict[str, Optional[object]]],
+    edges: Iterable[Tuple[str, str]],
+) -> None:
+    faculty = [name for name in layout if people[name].get("cmu", False)]
+    if not faculty:
+        return
+
+    bottom_y = max(float(layout[name]["y"]) for name in faculty)
+    graph = nx.Graph()
+    graph.add_nodes_from(layout)
+    graph.add_edges_from((advisor, advisee) for advisor, advisee in edges if advisor in layout and advisee in layout)
+
+    for component in nx.connected_components(graph):
+        component_faculty = [name for name in component if people[name].get("cmu", False)]
+        if not component_faculty:
+            continue
+        component_bottom = max(float(layout[name]["y"]) for name in component_faculty)
+        shift_y = bottom_y - component_bottom
+        for name in component:
+            layout[name]["y"] = round(float(layout[name]["y"]) + shift_y, 2)
+        for name in component_faculty:
+            layout[name]["y"] = round(bottom_y, 2)
+
+
+def _center_layout(layout: Dict[str, Dict[str, object]]) -> None:
+    if not layout:
+        return
+    min_x = min(float(item["x"]) - float(item.get("elkWidth", 0)) / 2 for item in layout.values())
+    max_x = max(float(item["x"]) + float(item.get("elkWidth", 0)) / 2 for item in layout.values())
+    min_y = min(float(item["y"]) - float(item.get("elkHeight", 0)) / 2 for item in layout.values())
+    max_y = max(float(item["y"]) + float(item.get("elkHeight", 0)) / 2 for item in layout.values())
+    center_x = (min_x + max_x) / 2
+    center_y = (min_y + max_y) / 2
+    for item in layout.values():
+        item["x"] = round(float(item["x"]) - center_x, 2)
+        item["y"] = round(float(item["y"]) - center_y, 2)
+
+
+def _refresh_rank_and_order(layout: Dict[str, Dict[str, object]]) -> None:
+    rows: Dict[float, List[str]] = defaultdict(list)
+    for name, position in layout.items():
+        rows[round(float(position["y"]), 2)].append(name)
+    for rank, y in enumerate(sorted(rows)):
+        ordered = sorted(rows[y], key=lambda name: (float(layout[name]["x"]), name.casefold()))
+        for row_index, name in enumerate(ordered):
+            layout[name]["rank"] = rank
+            layout[name]["rowOrder"] = row_index
+
+
+def _enforce_row_spacing(layout: Dict[str, Dict[str, object]], min_gap: float) -> None:
+    rows: Dict[float, List[str]] = defaultdict(list)
+    for name, position in layout.items():
+        rows[round(float(position["y"]), 2)].append(name)
+
+    for row in rows.values():
+        if len(row) < 2:
+            continue
+        target_x = {name: float(layout[name]["x"]) for name in row}
+        resolved = _resolve_layer_positions(row, target_x, min_gap)
+        ordered = sorted(row, key=lambda name: (resolved[name], name.casefold()))
+        for index, name in enumerate(ordered):
+            layout[name]["x"] = round(resolved[name], 2)
+            layout[name]["rowOrder"] = index
+
+
+def _enforce_faculty_peer_order(
+    layout: Dict[str, Dict[str, object]],
+    people: Dict[str, Dict[str, Optional[object]]],
+    edges: Iterable[Tuple[str, str]],
+) -> None:
+    faculty = [name for name in layout if people[name].get("cmu", False)]
+    if len(faculty) < 2:
+        return
+
+    faculty_set = set(faculty)
+    edge_list = list(edges)
+    advisor_targets: Dict[str, List[float]] = {name: [] for name in faculty}
+    for advisor, advisee in edge_list:
+        if advisee in advisor_targets and advisor in layout and advisor not in faculty_set:
+            advisor_targets[advisee].append(float(layout[advisor]["x"]))
+
+    def faculty_target_x(name: str) -> Tuple[float, float, str]:
+        targets = advisor_targets.get(name, [])
+        barycenter = sum(targets) / len(targets) if targets else float(layout[name]["x"])
+        return barycenter, float(layout[name]["x"]), name.casefold()
+
+    peer_graph = nx.DiGraph()
+    peer_graph.add_nodes_from(faculty)
+    peer_graph.add_edges_from(
+        (advisor, advisee)
+        for advisor, advisee in edge_list
+        if advisor in peer_graph and advisee in peer_graph
+    )
+    current_order = sorted(faculty, key=faculty_target_x)
+    if nx.is_directed_acyclic_graph(peer_graph):
+        ordered_faculty = list(current_order)
+        peer_edges = list(peer_graph.edges())
+        for _ in range(max(1, len(peer_edges) * len(faculty))):
+            changed = False
+            for advisor, advisee in peer_edges:
+                if advisor not in ordered_faculty or advisee not in ordered_faculty:
+                    continue
+                if ordered_faculty.index(advisee) == ordered_faculty.index(advisor) + 1:
+                    continue
+                ordered_faculty.remove(advisee)
+                advisor_index = ordered_faculty.index(advisor)
+                ordered_faculty.insert(advisor_index + 1, advisee)
+                changed = True
+            if not changed:
+                break
+        if any(ordered_faculty.index(advisor) >= ordered_faculty.index(advisee) for advisor, advisee in peer_edges):
+            order_index = {name: index for index, name in enumerate(current_order)}
+            ordered_faculty = list(
+                nx.lexicographical_topological_sort(
+                    peer_graph,
+                    key=lambda name: (order_index.get(name, len(order_index)), name.casefold()),
+                )
+            )
+    else:
+        ordered_faculty = current_order
+
+    x_slots = sorted(float(layout[name]["x"]) for name in faculty)
+    bottom_y = max(float(layout[name]["y"]) for name in faculty)
+    for index, name in enumerate(ordered_faculty):
+        layout[name]["x"] = round(x_slots[index], 2)
+        layout[name]["y"] = round(bottom_y, 2)
+        layout[name]["rowOrder"] = index
+        layout[name]["facultySink"] = True
+        layout[name]["facultyPerimeter"] = True
+
+
+def build_layout(
+    people: Dict[str, Dict[str, Optional[object]]],
+    edges: Iterable[Tuple[str, str]],
+    layout_engine: str = "elk",
+) -> Dict[str, Dict[str, object]]:
+    fallback_layout = _build_anchor_layout(people, edges)
+    if layout_engine == "anchor":
+        return fallback_layout
+    if layout_engine != "elk":
+        raise ValueError(f"Unsupported layout engine: {layout_engine}")
+    return _build_elk_layout(people, edges, fallback_layout)
+
+
 def infer_chronology_years(
     people: Dict[str, Dict[str, Optional[object]]],
     edges: Iterable[Tuple[str, str]],
@@ -872,6 +1250,7 @@ def build_graph_data(
     explicit_none: Set[str],
     explicit_ill: Set[str],
     skipped_rows: int = 0,
+    layout_engine: str = "elk",
 ) -> Dict[str, object]:
     """Build the JSON payload used by the browser explorer."""
     renderable_people = {name: attrs for name, attrs in people.items() if clean_name(name) is not None}
@@ -883,7 +1262,7 @@ def build_graph_data(
     explicit_none = explicit_none & set(renderable_people)
     explicit_ill = explicit_ill & set(renderable_people)
     roots = find_roots(renderable_people, renderable_edges, explicit_none, explicit_ill)
-    layout_by_name = build_layout(renderable_people, renderable_edges)
+    layout_by_name = build_layout(renderable_people, renderable_edges, layout_engine=layout_engine)
     chronology_years = infer_chronology_years(renderable_people, renderable_edges)
 
     ids_by_name = {name: stable_person_id(name) for name in sorted(renderable_people)}
@@ -921,6 +1300,7 @@ def build_graph_data(
                 "continentLabel": continent_label,
                 "role": role,
                 "era": era,
+                "sources": attrs.get("sources") if isinstance(attrs.get("sources"), list) else [],
                 "category": category,
                 "categoryLabel": CATEGORY_LABELS[category],
                 "cmu": bool(attrs.get("cmu", False)),
@@ -978,7 +1358,7 @@ def build_graph_data(
             "missingAdvisorCount": sum(1 for node in nodes if node["category"] == "missing-advisor"),
             "yearRange": [years[0], years[-1]] if years else None,
             "layout": {
-                "name": "advisor-layered-tree",
+                "name": "advisor-elk-layered" if layout_engine == "elk" else "advisor-layered-tree",
                 "rankDirection": "top-to-bottom",
                 "facultySink": True,
             },
@@ -1052,6 +1432,12 @@ def main(argv: Optional[List[str]] = None) -> None:
         default=[],
         help="Optional repo-owned CSV rows to append after the primary CSV. May be supplied more than once.",
     )
+    parser.add_argument(
+        "--layout-engine",
+        choices=["elk", "anchor"],
+        default="elk",
+        help="Layout engine for generated node coordinates.",
+    )
     args = parser.parse_args(argv)
 
     df = read_family_tree_csv(args.csv_path)
@@ -1067,7 +1453,14 @@ def main(argv: Optional[List[str]] = None) -> None:
         print(f"Skipped {skipped_rows} rows because advisee values were missing/placeholder.")
 
     impute_years(people, placeholder=-1)
-    graph_data = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
+    graph_data = build_graph_data(
+        people,
+        edges,
+        explicit_none,
+        explicit_ill,
+        skipped_rows,
+        layout_engine=args.layout_engine,
+    )
 
     output_json = args.output_json
     if output_json is None:

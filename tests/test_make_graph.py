@@ -140,6 +140,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisor": "",
                 "title": "PhD",
                 "university": "Example University",
+                "Wikipedia": "https://en.wikipedia.org/wiki/Root_Mentor",
                 "year": 1970,
             },
             {
@@ -149,6 +150,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "title": "Professor",
                 "university": "Carnegie Mellon University",
                 "country": "",
+                "Mathematics Genealogy Project": "12345",
                 "year": 1999,
             },
             {
@@ -158,6 +160,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "title": "PhD",
                 "university": "Example University",
                 "country": "Canada",
+                "sources": "data/lineage_reports/example.md",
                 "year": 2024,
             },
             {
@@ -196,9 +199,21 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student One"]["continentLabel"] == "North America"
     assert people_by_name["Student Two"]["continentLabel"] == "Unknown / none"
     assert people_by_name["Prof Advisor"]["chronologyYear"] == 1999
+    assert people_by_name["Root Mentor"]["sources"] == [
+        {"label": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Root_Mentor"}
+    ]
+    assert people_by_name["Prof Advisor"]["sources"] == [
+        {"label": "MGP", "url": "https://www.mathgenealogy.org/id.php?id=12345"}
+    ]
+    assert people_by_name["Student One"]["sources"] == [
+        {
+            "label": "Source",
+            "url": "https://github.com/cmccomb/cmu-meche-family-tree/blob/main/data/lineage_reports/example.md",
+        }
+    ]
     assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
     assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True
-    assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
+    assert payload["meta"]["layout"]["name"] == "advisor-elk-layered"
     assert payload["meta"]["layout"]["rankDirection"] == "top-to-bottom"
     assert payload["meta"]["layout"]["facultySink"] is True
     assert people_by_name["Root Mentor"]["layout"]["y"] < people_by_name["Prof Advisor"]["layout"]["y"]
@@ -307,7 +322,7 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
             assert edge["orientation"] == "left-to-right"
         else:
             assert advisor["y"] < advisee["y"]
-    assert payload["meta"]["layout"]["name"] == "advisor-layered-tree"
+    assert payload["meta"]["layout"]["name"] == "advisor-elk-layered"
 
 
 def test_faculty_advising_faculty_share_bottom_row_left_to_right() -> None:

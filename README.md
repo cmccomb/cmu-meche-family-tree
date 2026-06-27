@@ -15,9 +15,9 @@ tree from a CSV export and serves it as a browser-based explorer.
   - `year`
 - Handles multiple advisors in one cell, separated by `;`, `,`, or newlines.
 - Writes `graph-data.json` for the static JavaScript app.
-- Exports a stable advisor-sensitive layered layout with older ancestors above
-  their descendants, all current CMU MechE faculty pinned to the bottom row,
-  and faculty-to-faculty advisor links allowed to run left-to-right.
+- Exports an ELK layered layout with older ancestors above their descendants,
+  all current CMU MechE faculty pinned to the bottom row, and
+  faculty-to-faculty advisor links kept left-to-right.
 - Renders the tree in the browser with Cytoscape.js using those coordinates.
 - Supports search, selected-person profiles, lineage tracing, branch focus,
   focused-lineage relayout, path finding, mini-map navigation, university,
@@ -36,6 +36,7 @@ Special advisor tokens:
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+npm ci
 
 python make_graph.py \
   --csv "https://docs.google.com/spreadsheets/d/.../export?format=csv" \
@@ -63,4 +64,5 @@ Then open `http://localhost:8000`.
 ## Requirements
 
 - Python dependencies from `requirements.txt`
+- Node dependencies from `package-lock.json` for the ELK layout engine
 - Network access in the browser for the pinned Cytoscape.js CDN asset
