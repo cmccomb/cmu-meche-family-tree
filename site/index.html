@@ -8,6 +8,7 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.4/dist/cytoscape.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/elkjs@0.11.1/lib/elk.bundled.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -32,6 +33,10 @@
         <button class="icon-button" id="pathButton" type="button" title="Find path" aria-label="Find path">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7a3 3 0 1 0 0 .1"/><path d="M19 17a3 3 0 1 0 0 .1"/><path d="M8 7h3a4 4 0 0 1 0 8H8"/><path d="M13 15h3"/></svg>
           <span>Path</span>
+        </button>
+        <button class="icon-button reset-view-button" id="resetViewButton" type="button" title="Show full tree" aria-label="Show full tree" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/><path d="M21 21H3"/></svg>
+          <span>Full tree</span>
         </button>
         <button class="icon-button" id="shareButton" type="button" title="Copy share link" aria-label="Copy share link">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8"/><path d="M15 6h3a6 6 0 0 1 0 12h-3"/><path d="M9 18H6A6 6 0 0 1 6 6h3"/></svg>
@@ -118,6 +123,16 @@
       <div id="loadingOverlay" class="loading-overlay">
         <span class="spinner" aria-hidden="true"></span>
         <span>Loading family tree</span>
+      </div>
+      <div class="view-banner" id="viewBanner" aria-live="polite" hidden>
+        <div class="view-banner-copy">
+          <span id="viewTitle">Explore</span>
+          <strong id="viewDetail"></strong>
+        </div>
+        <button class="status-action" id="clearViewButton" type="button">Full tree</button>
+      </div>
+      <div class="timeline-panel" id="timelinePanel" hidden aria-label="Chronological timeline">
+        <svg id="timelineAxis" role="img" aria-label="Chronological timeline"></svg>
       </div>
       <div class="graph-status" aria-live="polite">
         <span id="visibleCount">0 visible</span>

@@ -9,6 +9,23 @@
   const DEFAULT_ORIENTATION = "vertical";
   const MINI_PANEL_STORAGE_KEY = "cmu-meche-family-tree-mini-panel";
   const MINI_PANEL_MARGIN = 12;
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const ELK_RELAYOUT_OPTIONS = {
+    "elk.algorithm": "layered",
+    "elk.direction": "DOWN",
+    "elk.edgeRouting": "SPLINES",
+    "elk.spacing.nodeNode": "54",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "100",
+    "elk.layered.spacing.edgeNodeBetweenLayers": "28",
+    "elk.layered.spacing.edgeEdgeBetweenLayers": "16",
+    "elk.layered.layering.strategy": "NETWORK_SIMPLEX",
+    "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
+    "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.thoroughness": "30",
+    "elk.layered.cycleBreaking.strategy": "GREEDY",
+  };
 
   const categoryColors = {
     "cmu-faculty": "#b00",
@@ -113,10 +130,17 @@
     fitButton: document.getElementById("fitButton"),
     focusButton: document.getElementById("focusButton"),
     pathButton: document.getElementById("pathButton"),
+    resetViewButton: document.getElementById("resetViewButton"),
     shareButton: document.getElementById("shareButton"),
     relayoutPathButton: document.getElementById("relayoutPathButton"),
     visibleCount: document.getElementById("visibleCount"),
     modeLabel: document.getElementById("modeLabel"),
+    viewBanner: document.getElementById("viewBanner"),
+    viewTitle: document.getElementById("viewTitle"),
+    viewDetail: document.getElementById("viewDetail"),
+    clearViewButton: document.getElementById("clearViewButton"),
+    timelinePanel: document.getElementById("timelinePanel"),
+    timelineAxis: document.getElementById("timelineAxis"),
     nodeCount: document.getElementById("nodeCount"),
     edgeCount: document.getElementById("edgeCount"),
     facultyCount: document.getElementById("facultyCount"),
@@ -154,6 +178,7 @@
     layoutOrientation: DEFAULT_ORIENTATION,
     chronology: false,
     lineageRelayoutId: "",
+    traceId: "",
     currentPathIds: [],
     currentPathEdgeIds: [],
     pathRelayoutActive: false,
@@ -175,6 +200,9 @@
 
   let filterTimer = 0;
   let miniFrame = 0;
+  let timelineFrame = 0;
+  let elkEngine = null;
+  let relayoutRun = 0;
 
   function normalizeText(value) {
     return String(value || "").trim().toLowerCase();
@@ -396,9 +424,12 @@
     state.selectedId = params.get("person") || "";
     state.query = params.get("q") || "";
     state.focusId = params.get("focus") || "";
+    state.lineageRelayoutId = params.get("lineage") || "";
+    state.traceId = params.get("trace") || "";
     state.colorMode = COLOR_MODES.has(params.get("color")) ? params.get("color") : "category";
     state.layoutOrientation = ORIENTATIONS.has(params.get("layout")) ? params.get("layout") : DEFAULT_ORIENTATION;
     state.chronology = params.get("chrono") === "1";
+    if (state.lineageRelayoutId && !state.focusId) state.focusId = state.lineageRelayoutId;
   }
 
   function writeUrlState() {
@@ -406,6 +437,8 @@
     if (state.selectedId) params.set("person", state.selectedId);
     if (state.query) params.set("q", state.query);
     if (state.focusId) params.set("focus", state.focusId);
+    if (state.lineageRelayoutId) params.set("lineage", state.lineageRelayoutId);
+    if (state.traceId) params.set("trace", state.traceId);
     if (state.colorMode !== "category") params.set("color", state.colorMode);
     if (state.layoutOrientation !== DEFAULT_ORIENTATION) params.set("layout", state.layoutOrientation);
     if (state.chronology) params.set("chrono", "1");
@@ -618,7 +651,10 @@
       }
     });
 
-    state.cy.on("pan zoom layoutstop", scheduleMiniMap);
+    state.cy.on("pan zoom layoutstop", () => {
+      scheduleMiniMap();
+      scheduleTimeline();
+    });
   }
 
   function collectionFromIds(ids) {
@@ -703,6 +739,103 @@
       connections.get(target).add(source);
     });
     return connections;
+  }
+
+  function nodeSizeForLayout(node) {
+    const dataWidth = Number(node.data("boxWidth"));
+    const dataHeight = Number(node.data("boxHeight"));
+    const renderedWidth = Number(node.width && node.width());
+    const renderedHeight = Number(node.height && node.height());
+    return {
+      width: Number.isFinite(dataWidth) ? dataWidth : (Number.isFinite(renderedWidth) ? renderedWidth : 150),
+      height: Number.isFinite(dataHeight) ? dataHeight : (Number.isFinite(renderedHeight) ? renderedHeight : 56),
+    };
+  }
+
+  function centeredPositionsFromLayout(children = []) {
+    const positioned = children.map((child) => {
+      const width = Number(child.width || 0);
+      const height = Number(child.height || 0);
+      return {
+        id: child.id,
+        x: Number(child.x || 0) + width / 2,
+        y: Number(child.y || 0) + height / 2,
+        width,
+        height,
+      };
+    });
+    if (!positioned.length) return null;
+
+    const minX = Math.min(...positioned.map((node) => node.x - node.width / 2));
+    const maxX = Math.max(...positioned.map((node) => node.x + node.width / 2));
+    const minY = Math.min(...positioned.map((node) => node.y - node.height / 2));
+    const maxY = Math.max(...positioned.map((node) => node.y + node.height / 2));
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    return new Map(positioned.map((node) => [node.id, {
+      x: node.x - centerX,
+      y: node.y - centerY,
+    }]));
+  }
+
+  function visibleEdgeRecordsForNodes(nodes) {
+    const nodeIds = new Set(nodes.map((node) => node.id()));
+    return visibleElements().edges().toArray()
+      .map((edge) => ({
+        id: edge.id(),
+        source: edge.data("source"),
+        target: edge.data("target"),
+      }))
+      .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target));
+  }
+
+  function pathEdgeRecords(pathIds) {
+    return pathIds.slice(0, -1).map((source, index) => ({
+      id: `path-relayout-${index}`,
+      source,
+      target: pathIds[index + 1],
+    }));
+  }
+
+  function elkRelayoutEngine() {
+    if (!window.ELK) return null;
+    if (!elkEngine) elkEngine = new window.ELK();
+    return elkEngine;
+  }
+
+  async function elkLayoutPositions(nodes, edges) {
+    const engine = elkRelayoutEngine();
+    if (!engine || !nodes.length) return null;
+
+    const nodeIds = new Set(nodes.map((node) => node.id()));
+    const children = nodes.map((node) => {
+      const { width, height } = nodeSizeForLayout(node);
+      return {
+        id: node.id(),
+        width,
+        height,
+      };
+    });
+    const elkEdges = edges
+      .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+      .map((edge) => ({
+        id: edge.id,
+        sources: [edge.source],
+        targets: [edge.target],
+      }));
+
+    try {
+      const layout = await engine.layout({
+        id: "relayout",
+        layoutOptions: ELK_RELAYOUT_OPTIONS,
+        children,
+        edges: elkEdges,
+      });
+      return centeredPositionsFromLayout(layout.children || []);
+    } catch {
+      return null;
+    }
   }
 
   function resolveHorizontalPositions(items, minGap) {
@@ -871,6 +1004,7 @@
     if (reducedMotion) {
       state.cy.fit(eles, padding);
       scheduleMiniMap();
+      scheduleTimeline();
       return;
     }
     state.cy.animate({
@@ -881,6 +1015,7 @@
   }
 
   function runLayout({ fit = true } = {}) {
+    relayoutRun += 1;
     const nodes = visibleNodes();
     if (!state.cy || nodes.length === 0) return;
     const roots = visibleRootCollection();
@@ -917,6 +1052,7 @@
       if (fit) fitGraph(visibleElements(), 68);
       updateVisibleCount();
       scheduleMiniMap();
+      scheduleTimeline();
     });
     visibleElements().layout(options).run();
   }
@@ -990,6 +1126,7 @@
       runLayout({ fit: true });
     } else {
       scheduleMiniMap();
+      scheduleTimeline();
     }
   }
 
@@ -999,16 +1136,91 @@
     els.visibleCount.textContent = `${formatNumber(visible)} of ${formatNumber(total)} visible`;
   }
 
+  function personLabel(id, fallback = "Selected person") {
+    const person = model.peopleById.get(id);
+    return person ? person.name : fallback;
+  }
+
+  function activeViewDescriptor() {
+    if (state.currentPathIds.length) {
+      const first = personLabel(state.currentPathIds[0], "Start");
+      const last = personLabel(state.currentPathIds[state.currentPathIds.length - 1], "End");
+      const title = state.pathRelayoutActive ? "Relayout path" : "Path";
+      return {
+        title,
+        detail: `${first} to ${last} / ${state.currentPathIds.length} people`,
+      };
+    }
+    if (state.lineageRelayoutId) {
+      return {
+        title: "Relayout lineage",
+        detail: personLabel(state.lineageRelayoutId),
+      };
+    }
+    if (state.traceId) {
+      return {
+        title: "Lineage trace",
+        detail: personLabel(state.traceId),
+      };
+    }
+    if (state.focusId) {
+      return {
+        title: "Focused branch",
+        detail: personLabel(state.focusId),
+      };
+    }
+    if (state.query) {
+      return {
+        title: "Search results",
+        detail: state.query,
+      };
+    }
+    if (state.chronology) {
+      return {
+        title: isHorizontalLayout() ? "Chronological x-axis" : "Chronological y-axis",
+        detail: "Full tree",
+      };
+    }
+    if (isHorizontalLayout()) {
+      return {
+        title: "Horizontal layout",
+        detail: "Full tree",
+      };
+    }
+    return null;
+  }
+
+  function hasActiveViewState() {
+    return Boolean(activeViewDescriptor());
+  }
+
+  function syncViewNavigation() {
+    const descriptor = activeViewDescriptor();
+    const active = Boolean(descriptor);
+    els.resetViewButton.hidden = !active;
+    els.viewBanner.hidden = !active;
+    if (!active) return;
+    els.viewTitle.textContent = descriptor.title;
+    els.viewDetail.textContent = descriptor.detail || "";
+    els.viewDetail.hidden = !descriptor.detail;
+  }
+
   function updateModeLabel(text) {
     if (text) {
       els.modeLabel.textContent = text;
+      syncViewNavigation();
       return;
     }
     if (state.currentPathIds.length) {
       const parts = [state.pathRelayoutActive ? "Relayout path" : "Path"];
       parts.push(`${state.currentPathIds.length} people`);
-      if (state.pathRelayoutActive && isHorizontalLayout()) parts.push("horizontal");
+      if (state.chronology) {
+        parts.push(isHorizontalLayout() ? "chronological x-axis" : "chronology");
+      } else if (state.pathRelayoutActive && isHorizontalLayout()) {
+        parts.push("horizontal");
+      }
       els.modeLabel.textContent = parts.join(" / ");
+      syncViewNavigation();
       return;
     }
     if (state.lineageRelayoutId) {
@@ -1016,24 +1228,35 @@
       if (state.chronology) parts.push(isHorizontalLayout() ? "chronological x-axis" : "chronology");
       if (isHorizontalLayout() && !state.chronology) parts.push("horizontal");
       els.modeLabel.textContent = parts.join(" + ");
+      syncViewNavigation();
+      return;
+    }
+    if (state.traceId) {
+      const person = model.peopleById.get(state.traceId);
+      els.modeLabel.textContent = person ? `Lineage: ${person.name}` : "Lineage trace";
+      syncViewNavigation();
       return;
     }
     if (state.focusId) {
       const person = model.peopleById.get(state.focusId);
       const label = person ? `Focused: ${person.name}` : "Focused branch";
       els.modeLabel.textContent = isHorizontalLayout() ? `${label} + horizontal` : label;
+      syncViewNavigation();
       return;
     }
     if (state.chronology) {
       els.modeLabel.textContent = isHorizontalLayout() ? "Chronological x-axis" : "Chronological y-axis";
+      syncViewNavigation();
       return;
     }
     if (isHorizontalLayout()) {
       els.modeLabel.textContent = "Horizontal layout";
+      syncViewNavigation();
       return;
     }
     const active = [state.query].filter(Boolean).length;
     els.modeLabel.textContent = active ? `${active} filter${active === 1 ? "" : "s"}` : "Explore";
+    syncViewNavigation();
   }
 
   function populateControls(graph) {
@@ -1132,6 +1355,7 @@
     });
     renderLegend(state.graph);
     scheduleMiniMap();
+    scheduleTimeline();
     writeUrlState();
   }
 
@@ -1152,8 +1376,15 @@
       clearElementHighlights();
       applyFilters({ relayout: false });
     }
-    runLayout({ fit: true });
+    if (state.pathRelayoutActive) {
+      relayoutCurrentPath();
+    } else if (state.lineageRelayoutId) {
+      relayoutLineage(state.lineageRelayoutId);
+    } else {
+      runLayout({ fit: true });
+    }
     updateModeLabel();
+    scheduleTimeline();
     writeUrlState();
   }
 
@@ -1166,10 +1397,13 @@
     });
     if (state.pathRelayoutActive) {
       relayoutCurrentPath();
+    } else if (state.lineageRelayoutId) {
+      relayoutLineage(state.lineageRelayoutId);
     } else {
       runLayout({ fit: true });
     }
     updateModeLabel();
+    scheduleTimeline();
     writeUrlState();
   }
 
@@ -1218,6 +1452,8 @@
     if (center) {
       const target = state.cy.$id(id).closedNeighborhood().not(".is-hidden");
       fitGraph(target.length ? target : state.cy.$id(id), 120);
+    } else {
+      scheduleTimeline();
     }
   }
 
@@ -1230,6 +1466,7 @@
     els.appShell.classList.add("no-selection");
     state.cy.resize();
     scheduleMiniMap();
+    scheduleTimeline();
     writeUrlState();
   }
 
@@ -1327,21 +1564,31 @@
   function clearElementHighlights({ preservePathState = false } = {}) {
     if (!state.cy) return;
     state.cy.elements().removeClass("faded lineage path-node path-edge");
-    if (!preservePathState) clearPathState();
+    if (!preservePathState) {
+      state.traceId = "";
+      clearPathState();
+    }
     updateModeLabel();
   }
 
   function traceLineage(id = state.selectedId) {
     if (!id || !state.cy) return;
+    state.focusId = "";
     state.lineageRelayoutId = "";
+    state.query = "";
+    els.search.value = "";
+    els.searchResults.replaceChildren();
     clearElementHighlights();
+    applyFilters({ relayout: false });
+    state.traceId = id;
     const node = state.cy.$id(id);
     const lineage = node.predecessors().union(node.successors()).union(node);
     state.cy.elements().addClass("faded");
     lineage.removeClass("faded").addClass("lineage");
     node.removeClass("lineage").addClass("selected");
     fitGraph(lineage.not(".is-hidden"), 94);
-    updateModeLabel("Lineage trace");
+    updateModeLabel();
+    writeUrlState();
   }
 
   function lineageLayoutPositions(nodes) {
@@ -1435,10 +1682,12 @@
     return positions;
   }
 
-  function relayoutLineage(id = state.selectedId) {
+  async function relayoutLineage(id = state.selectedId) {
     if (!id || !state.cy) return;
+    const runId = ++relayoutRun;
     state.focusId = id;
     state.lineageRelayoutId = id;
+    state.traceId = "";
     state.query = "";
     els.search.value = "";
     els.searchResults.replaceChildren();
@@ -1448,7 +1697,9 @@
 
     const lineage = visibleElements();
     const nodes = visibleNodes().toArray();
-    const basePositions = lineageLayoutPositions(nodes);
+    const elkPositions = await elkLayoutPositions(nodes, visibleEdgeRecordsForNodes(nodes));
+    if (runId !== relayoutRun || state.lineageRelayoutId !== id) return;
+    const basePositions = elkPositions || lineageLayoutPositions(nodes);
     const rawPositions = state.chronology ? chronologicalLayoutPositions(nodes, basePositions) : basePositions;
     const positions = orientPositions(rawPositions);
     state.cy.elements().removeClass("faded lineage path-node path-edge");
@@ -1460,6 +1711,7 @@
       updateVisibleCount();
       renderLegend(state.graph);
       scheduleMiniMap();
+      scheduleTimeline();
     });
     lineage.layout({
       name: "preset",
@@ -1476,6 +1728,7 @@
   function focusBranch(id = state.selectedId) {
     if (!id) return;
     state.lineageRelayoutId = "";
+    state.traceId = "";
     state.focusId = state.focusId === id ? "" : id;
     if (state.focusId) {
       state.query = "";
@@ -1490,10 +1743,32 @@
   function clearAll() {
     state.focusId = "";
     state.lineageRelayoutId = "";
+    state.traceId = "";
     state.query = "";
     els.search.value = "";
     els.searchResults.replaceChildren();
     clearElementHighlights();
+    applyFilters({ relayout: true });
+  }
+
+  function resetToFullTree() {
+    if (!state.cy) return;
+    state.focusId = "";
+    state.lineageRelayoutId = "";
+    state.traceId = "";
+    state.query = "";
+    state.layoutOrientation = DEFAULT_ORIENTATION;
+    state.chronology = false;
+    renderTimeline();
+    els.search.value = "";
+    els.searchResults.replaceChildren();
+    els.layoutOrientationInputs.forEach((input) => {
+      input.checked = input.value === state.layoutOrientation;
+    });
+    els.chronologyToggle.checked = false;
+    clearPathState();
+    state.cy.elements().removeClass("faded lineage path-node path-edge is-hidden");
+    if (state.selectedId) state.cy.$id(state.selectedId).addClass("selected");
     applyFilters({ relayout: true });
   }
 
@@ -1521,6 +1796,7 @@
 
   function highlightPath(pathIds) {
     state.lineageRelayoutId = "";
+    state.traceId = "";
     clearAllFiltersWithoutLayout();
     clearElementHighlights();
     const pathSet = new Set(pathIds);
@@ -1549,15 +1825,25 @@
     return new Map(pathIds.map((id, index) => [id, { x: 0, y: index * gap - offset }]));
   }
 
-  function relayoutCurrentPath() {
+  async function relayoutCurrentPath() {
     if (!state.cy || state.currentPathIds.length < 2) return;
+    const runId = ++relayoutRun;
+    const expectedPathKey = state.currentPathIds.join("\u0000");
     const visiblePathIds = state.currentPathIds.filter((id) => {
       const node = state.cy.$id(id);
       return node.length && !node.hasClass("is-hidden");
     });
     if (visiblePathIds.length < 2) return;
 
-    const positions = orientPositions(pathLayoutPositions(visiblePathIds));
+    const pathNodes = visiblePathIds
+      .map((id) => state.cy.$id(id))
+      .filter((node) => node.length);
+    const elkPositions = await elkLayoutPositions(pathNodes, pathEdgeRecords(visiblePathIds));
+    const samePath = state.currentPathIds.join("\u0000") === expectedPathKey;
+    if (runId !== relayoutRun || !samePath) return;
+    const basePositions = elkPositions || pathLayoutPositions(visiblePathIds);
+    const rawPositions = state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions) : basePositions;
+    const positions = orientPositions(rawPositions);
     const visibleEdgeIds = state.currentPathEdgeIds.filter((id) => {
       const edge = state.cy.$id(id);
       return edge.length && !edge.hasClass("is-hidden");
@@ -1572,6 +1858,7 @@
       fitGraph(pathEles, 118);
       updateVisibleCount();
       scheduleMiniMap();
+      scheduleTimeline();
     });
     pathEles.layout({
       name: "preset",
@@ -1587,6 +1874,7 @@
   function clearAllFiltersWithoutLayout() {
     state.focusId = "";
     state.lineageRelayoutId = "";
+    state.traceId = "";
     state.query = "";
     els.search.value = "";
     state.cy.elements().removeClass("is-hidden");
@@ -1631,6 +1919,14 @@
     miniFrame = window.requestAnimationFrame(() => {
       miniFrame = 0;
       updateMiniMap();
+    });
+  }
+
+  function scheduleTimeline() {
+    if (timelineFrame) return;
+    timelineFrame = window.requestAnimationFrame(() => {
+      timelineFrame = 0;
+      renderTimeline();
     });
   }
 
@@ -1691,6 +1987,212 @@
     view.setAttribute("stroke-width", "1.4");
     view.setAttribute("rx", "3");
     els.miniMap.append(view);
+  }
+
+  function svgElement(name, attrs = {}) {
+    const element = document.createElementNS(SVG_NS, name);
+    Object.entries(attrs).forEach(([key, value]) => {
+      element.setAttribute(key, String(value));
+    });
+    return element;
+  }
+
+  function clearTimeline() {
+    if (!els.timelinePanel || !els.timelineAxis) return;
+    els.timelineAxis.replaceChildren();
+    els.timelinePanel.hidden = true;
+  }
+
+  function timelineAxisItems() {
+    if (!state.cy) return [];
+    const horizontal = isHorizontalLayout();
+    return visibleNodes().toArray()
+      .map((node) => {
+        const year = numericChronologyYear(node.data("chronologyYear"));
+        const position = node.position();
+        const coord = horizontal ? Number(position.x) : Number(position.y);
+        if (year === null || !Number.isFinite(coord)) return null;
+        return { year, coord };
+      })
+      .filter(Boolean);
+  }
+
+  function niceYearStep(span, targetTicks) {
+    if (!Number.isFinite(span) || span <= 0) return 1;
+    const raw = Math.max(1, span / Math.max(1, targetTicks));
+    const power = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 5, 10].find((multiple) => raw <= multiple * power) || 10;
+    return Math.max(1, Math.round(step * power));
+  }
+
+  function timelineYearLabel(year) {
+    return String(Math.round(year));
+  }
+
+  function renderTimeline() {
+    if (!state.chronology || !state.cy || !els.timelinePanel || !els.timelineAxis) {
+      clearTimeline();
+      return;
+    }
+
+    const items = timelineAxisItems();
+    if (!items.length) {
+      clearTimeline();
+      return;
+    }
+
+    const horizontal = isHorizontalLayout();
+    const width = horizontal ? 900 : 96;
+    const height = horizontal ? 82 : 640;
+    const axisStart = horizontal ? 48 : 44;
+    const axisEnd = horizontal ? width - 48 : height - 44;
+    const axisLength = axisEnd - axisStart;
+    const axisCoord = horizontal ? 42 : 42;
+    const years = items.map((item) => item.year);
+    const coords = items.map((item) => item.coord);
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const minCoord = Math.min(...coords);
+    const maxCoord = Math.max(...coords);
+    const yearSpan = maxYear - minYear;
+    const coordSpan = maxCoord - minCoord;
+    const axisMidpoint = (axisStart + axisEnd) / 2;
+    const coordToPixel = coordSpan <= 0
+      ? () => axisMidpoint
+      : (coord) => clamp(axisStart + ((coord - minCoord) / coordSpan) * axisLength, axisStart, axisEnd);
+    const yearToPixel = yearSpan <= 0
+      ? () => axisMidpoint
+      : (year) => coordToPixel(minCoord + ((year - minYear) / yearSpan) * coordSpan);
+
+    els.timelinePanel.hidden = false;
+    els.timelinePanel.classList.toggle("is-horizontal", horizontal);
+    els.timelinePanel.classList.toggle("is-vertical", !horizontal);
+    els.timelineAxis.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    els.timelineAxis.setAttribute(
+      "aria-label",
+      horizontal ? "Chronological x-axis timeline" : "Chronological y-axis timeline"
+    );
+    els.timelineAxis.replaceChildren();
+
+    const extent = state.cy.extent();
+    const viewMinCoord = horizontal ? Number(extent.x1) : Number(extent.y1);
+    const viewMaxCoord = horizontal ? Number(extent.x2) : Number(extent.y2);
+    if (Number.isFinite(viewMinCoord) && Number.isFinite(viewMaxCoord)) {
+      const viewStart = coordToPixel(Math.min(viewMinCoord, viewMaxCoord));
+      const viewEnd = coordToPixel(Math.max(viewMinCoord, viewMaxCoord));
+      if (horizontal) {
+        els.timelineAxis.append(svgElement("rect", {
+          class: "timeline-window",
+          x: viewStart,
+          y: 13,
+          width: Math.max(2, viewEnd - viewStart),
+          height: 46,
+          rx: 4,
+        }));
+      } else {
+        els.timelineAxis.append(svgElement("rect", {
+          class: "timeline-window",
+          x: 15,
+          y: viewStart,
+          width: 30,
+          height: Math.max(2, viewEnd - viewStart),
+          rx: 4,
+        }));
+      }
+    }
+
+    const marksByYear = new Map();
+    items.forEach((item) => {
+      const key = Math.round(item.year);
+      const mark = marksByYear.get(key) || { count: 0, coordTotal: 0 };
+      mark.count += 1;
+      mark.coordTotal += item.coord;
+      marksByYear.set(key, mark);
+    });
+    marksByYear.forEach((mark) => {
+      const pixel = coordToPixel(mark.coordTotal / mark.count);
+      const length = Math.min(horizontal ? 24 : 18, 4 + Math.sqrt(mark.count) * 3.2);
+      if (horizontal) {
+        els.timelineAxis.append(svgElement("line", {
+          class: "timeline-rug",
+          x1: pixel,
+          x2: pixel,
+          y1: axisCoord - 7,
+          y2: axisCoord - 7 - length,
+        }));
+      } else {
+        els.timelineAxis.append(svgElement("line", {
+          class: "timeline-rug",
+          x1: axisCoord - 7,
+          x2: axisCoord - 7 - length,
+          y1: pixel,
+          y2: pixel,
+        }));
+      }
+    });
+
+    if (horizontal) {
+      els.timelineAxis.append(svgElement("line", {
+        class: "timeline-axis-line",
+        x1: axisStart,
+        x2: axisEnd,
+        y1: axisCoord,
+        y2: axisCoord,
+      }));
+    } else {
+      els.timelineAxis.append(svgElement("line", {
+        class: "timeline-axis-line",
+        x1: axisCoord,
+        x2: axisCoord,
+        y1: axisStart,
+        y2: axisEnd,
+      }));
+    }
+
+    const step = niceYearStep(maxYear - minYear, horizontal ? 7 : 8);
+    const tickYears = new Set([Math.round(minYear), Math.round(maxYear)]);
+    for (let year = Math.ceil(minYear / step) * step; year <= maxYear; year += step) {
+      tickYears.add(year);
+    }
+
+    [...tickYears]
+      .filter((year) => year >= minYear && year <= maxYear)
+      .sort((a, b) => a - b)
+      .forEach((year) => {
+        const pixel = yearToPixel(year);
+        if (horizontal) {
+          els.timelineAxis.append(svgElement("line", {
+            class: "timeline-tick",
+            x1: pixel,
+            x2: pixel,
+            y1: axisCoord - 7,
+            y2: axisCoord + 8,
+          }));
+          const label = svgElement("text", {
+            class: "timeline-year",
+            x: pixel,
+            y: 68,
+            "text-anchor": "middle",
+          });
+          label.textContent = timelineYearLabel(year);
+          els.timelineAxis.append(label);
+        } else {
+          els.timelineAxis.append(svgElement("line", {
+            class: "timeline-tick",
+            x1: axisCoord - 8,
+            x2: axisCoord + 8,
+            y1: pixel,
+            y2: pixel,
+          }));
+          const label = svgElement("text", {
+            class: "timeline-year",
+            x: 52,
+            y: pixel + 3,
+          });
+          label.textContent = timelineYearLabel(year);
+          els.timelineAxis.append(label);
+        }
+      });
   }
 
   function panFromMiniMap(event) {
@@ -1858,6 +2360,8 @@
     els.focusButton.addEventListener("click", () => focusBranch());
     els.traceButton.addEventListener("click", () => traceLineage());
     els.relayoutLineageButton.addEventListener("click", () => relayoutLineage());
+    els.resetViewButton.addEventListener("click", resetToFullTree);
+    els.clearViewButton.addEventListener("click", resetToFullTree);
     els.profileCloseButton.addEventListener("click", closeProfilePanel);
     els.relayoutPathButton.addEventListener("click", relayoutCurrentPath);
     els.shareButton.addEventListener("click", copyShareLink);
@@ -1885,11 +2389,16 @@
       state.cy.resize();
       clampCurrentMiniPanelPosition();
       scheduleMiniMap();
+      scheduleTimeline();
     });
 
     window.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || !state.selectedId || els.pathDialog.open) return;
-      closeProfilePanel();
+      if (event.key !== "Escape" || els.pathDialog.open) return;
+      if (hasActiveViewState()) {
+        resetToFullTree();
+        return;
+      }
+      if (state.selectedId) closeProfilePanel();
     });
   }
 
@@ -1925,7 +2434,12 @@
         selectPerson(state.selectedId, { center: true });
       }
 
-      if (state.focusId && model.peopleById.has(state.focusId)) {
+      if (state.lineageRelayoutId && model.peopleById.has(state.lineageRelayoutId)) {
+        await relayoutLineage(state.lineageRelayoutId);
+      } else if (state.traceId && model.peopleById.has(state.traceId)) {
+        if (!state.selectedId) selectPerson(state.traceId, { center: false });
+        traceLineage(state.traceId);
+      } else if (state.focusId && model.peopleById.has(state.focusId)) {
         applyFilters({ relayout: true });
       }
 
