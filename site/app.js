@@ -1952,6 +1952,10 @@
     model.miniTransform = { bb, scale, offsetX, offsetY };
 
     const ns = "http://www.w3.org/2000/svg";
+    const miniPoint = (position) => ({
+      x: offsetX + (position.x - bb.x1) * scale,
+      y: offsetY + (position.y - bb.y1) * scale,
+    });
     const group = document.createElementNS(ns, "g");
     const miniNodes = nodes.toArray().map((node) => {
       const fill = node.data("fillColor") || categoryColors[node.data("category")] || "#68707a";
@@ -1966,16 +1970,60 @@
     });
 
     miniNodes.forEach(({ node, fill }) => {
-      const position = node.position();
+      const point = miniPoint(node.position());
       const circle = document.createElementNS(ns, "circle");
-      circle.setAttribute("cx", offsetX + (position.x - bb.x1) * scale);
-      circle.setAttribute("cy", offsetY + (position.y - bb.y1) * scale);
+      circle.setAttribute("cx", point.x);
+      circle.setAttribute("cy", point.y);
       circle.setAttribute("r", node.hasClass("selected") ? "3.1" : "2.1");
       circle.setAttribute("fill", fill);
       circle.setAttribute("opacity", node.hasClass("faded") ? "0.28" : "0.78");
       group.append(circle);
     });
     els.miniMap.append(group);
+
+    const activeGroup = document.createElementNS(ns, "g");
+    const activeNodeIds = new Set();
+    visibleElements().edges(".lineage, .path-edge").forEach((edge) => {
+      const source = edge.source();
+      const target = edge.target();
+      if (!source.length || !target.length) return;
+      activeNodeIds.add(source.id());
+      activeNodeIds.add(target.id());
+      const sourcePoint = miniPoint(source.position());
+      const targetPoint = miniPoint(target.position());
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", sourcePoint.x);
+      line.setAttribute("y1", sourcePoint.y);
+      line.setAttribute("x2", targetPoint.x);
+      line.setAttribute("y2", targetPoint.y);
+      line.setAttribute("stroke", "#ffd166");
+      line.setAttribute("stroke-width", edge.hasClass("path-edge") ? "2.5" : "2");
+      line.setAttribute("stroke-linecap", "round");
+      line.setAttribute("opacity", "0.92");
+      activeGroup.append(line);
+    });
+
+    nodes.toArray().forEach((node) => {
+      if (!node.hasClass("lineage") && !node.hasClass("path-node") && !node.hasClass("selected") && !activeNodeIds.has(node.id())) return;
+      const point = miniPoint(node.position());
+      const fill = node.data("fillColor") || categoryColors[node.data("category")] || "#68707a";
+      const halo = document.createElementNS(ns, "circle");
+      halo.setAttribute("cx", point.x);
+      halo.setAttribute("cy", point.y);
+      halo.setAttribute("r", node.hasClass("selected") ? "5.2" : "4.2");
+      halo.setAttribute("fill", "#ffd166");
+      halo.setAttribute("opacity", node.hasClass("faded") ? "0.36" : "0.82");
+      activeGroup.append(halo);
+
+      const dot = document.createElementNS(ns, "circle");
+      dot.setAttribute("cx", point.x);
+      dot.setAttribute("cy", point.y);
+      dot.setAttribute("r", node.hasClass("selected") ? "2.9" : "2.2");
+      dot.setAttribute("fill", fill);
+      dot.setAttribute("opacity", node.hasClass("faded") ? "0.44" : "0.95");
+      activeGroup.append(dot);
+    });
+    els.miniMap.append(activeGroup);
 
     const extent = state.cy.extent();
     const view = document.createElementNS(ns, "rect");
