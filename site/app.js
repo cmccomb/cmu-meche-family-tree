@@ -19,6 +19,8 @@
   const CHRONO_COLLISION_Y_GAP = 74;
   const CHRONO_COLLISION_X_GAP = 132;
   const CHRONO_COLLISION_SHIFT = 138;
+  const CHRONO_SWEEP_PASSES = 4;
+  const CHRONO_NEIGHBOR_WEIGHT = 0.74;
   const SVG_NS = "http://www.w3.org/2000/svg";
   const ELK_RELAYOUT_OPTIONS = {
     "elk.algorithm": "layered",
@@ -933,6 +935,75 @@
     return positions;
   }
 
+  function average(values) {
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+  }
+
+  function chronologyBands(nodes, positions) {
+    const bands = new Map();
+    nodes.forEach((node) => {
+      const position = positions.get(node.id());
+      if (!position) return;
+      const key = Math.round(position.y / CHRONO_BAND_HEIGHT);
+      if (!bands.has(key)) bands.set(key, { key, items: [] });
+      bands.get(key).items.push({
+        id: node.id(),
+        name: node.data("name") || node.id(),
+        target: position.x,
+      });
+    });
+    return [...bands.values()].sort((a, b) => a.key - b.key);
+  }
+
+  function applyChronologyBandSweep(nodes, positions, baseTargetById, connections) {
+    const bands = chronologyBands(nodes, positions);
+    const bandIndexById = new Map();
+    bands.forEach((band, bandIndex) => {
+      band.items.forEach((item) => bandIndexById.set(item.id, bandIndex));
+    });
+
+    function neighborTarget(id, bandIndex, direction) {
+      const linked = [...(connections.get(id) || [])]
+        .filter((neighborId) => {
+          const neighborBand = bandIndexById.get(neighborId);
+          if (!Number.isFinite(neighborBand)) return false;
+          return direction > 0 ? neighborBand < bandIndex : neighborBand > bandIndex;
+        })
+        .map((neighborId) => positions.get(neighborId)?.x)
+        .filter((x) => Number.isFinite(x));
+      if (linked.length) return average(linked);
+
+      const allLinked = [...(connections.get(id) || [])]
+        .map((neighborId) => positions.get(neighborId)?.x)
+        .filter((x) => Number.isFinite(x));
+      return average(allLinked);
+    }
+
+    for (let pass = 0; pass < CHRONO_SWEEP_PASSES; pass += 1) {
+      [1, -1].forEach((direction) => {
+        const sweepBands = direction > 0 ? bands : [...bands].reverse();
+        sweepBands.forEach((band) => {
+          const bandIndex = bandIndexById.get(band.items[0]?.id);
+          const items = band.items.map((item) => {
+            const baseTarget = baseTargetById.get(item.id);
+            const linkedTarget = neighborTarget(item.id, bandIndex, direction);
+            const ownTarget = positions.get(item.id)?.x ?? baseTarget ?? 0;
+            return {
+              ...item,
+              target: linkedTarget === null
+                ? ownTarget
+                : linkedTarget * CHRONO_NEIGHBOR_WEIGHT + (baseTarget ?? ownTarget) * (1 - CHRONO_NEIGHBOR_WEIGHT),
+            };
+          });
+          const resolved = resolveHorizontalPositions(items, CHRONO_BAND_X_GAP);
+          resolved.forEach((x, id) => {
+            positions.get(id).x = x;
+          });
+        });
+      });
+    }
+  }
+
   function chronologicalLayoutPositions(nodes, basePositions = null) {
     const withYears = nodes
       .map((node) => ({ node, year: numericChronologyYear(node.data("chronologyYear")) }))
@@ -964,16 +1035,19 @@
     const connections = visibleConnections(nodes);
 
     const positions = new Map();
+    const baseTargetById = new Map();
     nodes.forEach((node) => {
       const base = baseById.get(node.id());
       const year = numericChronologyYear(node.data("chronologyYear"));
+      const x = (base.x - baseCenterX) * xScale;
+      baseTargetById.set(node.id(), x);
       positions.set(node.id(), {
-        x: (base.x - baseCenterX) * xScale,
+        x,
         y: year === null ? base.y : (year - yearCenter) * yScale,
       });
     });
 
-    for (let pass = 0; pass < 3; pass += 1) {
+    for (let pass = 0; pass < 2; pass += 1) {
       const nextX = new Map();
       nodes.forEach((node) => {
         const neighborXs = [...(connections.get(node.id()) || [])]
@@ -993,23 +1067,7 @@
       });
     }
 
-    const bands = new Map();
-    nodes.forEach((node) => {
-      const position = positions.get(node.id());
-      const key = Math.round(position.y / CHRONO_BAND_HEIGHT);
-      if (!bands.has(key)) bands.set(key, []);
-      bands.get(key).push({
-        id: node.id(),
-        name: node.data("name") || node.id(),
-        target: position.x,
-      });
-    });
-    bands.forEach((items) => {
-      const resolved = resolveHorizontalPositions(items, CHRONO_BAND_X_GAP);
-      resolved.forEach((x, id) => {
-        positions.get(id).x = x;
-      });
-    });
+    applyChronologyBandSweep(nodes, positions, baseTargetById, connections);
 
     const placed = [];
     nodes
