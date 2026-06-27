@@ -685,6 +685,7 @@
     });
 
     state.cy.on("pan zoom layoutstop", scheduleMiniMap);
+    state.cy.on("pan zoom", scheduleTimeline);
     state.cy.on("layoutstop", scheduleTimeline);
   }
 
@@ -2236,7 +2237,7 @@
     return visibleNodes().toArray()
       .map((node) => {
         const year = numericChronologyYear(node.data("chronologyYear"));
-        const position = node.renderedPosition ? node.renderedPosition() : node.position();
+        const position = node.position();
         const coord = horizontal ? Number(position.x) : Number(position.y);
         if (year === null || !Number.isFinite(coord)) return null;
         return { year, coord };
@@ -2273,11 +2274,17 @@
       return;
     }
 
+    const nodes = visibleNodes();
+    if (!nodes.length) {
+      clearTimeline();
+      return;
+    }
+
     const panelRect = els.timelinePanel.getBoundingClientRect();
     const width = Math.max(1, Math.round(panelRect.width));
     const height = Math.max(1, Math.round(panelRect.height));
-    const axisStart = horizontal ? 28 : 26;
-    const axisEnd = horizontal ? width - 28 : height - 26;
+    const nodeBounds = nodes.boundingBox({ includeLabels: false });
+    const graphPad = 260;
     const years = items.map((item) => item.year);
     const coords = items.map((item) => item.coord);
     const minYear = Math.min(...years);
@@ -2286,10 +2293,10 @@
     const maxCoord = Math.max(...coords);
     const yearSpan = maxYear - minYear;
     const coordSpan = maxCoord - minCoord;
-    const axisMidpoint = (axisStart + axisEnd) / 2;
-    const yearToPixel = yearSpan <= 0
+    const axisMidpoint = (minCoord + maxCoord) / 2;
+    const yearToCoord = yearSpan <= 0
       ? () => axisMidpoint
-      : (year) => clamp(minCoord + ((year - minYear) / yearSpan) * coordSpan, axisStart, axisEnd);
+      : (year) => minCoord + ((year - minYear) / yearSpan) * coordSpan;
 
     els.timelineAxis.setAttribute("viewBox", `0 0 ${width} ${height}`);
     els.timelineAxis.setAttribute("preserveAspectRatio", "none");
@@ -2298,6 +2305,34 @@
       horizontal ? "Chronological x-axis grid" : "Chronological y-axis grid"
     );
     els.timelineAxis.replaceChildren();
+    const pan = state.cy.pan();
+    const zoom = state.cy.zoom();
+    const safeZoom = Math.max(zoom, 0.001);
+    const graphX1 = nodeBounds.x1 - graphPad;
+    const graphX2 = nodeBounds.x2 + graphPad;
+    const graphY1 = nodeBounds.y1 - graphPad;
+    const graphY2 = nodeBounds.y2 + graphPad;
+    const viewportOverflow = (value, min, max) => {
+      if (value < min) return min - value;
+      if (value > max) return value - max;
+      return 0;
+    };
+    const leftLabelX = nodeBounds.x1 - 64 / safeZoom;
+    const rightLabelX = nodeBounds.x2 + 64 / safeZoom;
+    const topLabelY = nodeBounds.y1 - 42 / safeZoom;
+    const bottomLabelY = nodeBounds.y2 + 42 / safeZoom;
+    const useRightLabel = viewportOverflow(pan.x + zoom * rightLabelX, 24, width - 24)
+      <= viewportOverflow(pan.x + zoom * leftLabelX, 24, width - 24);
+    const useBottomLabel = viewportOverflow(pan.y + zoom * bottomLabelY, 20, height - 20)
+      <= viewportOverflow(pan.y + zoom * topLabelY, 20, height - 20);
+    const verticalLabelX = clamp(pan.x + zoom * (useRightLabel ? rightLabelX : leftLabelX), 34, width - 18);
+    const verticalLabelAnchor = verticalLabelX > width / 2 ? "end" : "start";
+    const horizontalLabelY = clamp(pan.y + zoom * (useBottomLabel ? bottomLabelY : topLabelY), 16, height - 14);
+    const layer = svgElement("g", {
+      class: "timeline-grid-layer",
+      transform: `translate(${pan.x} ${pan.y}) scale(${zoom})`,
+    });
+    els.timelineAxis.append(layer);
 
     const step = niceYearStep(maxYear - minYear, horizontal ? 7 : 8);
     const tickYears = new Map();
@@ -2311,37 +2346,38 @@
       .filter((year) => year >= minYear && year <= maxYear)
       .sort((a, b) => a - b)
       .forEach((year) => {
-        const pixel = yearToPixel(year);
+        const coord = yearToCoord(year);
         const boundary = Math.abs(year - minYear) < 0.001 || Math.abs(year - maxYear) < 0.001;
         if (horizontal) {
-          els.timelineAxis.append(svgElement("line", {
+          layer.append(svgElement("line", {
             class: `timeline-grid-line${boundary ? " is-boundary" : ""}`,
-            x1: pixel,
-            x2: pixel,
-            y1: 0,
-            y2: height,
+            x1: coord,
+            x2: coord,
+            y1: graphY1,
+            y2: graphY2,
           }));
           const label = svgElement("text", {
             class: "timeline-grid-year",
-            x: clamp(pixel, 30, width - 30),
-            y: height - 14,
+            x: pan.x + zoom * coord,
+            y: horizontalLabelY,
             "text-anchor": "middle",
           });
           label.textContent = timelineYearLabel(year);
           els.timelineAxis.append(label);
         } else {
-          els.timelineAxis.append(svgElement("line", {
+          layer.append(svgElement("line", {
             class: `timeline-grid-line${boundary ? " is-boundary" : ""}`,
-            x1: 0,
-            x2: width,
-            y1: pixel,
-            y2: pixel,
+            x1: graphX1,
+            x2: graphX2,
+            y1: coord,
+            y2: coord,
           }));
           const label = svgElement("text", {
             class: "timeline-grid-year",
-            x: width - 18,
-            y: clamp(pixel - 4, 16, height - 8),
-            "text-anchor": "end",
+            x: verticalLabelX,
+            y: pan.y + zoom * coord,
+            "text-anchor": verticalLabelAnchor,
+            "dominant-baseline": "central",
           });
           label.textContent = timelineYearLabel(year);
           els.timelineAxis.append(label);

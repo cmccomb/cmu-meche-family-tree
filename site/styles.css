@@ -599,6 +599,7 @@ a:focus-visible {
 .timeline-grid-line {
   stroke: rgba(238, 242, 247, 0.18);
   stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
 .timeline-grid-line.is-boundary {
