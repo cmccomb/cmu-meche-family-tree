@@ -680,7 +680,12 @@
 
     state.cy.on("tap", (event) => {
       if (event.target === state.cy) {
+        if (hasActiveViewState()) {
+          resetToFullTree();
+          return;
+        }
         clearElementHighlights();
+        writeUrlState();
       }
     });
 
@@ -1113,6 +1118,7 @@
   }
 
   function capGraphZoom(maxZoom) {
+    if (maxZoom === null || maxZoom === undefined) return;
     const limit = Number(maxZoom);
     if (!state.cy || !Number.isFinite(limit) || state.cy.zoom() <= limit) return;
     state.cy.zoom({
@@ -1333,6 +1339,9 @@
     const active = Boolean(descriptor);
     els.resetViewButton.hidden = !active;
     els.viewBanner.hidden = !active;
+    if (els.graphStage) {
+      els.graphStage.classList.toggle("is-path-relayout", state.pathRelayoutActive);
+    }
     if (!active) return;
     els.viewTitle.textContent = descriptor.title;
     els.viewDetail.textContent = descriptor.detail || "";
@@ -1649,10 +1658,13 @@
       link.href = source.url;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
+      const labelText = sourceLabel(source);
+      const hostText = hostnameForUrl(source.url);
+      link.setAttribute("aria-label", hostText && hostText !== labelText ? `${labelText} source, ${hostText}` : `${labelText} source`);
       const label = document.createElement("strong");
-      label.textContent = sourceLabel(source);
+      label.textContent = labelText;
       const host = document.createElement("span");
-      host.textContent = hostnameForUrl(source.url);
+      host.textContent = hostText && hostText !== labelText ? ` ${hostText}` : "";
       link.append(label);
       if (host.textContent) link.append(host);
       els.sourceList.append(link);
@@ -1689,7 +1701,7 @@
   }
 
   function setPathActionVisible() {
-    els.relayoutPathButton.hidden = state.currentPathIds.length < 2;
+    els.relayoutPathButton.hidden = state.currentPathIds.length < 2 || state.pathRelayoutActive;
   }
 
   function clearPathState() {
@@ -1963,7 +1975,7 @@
     state.pathRelayoutActive = false;
     setPathActionVisible();
     const pathEles = collectionFromIds([...pathSet, ...edgeIds]);
-    fitGraph(pathEles, 118);
+    fitGraph(pathEles, 150, { maxZoom: 1.6 });
     updateModeLabel(`Path: ${pathIds.length} people`);
     writeUrlState();
     revealGraphOnMobile();
@@ -2004,6 +2016,7 @@
     state.pathRelayoutRequested = true;
     state.pathSourceId = visiblePathIds[0] || state.pathSourceId;
     state.pathTargetId = visiblePathIds[visiblePathIds.length - 1] || state.pathTargetId;
+    setPathActionVisible();
     state.cy.elements().removeClass("lineage");
     state.cy.elements().forEach((element) => {
       element.toggleClass("is-hidden", !relayoutIds.has(element.id()));
@@ -2012,7 +2025,7 @@
     pathEles.edges().removeClass("faded").addClass("path-edge");
 
     state.cy.once("layoutstop", () => {
-      fitGraph(pathEles, 220, { maxZoom: 1.25 });
+      fitGraph(pathEles, 120, { maxZoom: 1.8 });
       updateVisibleCount();
       scheduleMiniMap();
       scheduleTimeline();
@@ -2618,22 +2631,35 @@
       createCy(graph);
       attachEvents();
       applyFilters({ relayout: false });
-      runLayout({ fit: true });
+
+      const hasPathUrl = Boolean(state.pathSourceId && state.pathTargetId);
+      const hasDeferredView = Boolean(
+        hasPathUrl || state.lineageRelayoutId || state.traceId || state.focusId
+      );
+      if (!hasDeferredView) runLayout({ fit: true });
 
       if (state.selectedId && model.peopleById.has(state.selectedId)) {
-        selectPerson(state.selectedId, { center: true });
+        selectPerson(state.selectedId, { center: !hasDeferredView });
       }
 
-      const restoredPath = await restorePathFromUrl();
+      let handledDeferredView = false;
+      const restoredPath = hasPathUrl ? await restorePathFromUrl() : false;
       if (restoredPath) {
-        // The path restoration owns the active graph view.
+        handledDeferredView = true;
       } else if (state.lineageRelayoutId && model.peopleById.has(state.lineageRelayoutId)) {
         await relayoutLineage(state.lineageRelayoutId);
+        handledDeferredView = true;
       } else if (state.traceId && model.peopleById.has(state.traceId)) {
         if (!state.selectedId) selectPerson(state.traceId, { center: false });
         traceLineage(state.traceId);
+        handledDeferredView = true;
       } else if (state.focusId && model.peopleById.has(state.focusId)) {
         applyFilters({ relayout: true });
+        handledDeferredView = true;
+      }
+
+      if (hasDeferredView && !handledDeferredView) {
+        runLayout({ fit: true });
       }
 
       els.loading.hidden = true;

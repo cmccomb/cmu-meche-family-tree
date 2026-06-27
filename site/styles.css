@@ -632,6 +632,10 @@ a:focus-visible {
   z-index: 4;
 }
 
+.graph-stage.is-path-relayout .mini-panel {
+  display: none;
+}
+
 .mini-panel.is-dragging {
   cursor: grabbing;
   user-select: none;
