@@ -21,6 +21,9 @@
   const CHRONO_COLLISION_SHIFT = 138;
   const CHRONO_SWEEP_PASSES = 4;
   const CHRONO_NEIGHBOR_WEIGHT = 0.74;
+  const TIMELINE_CENTURY_STEP = 100;
+  const TIMELINE_DECADE_STEP = 10;
+  const TIMELINE_DECADE_MIN_SCREEN_GAP = 46;
   const SVG_NS = "http://www.w3.org/2000/svg";
   const ELK_RELAYOUT_OPTIONS = {
     "elk.algorithm": "layered",
@@ -2282,16 +2285,29 @@
       .filter(Boolean);
   }
 
-  function niceYearStep(span, targetTicks) {
-    if (!Number.isFinite(span) || span <= 0) return 1;
-    const raw = Math.max(1, span / Math.max(1, targetTicks));
-    const power = 10 ** Math.floor(Math.log10(raw));
-    const step = [1, 2, 5, 10].find((multiple) => raw <= multiple * power) || 10;
-    return Math.max(1, Math.round(step * power));
-  }
-
   function timelineYearLabel(year) {
     return String(Math.round(year));
+  }
+
+  function timelineTickYears(minYear, maxYear, pixelsPerYear) {
+    if (!Number.isFinite(minYear) || !Number.isFinite(maxYear)) return [];
+    const ticks = new Map();
+    const centuryStart = Math.floor(minYear / TIMELINE_CENTURY_STEP) * TIMELINE_CENTURY_STEP;
+    const centuryEnd = Math.floor(maxYear / TIMELINE_CENTURY_STEP) * TIMELINE_CENTURY_STEP;
+    for (let year = centuryStart; year <= centuryEnd; year += TIMELINE_CENTURY_STEP) {
+      ticks.set(year, { year, kind: "century" });
+    }
+
+    const decadeSpacing = Math.abs(pixelsPerYear * TIMELINE_DECADE_STEP);
+    if (decadeSpacing >= TIMELINE_DECADE_MIN_SCREEN_GAP) {
+      const decadeStart = Math.floor(minYear / TIMELINE_DECADE_STEP) * TIMELINE_DECADE_STEP;
+      const decadeEnd = Math.floor(maxYear / TIMELINE_DECADE_STEP) * TIMELINE_DECADE_STEP;
+      for (let year = decadeStart; year <= decadeEnd; year += TIMELINE_DECADE_STEP) {
+        if (!ticks.has(year)) ticks.set(year, { year, kind: "decade" });
+      }
+    }
+
+    return [...ticks.values()].sort((a, b) => a.year - b.year);
   }
 
   function renderTimeline() {
@@ -2371,30 +2387,22 @@
     });
     els.timelineAxis.append(layer);
 
-    const step = niceYearStep(maxYear - minYear, horizontal ? 7 : 8);
-    const tickYears = new Map();
-    tickYears.set(minYear.toFixed(2), minYear);
-    tickYears.set(maxYear.toFixed(2), maxYear);
-    for (let year = Math.ceil(minYear / step) * step; year <= maxYear; year += step) {
-      tickYears.set(year.toFixed(2), year);
-    }
+    const pixelsPerYear = yearSpan <= 0 ? 0 : Math.abs((coordSpan / yearSpan) * zoom);
+    const ticks = timelineTickYears(minYear, maxYear, pixelsPerYear);
 
-    [...tickYears.values()]
-      .filter((year) => year >= minYear && year <= maxYear)
-      .sort((a, b) => a - b)
-      .forEach((year) => {
+    ticks
+      .forEach(({ year, kind }) => {
         const coord = yearToCoord(year);
-        const boundary = Math.abs(year - minYear) < 0.001 || Math.abs(year - maxYear) < 0.001;
         if (horizontal) {
           layer.append(svgElement("line", {
-            class: `timeline-grid-line${boundary ? " is-boundary" : ""}`,
+            class: `timeline-grid-line is-${kind}`,
             x1: coord,
             x2: coord,
             y1: graphY1,
             y2: graphY2,
           }));
           const label = svgElement("text", {
-            class: "timeline-grid-year",
+            class: `timeline-grid-year is-${kind}`,
             x: pan.x + zoom * coord,
             y: horizontalLabelY,
             "text-anchor": "middle",
@@ -2403,14 +2411,14 @@
           els.timelineAxis.append(label);
         } else {
           layer.append(svgElement("line", {
-            class: `timeline-grid-line${boundary ? " is-boundary" : ""}`,
+            class: `timeline-grid-line is-${kind}`,
             x1: graphX1,
             x2: graphX2,
             y1: coord,
             y2: coord,
           }));
           const label = svgElement("text", {
-            class: "timeline-grid-year",
+            class: `timeline-grid-year is-${kind}`,
             x: verticalLabelX,
             y: pan.y + zoom * coord,
             "text-anchor": verticalLabelAnchor,

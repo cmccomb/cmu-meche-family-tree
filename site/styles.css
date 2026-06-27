@@ -602,9 +602,14 @@ a:focus-visible {
   vector-effect: non-scaling-stroke;
 }
 
-.timeline-grid-line.is-boundary {
+.timeline-grid-line.is-century {
   stroke: rgba(255, 209, 102, 0.42);
   stroke-width: 1.4;
+}
+
+.timeline-grid-line.is-decade {
+  stroke: rgba(238, 242, 247, 0.24);
+  stroke-dasharray: 3 7;
 }
 
 .timeline-grid-year {
@@ -615,6 +620,12 @@ a:focus-visible {
   stroke: rgba(37, 40, 44, 0.92);
   stroke-linejoin: round;
   stroke-width: 4px;
+}
+
+.timeline-grid-year.is-decade {
+  fill: #cbd5e1;
+  font-size: 9px;
+  font-weight: 760;
 }
 
 .mini-panel {
