@@ -655,6 +655,13 @@
           },
         },
         {
+          selector: ".path-node",
+          style: {
+            "font-size": 11,
+            "min-zoomed-font-size": 3,
+          },
+        },
+        {
           selector: "edge.lineage, edge.path-edge",
           style: {
             width: 3,
@@ -761,6 +768,23 @@
   function orientPositions(positions) {
     if (!positions || !isHorizontalLayout()) return positions;
     return new Map([...positions.entries()].map(([id, position]) => [id, orientPosition(position)]));
+  }
+
+  function compactStackedPathPositions(positions) {
+    if (!positions || !isStackedLayout() || !state.chronology || isHorizontalLayout()) return positions;
+    const ys = [...positions.values()].map((position) => position.y).filter(Number.isFinite);
+    if (ys.length < 2) return positions;
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const span = maxY - minY;
+    const maxSpan = 320;
+    if (!Number.isFinite(span) || span <= maxSpan) return positions;
+    const center = (minY + maxY) / 2;
+    const scale = maxSpan / span;
+    return new Map([...positions.entries()].map(([id, position]) => [id, {
+      ...position,
+      y: center + (position.y - center) * scale,
+    }]));
   }
 
   function chronologyLayoutPosition(node) {
@@ -1975,7 +1999,7 @@
     state.pathRelayoutActive = false;
     setPathActionVisible();
     const pathEles = collectionFromIds([...pathSet, ...edgeIds]);
-    fitGraph(pathEles, 150, { maxZoom: 1.6 });
+    fitGraph(pathEles, isStackedLayout() ? 80 : 150, { maxZoom: isStackedLayout() ? 2.2 : 1.6 });
     updateModeLabel(`Path: ${pathIds.length} people`);
     writeUrlState();
     revealGraphOnMobile();
@@ -2005,7 +2029,7 @@
     if (runId !== relayoutRun || !samePath) return;
     const basePositions = elkPositions || pathLayoutPositions(visiblePathIds);
     const rawPositions = state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions) : basePositions;
-    const positions = orientPositions(rawPositions);
+    const positions = orientPositions(compactStackedPathPositions(rawPositions));
     const visibleEdgeIds = state.currentPathEdgeIds.filter((id) => {
       const edge = state.cy.$id(id);
       return edge.length && !edge.hasClass("is-hidden");
@@ -2025,7 +2049,7 @@
     pathEles.edges().removeClass("faded").addClass("path-edge");
 
     state.cy.once("layoutstop", () => {
-      fitGraph(pathEles, 120, { maxZoom: 1.8 });
+      fitGraph(pathEles, isStackedLayout() ? 92 : 120, { maxZoom: isStackedLayout() ? 2.4 : 1.8 });
       updateVisibleCount();
       scheduleMiniMap();
       scheduleTimeline();

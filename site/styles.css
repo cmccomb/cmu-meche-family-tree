@@ -1096,6 +1096,10 @@ a:focus-visible {
     max-width: calc(100% - 24px);
   }
 
+  .graph-stage.is-path-relayout .graph-status {
+    display: none;
+  }
+
   .view-banner {
     top: 12px;
     left: 12px;
