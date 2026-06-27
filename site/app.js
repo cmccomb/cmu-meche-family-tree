@@ -5,6 +5,8 @@
   const OTHER_BUCKET = "Other";
   const NULL_BUCKET = "Unknown / none";
   const COLOR_MODES = new Set(["category", "university", "country", "continent"]);
+  const ORIENTATIONS = new Set(["vertical", "horizontal"]);
+  const DEFAULT_ORIENTATION = "vertical";
 
   const categoryColors = {
     "cmu-faculty": "#b00",
@@ -104,6 +106,7 @@
     peopleOptions: document.getElementById("peopleOptions"),
     searchResults: document.getElementById("searchResults"),
     colorModeInputs: [...document.querySelectorAll('input[name="colorMode"]')],
+    layoutOrientationInputs: [...document.querySelectorAll('input[name="layoutOrientation"]')],
     chronologyToggle: document.getElementById("chronologyToggle"),
     fitButton: document.getElementById("fitButton"),
     focusButton: document.getElementById("focusButton"),
@@ -141,6 +144,7 @@
     query: "",
     focusId: "",
     colorMode: "category",
+    layoutOrientation: DEFAULT_ORIENTATION,
     chronology: false,
     lineageRelayoutId: "",
   };
@@ -360,6 +364,7 @@
     state.query = params.get("q") || "";
     state.focusId = params.get("focus") || "";
     state.colorMode = COLOR_MODES.has(params.get("color")) ? params.get("color") : "category";
+    state.layoutOrientation = ORIENTATIONS.has(params.get("layout")) ? params.get("layout") : DEFAULT_ORIENTATION;
     state.chronology = params.get("chrono") === "1";
   }
 
@@ -369,6 +374,7 @@
     if (state.query) params.set("q", state.query);
     if (state.focusId) params.set("focus", state.focusId);
     if (state.colorMode !== "category") params.set("color", state.colorMode);
+    if (state.layoutOrientation !== DEFAULT_ORIENTATION) params.set("layout", state.layoutOrientation);
     if (state.chronology) params.set("chrono", "1");
     const query = params.toString();
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
@@ -610,6 +616,23 @@
     return { x, y };
   }
 
+  function isHorizontalLayout() {
+    return state.layoutOrientation === "horizontal";
+  }
+
+  function orientPosition(position) {
+    if (!position || !isHorizontalLayout()) return position;
+    return {
+      x: position.y * 1.18,
+      y: position.x * 0.86,
+    };
+  }
+
+  function orientPositions(positions) {
+    if (!positions || !isHorizontalLayout()) return positions;
+    return new Map([...positions.entries()].map(([id, position]) => [id, orientPosition(position)]));
+  }
+
   function chronologyLayoutPosition(node) {
     const base = nodeLayoutPosition(node) || node.position();
     const range = model.chronologyRange;
@@ -622,7 +645,8 @@
   }
 
   function activeLayoutPosition(node) {
-    return state.chronology ? chronologyLayoutPosition(node) : nodeLayoutPosition(node);
+    const position = state.chronology ? chronologyLayoutPosition(node) : nodeLayoutPosition(node);
+    return orientPosition(position);
   }
 
   function clamp(value, min, max) {
@@ -795,8 +819,8 @@
   function preparedLayoutPositions(nodes) {
     const nodeArray = nodes.toArray();
     const basePositions = state.lineageRelayoutId ? lineageLayoutPositions(nodeArray) : null;
-    if (state.chronology) return chronologicalLayoutPositions(nodeArray, basePositions);
-    return basePositions;
+    const positions = state.chronology ? chronologicalLayoutPositions(nodeArray, basePositions) : basePositions;
+    return orientPositions(positions);
   }
 
   function hasPresetLayout(nodes) {
@@ -849,6 +873,7 @@
           avoidOverlap: true,
           nodeDimensionsIncludeLabels: true,
           padding: 72,
+          transform: (node, position) => orientPosition(position),
           fit: false,
           animate: !reducedMotion,
           animationDuration: 560,
@@ -947,16 +972,24 @@
       return;
     }
     if (state.lineageRelayoutId) {
-      els.modeLabel.textContent = state.chronology ? "Relayout lineage + chronology" : "Relayout lineage";
+      const parts = ["Relayout lineage"];
+      if (state.chronology) parts.push(isHorizontalLayout() ? "chronological x-axis" : "chronology");
+      if (isHorizontalLayout() && !state.chronology) parts.push("horizontal");
+      els.modeLabel.textContent = parts.join(" + ");
       return;
     }
     if (state.focusId) {
       const person = model.peopleById.get(state.focusId);
-      els.modeLabel.textContent = person ? `Focused: ${person.name}` : "Focused branch";
+      const label = person ? `Focused: ${person.name}` : "Focused branch";
+      els.modeLabel.textContent = isHorizontalLayout() ? `${label} + horizontal` : label;
       return;
     }
     if (state.chronology) {
-      els.modeLabel.textContent = "Chronological y-axis";
+      els.modeLabel.textContent = isHorizontalLayout() ? "Chronological x-axis" : "Chronological y-axis";
+      return;
+    }
+    if (isHorizontalLayout()) {
+      els.modeLabel.textContent = "Horizontal layout";
       return;
     }
     const active = [state.query].filter(Boolean).length;
@@ -979,6 +1012,9 @@
     els.search.value = state.query;
     els.colorModeInputs.forEach((input) => {
       input.checked = input.value === state.colorMode;
+    });
+    els.layoutOrientationInputs.forEach((input) => {
+      input.checked = input.value === state.layoutOrientation;
     });
     els.chronologyToggle.checked = state.chronology;
   }
@@ -1076,6 +1112,18 @@
       clearElementHighlights();
       applyFilters({ relayout: false });
     }
+    runLayout({ fit: true });
+    updateModeLabel();
+    writeUrlState();
+  }
+
+  function setLayoutOrientation(orientation) {
+    const nextOrientation = ORIENTATIONS.has(orientation) ? orientation : DEFAULT_ORIENTATION;
+    if (state.layoutOrientation === nextOrientation) return;
+    state.layoutOrientation = nextOrientation;
+    els.layoutOrientationInputs.forEach((input) => {
+      input.checked = input.value === state.layoutOrientation;
+    });
     runLayout({ fit: true });
     updateModeLabel();
     writeUrlState();
@@ -1310,7 +1358,8 @@
     const lineage = visibleElements();
     const nodes = visibleNodes().toArray();
     const basePositions = lineageLayoutPositions(nodes);
-    const positions = state.chronology ? chronologicalLayoutPositions(nodes, basePositions) : basePositions;
+    const rawPositions = state.chronology ? chronologicalLayoutPositions(nodes, basePositions) : basePositions;
+    const positions = orientPositions(rawPositions);
     state.cy.elements().removeClass("faded lineage path-node path-edge");
     lineage.addClass("lineage");
     state.cy.$id(id).removeClass("lineage").addClass("selected");
@@ -1329,7 +1378,7 @@
       animationDuration: 520,
       animationEasing: "ease-out-cubic",
     }).run();
-    updateModeLabel(state.chronology ? "Relayout lineage + chronology" : "Relayout lineage");
+    updateModeLabel();
     writeUrlState();
   }
 
@@ -1548,6 +1597,11 @@
     els.colorModeInputs.forEach((input) => {
       input.addEventListener("change", () => {
         if (input.checked) setColorMode(input.value);
+      });
+    });
+    els.layoutOrientationInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        if (input.checked) setLayoutOrientation(input.value);
       });
     });
     els.chronologyToggle.addEventListener("change", () => setChronologyMode(els.chronologyToggle.checked));
