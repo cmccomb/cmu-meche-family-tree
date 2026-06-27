@@ -2,7 +2,16 @@ import json
 
 import pandas as pd
 
-from make_graph import build_graph, build_graph_data, impute_years, is_cmu_faculty_marker, main
+from make_graph import build_graph, build_graph_data, impute_years, is_cmu_faculty_marker, main, role_for_person
+
+
+def test_role_inference_does_not_emit_ms_alumni() -> None:
+    assert role_for_person({"title": "MS"}) == "Unlisted role"
+    assert role_for_person({"title": "M.S."}) == "Unlisted role"
+    assert (
+        role_for_person({"title": "A Robust Concept Exploration Method for Configuring Complex Systems"})
+        == "A Robust Concept Exploration Method for Configuring Complex Systems"
+    )
 
 
 def test_placeholder_advisors_and_nan_filtering() -> None:
@@ -187,7 +196,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
     people_by_name = {node["name"]: node for node in payload["nodes"]}
     assert people_by_name["Prof Advisor"]["category"] == "cmu-faculty"
     assert people_by_name["Student One"]["role"] == "PhD alumni"
-    assert people_by_name["Student Two"]["role"] == "MS alumni"
+    assert people_by_name["Student Two"]["role"] == "Unlisted role"
     assert people_by_name["Student Two"]["category"] == "follow-up"
     assert people_by_name["Prof Advisor"]["universityLabel"] == "Carnegie Mellon University"
     assert people_by_name["Student One"]["universityLabel"] == "Example University"

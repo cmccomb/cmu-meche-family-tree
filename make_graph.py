@@ -545,8 +545,8 @@ def role_for_person(attrs: Dict[str, Optional[object]]) -> str:
     normalized = re.sub(r"[^a-z0-9]+", "", title)
     if "phd" in normalized or "doctor" in normalized:
         return "PhD alumni"
-    if "ms" in normalized or "msc" in normalized or "master" in normalized:
-        return "MS alumni"
+    if normalized in {"ms", "msc", "mse", "master", "masters", "masterofscience"}:
+        return "Unlisted role"
     if title.strip():
         return str(attrs.get("title"))
     return "Unlisted role"
@@ -578,7 +578,7 @@ def _sort_eras(eras: Iterable[str]) -> List[str]:
 
 
 def _sort_roles(roles: Iterable[str]) -> List[str]:
-    preferred = ["CMU faculty", "PhD alumni", "MS alumni", "Unlisted role"]
+    preferred = ["CMU faculty", "PhD alumni", "Unlisted role"]
     role_set = set(roles)
     leading = [role for role in preferred if role in role_set]
     rest = sorted(role_set - set(leading), key=str.casefold)

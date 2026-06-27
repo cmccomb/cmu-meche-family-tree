@@ -263,8 +263,18 @@
     return normalizeText(value) === "unlisted role";
   }
 
+  function isHiddenRole(value) {
+    const role = normalizeText(value);
+    return role === "unlisted role" || role === "ms alumni";
+  }
+
+  function isHiddenTitleTag(value) {
+    const title = normalizeText(value).replace(/[^a-z0-9]+/g, "");
+    return title === "ms" || title === "msc" || title === "mse" || title === "master" || title === "masters";
+  }
+
   function displayRole(value) {
-    return isUnlistedRole(value) ? "" : value;
+    return isHiddenRole(value) ? "" : value;
   }
 
   function hostnameForUrl(url) {
@@ -289,7 +299,7 @@
       person.universityLabel,
       person.countryLabel,
       person.continentLabel,
-      person.role,
+      displayRole(person.role),
       person.era,
       person.categoryLabel,
       person.yearLabel,
@@ -1669,7 +1679,7 @@
       person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
       person.countryLabel && person.countryLabel !== "Unknown country" ? person.countryLabel : "",
       person.continentLabel && ![OTHER_BUCKET, NULL_BUCKET].includes(person.continentLabel) ? person.continentLabel : "",
-      person.title && !isUnlistedRole(person.title) && person.title !== person.role ? person.title : "",
+      person.title && !isHiddenRole(person.title) && !isHiddenTitleTag(person.title) && person.title !== person.role ? person.title : "",
     ].filter(Boolean).forEach((value) => {
       const tag = document.createElement("span");
       tag.className = "tag";
