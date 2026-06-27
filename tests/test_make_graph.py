@@ -158,7 +158,8 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "advisor": "Root Mentor",
                 "title": "Professor",
                 "university": "Carnegie Mellon University",
-                "country": "",
+                "country": "United States",
+                "continent": "North America",
                 "Mathematics Genealogy Project": "12345",
                 "year": 1999,
             },
@@ -169,6 +170,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "title": "PhD",
                 "university": "Example University",
                 "country": "Canada",
+                "continent": "North America",
                 "sources": "https://example.edu/student-one-lineage",
                 "year": 2024,
             },
@@ -179,6 +181,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "title": "MS",
                 "university": "",
                 "country": "",
+                "continent": "",
                 "year": 2025,
             },
         ]
@@ -220,6 +223,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
             "url": "https://example.edu/student-one-lineage",
         }
     ]
+
     assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
     assert people_by_name["Prof Advisor"]["layout"]["facultyPerimeter"] is True
     assert payload["meta"]["layout"]["name"] == "advisor-elk-layered"
@@ -234,6 +238,56 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert edge["target"] == people_by_name["Prof Advisor"]["id"]
     assert edge["facultyPeer"] is False
     assert edge["orientation"] == "top-to-bottom"
+
+
+def test_geography_labels_come_directly_from_spreadsheet() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "generation": "",
+                "advisee": "Older Scholar",
+                "advisor": "",
+                "title": "PhD",
+                "university": "",
+                "country": "Iran",
+                "continent": "Asia",
+                "year": 1890,
+            },
+            {
+                "generation": "",
+                "advisee": "University Only",
+                "advisor": "",
+                "title": "PhD",
+                "university": "Carnegie Mellon University",
+                "country": "",
+                "continent": "",
+                "year": 1990,
+            },
+            {
+                "generation": "",
+                "advisee": "Custom Sheet Geography",
+                "advisor": "",
+                "title": "PhD",
+                "university": "Example University",
+                "country": "Iraq",
+                "continent": "Asia",
+                "year": 1991,
+            },
+        ]
+    )
+
+    people, edges, explicit_none, explicit_ill, skipped_rows = build_graph(df)
+    impute_years(people)
+    payload = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
+
+    people_by_name = {node["name"]: node for node in payload["nodes"]}
+
+    assert people_by_name["Older Scholar"]["countryLabel"] == "Iran"
+    assert people_by_name["Older Scholar"]["continentLabel"] == "Asia"
+    assert people_by_name["Custom Sheet Geography"]["countryLabel"] == "Iraq"
+    assert people_by_name["Custom Sheet Geography"]["continentLabel"] == "Asia"
+    assert people_by_name["University Only"]["countryLabel"] == "Unknown country"
+    assert people_by_name["University Only"]["continentLabel"] == "Unknown / none"
 
 
 def test_layout_places_lineages_on_layered_tree_rows() -> None:
