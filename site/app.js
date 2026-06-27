@@ -37,7 +37,7 @@
 
   const nodePalette = {
     "cmu-faculty": { fill: "#b00", border: "#ffffff", text: "#ffffff" },
-    "alumni": { fill: "#ffffff", border: "#cbd1d8", text: "#1c1f23" },
+    "alumni": { fill: "#ffffff", border: "#6f7b8a", text: "#1c1f23" },
     "unknown-lineage": { fill: "#3e8c69", border: "#ffffff", text: "#ffffff" },
     "missing-advisor": { fill: "#f6d486", border: "#9b6810", text: "#1c1f23" },
     "follow-up": { fill: "#d45f16", border: "#ffffff", text: "#ffffff" },
@@ -564,6 +564,11 @@
             "text-outline-width": 0,
             "min-zoomed-font-size": 7,
             "overlay-padding": 6,
+            "shadow-blur": 12,
+            "shadow-color": "#000000",
+            "shadow-offset-x": 0,
+            "shadow-offset-y": 3,
+            "shadow-opacity": 0.16,
             "transition-property": "background-color, border-color, opacity, width, height",
             "transition-duration": reducedMotion ? 0 : 160,
           },
@@ -592,11 +597,11 @@
           style: {
             width: 1.25,
             "curve-style": "straight",
-            "line-color": "#a6b1bd",
-            "target-arrow-color": "#a6b1bd",
+            "line-color": "#96a3b3",
+            "target-arrow-color": "#96a3b3",
             "target-arrow-shape": "triangle",
             "arrow-scale": 0.7,
-            opacity: 0.64,
+            opacity: 0.72,
             "transition-property": "line-color, opacity, width",
             "transition-duration": reducedMotion ? 0 : 160,
           },
@@ -608,7 +613,7 @@
         {
           selector: ".selected",
           style: {
-            "border-color": "#111318",
+            "border-color": "#ffd166",
             "border-width": 4,
             "z-index": 30,
           },
@@ -616,7 +621,7 @@
         {
           selector: ".lineage, .path-node",
           style: {
-            "border-color": "#111318",
+            "border-color": "#ffd166",
             "border-width": 3,
             "z-index": 20,
           },
@@ -625,8 +630,8 @@
           selector: "edge.lineage, edge.path-edge",
           style: {
             width: 3,
-            "line-color": "#111318",
-            "target-arrow-color": "#111318",
+            "line-color": "#ffd166",
+            "target-arrow-color": "#ffd166",
             opacity: 0.95,
             "z-index": 10,
           },
@@ -1983,7 +1988,7 @@
     view.setAttribute("width", Math.max(4, Math.min(width - 2, w)));
     view.setAttribute("height", Math.max(4, Math.min(height - 2, h)));
     view.setAttribute("fill", "none");
-    view.setAttribute("stroke", "#111318");
+    view.setAttribute("stroke", "#eef2f7");
     view.setAttribute("stroke-width", "1.4");
     view.setAttribute("rx", "3");
     els.miniMap.append(view);
@@ -2001,6 +2006,7 @@
     if (!els.timelinePanel || !els.timelineAxis) return;
     els.timelineAxis.replaceChildren();
     els.timelinePanel.hidden = true;
+    els.timelinePanel.parentElement.classList.remove("has-horizontal-timeline", "has-vertical-timeline");
   }
 
   function timelineAxisItems() {
@@ -2067,6 +2073,8 @@
     els.timelinePanel.hidden = false;
     els.timelinePanel.classList.toggle("is-horizontal", horizontal);
     els.timelinePanel.classList.toggle("is-vertical", !horizontal);
+    els.timelinePanel.parentElement.classList.toggle("has-horizontal-timeline", horizontal);
+    els.timelinePanel.parentElement.classList.toggle("has-vertical-timeline", !horizontal);
     els.timelineAxis.setAttribute("viewBox", `0 0 ${width} ${height}`);
     els.timelineAxis.setAttribute(
       "aria-label",
