@@ -39,6 +39,7 @@ pip install -r requirements.txt
 
 python make_graph.py \
   --csv "https://docs.google.com/spreadsheets/d/.../export?format=csv" \
+  --supplemental-csv data/supplemental_lineages.csv \
   --output-json docs/graph-data.json
 
 cp site/index.html site/app.js site/styles.css site/zoom.html docs/
@@ -50,6 +51,8 @@ Then open `http://localhost:8000`.
 ## GitHub Pages deployment
 
 - Set the repo secret `CSV_URL` to your published sheet CSV URL.
+- Repo-owned historical additions live in `data/supplemental_lineages.csv`
+  and are appended during the build.
 - Workflow in `.github/workflows/build.yml` runs on push, manual dispatch, and
   schedule.
 - It writes `docs/graph-data.json`, copies the static site assets, and deploys

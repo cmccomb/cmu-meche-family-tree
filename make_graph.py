@@ -1002,6 +1002,26 @@ def write_graph_data(graph_data: Dict[str, object], output_path: str) -> None:
     print(f"Saved: {path}")
 
 
+def read_family_tree_csv(csv_path: str) -> pd.DataFrame:
+    """Read a family-tree CSV and normalize its column names."""
+    df = pd.read_csv(csv_path, keep_default_na=False)
+    df.columns = [norm(c) for c in df.columns]
+    return df
+
+
+def append_supplemental_rows(df: pd.DataFrame, supplemental_csvs: Iterable[str]) -> pd.DataFrame:
+    """Append repo-owned supplemental rows to the primary source dataframe."""
+    frames = [df]
+    for supplemental_csv in supplemental_csvs:
+        path = Path(supplemental_csv)
+        if not path.exists():
+            raise FileNotFoundError(f"Supplemental CSV not found: {path}")
+        frames.append(read_family_tree_csv(str(path)))
+    if len(frames) == 1:
+        return df
+    return pd.concat(frames, ignore_index=True, sort=False)
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(
         description="Generate browser-consumable family tree JSON from a CSV file.",
@@ -1025,10 +1045,17 @@ def main(argv: Optional[List[str]] = None) -> None:
         default=None,
         help="Deprecated compatibility option. Writes <basename>.json when --output-json is omitted.",
     )
+    parser.add_argument(
+        "--supplemental-csv",
+        dest="supplemental_csvs",
+        action="append",
+        default=[],
+        help="Optional repo-owned CSV rows to append after the primary CSV. May be supplied more than once.",
+    )
     args = parser.parse_args(argv)
 
-    df = pd.read_csv(args.csv_path, keep_default_na=False)
-    df.columns = [norm(c) for c in df.columns]
+    df = read_family_tree_csv(args.csv_path)
+    df = append_supplemental_rows(df, args.supplemental_csvs)
 
     required_cols = {"generation", "advisee", "advisor", "title", "year"}
     missing = required_cols - set(df.columns)

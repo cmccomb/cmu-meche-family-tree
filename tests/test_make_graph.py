@@ -404,3 +404,47 @@ def test_cli_preserves_literal_none_advisor_token(tmp_path) -> None:
 
     assert payload["meta"]["missingAdvisorCount"] == 1
     assert payload["nodes"][0]["category"] == "missing-advisor"
+
+
+def test_cli_appends_supplemental_csv_rows(tmp_path) -> None:
+    csv_path = tmp_path / "tree.csv"
+    supplemental_path = tmp_path / "supplemental.csv"
+    json_path = tmp_path / "graph-data.json"
+    csv_path.write_text(
+        "\n".join(
+            [
+                "generation,advisee,advisor,title,university,country,year",
+                "1,Base Student,Base Advisor,PhD,Example University,Canada,2020",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    supplemental_path.write_text(
+        "\n".join(
+            [
+                "generation,advisee,advisor,title,university,country,year",
+                ",Supplemental Student,Supplemental Advisor,Doctor of Laws,University of Frankfurt (Oder),Germany,1665",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    main(
+        [
+            "--csv",
+            str(csv_path),
+            "--supplemental-csv",
+            str(supplemental_path),
+            "--output-json",
+            str(json_path),
+        ]
+    )
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+
+    people_by_name = {node["name"]: node for node in payload["nodes"]}
+    edge_by_pair = {(edge["advisorName"], edge["adviseeName"]) for edge in payload["edges"]}
+
+    assert "Base Student" in people_by_name
+    assert people_by_name["Supplemental Student"]["universityLabel"] == "University of Frankfurt (Oder)"
+    assert people_by_name["Supplemental Student"]["countryLabel"] == "Germany"
+    assert ("Supplemental Advisor", "Supplemental Student") in edge_by_pair

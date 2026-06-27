@@ -41,7 +41,10 @@ jobs:
         run: |
           rm -rf docs
           mkdir -p docs
-          python make_graph.py --csv "$CSV_URL" --output-json docs/graph-data.json
+          python make_graph.py \
+            --csv "$CSV_URL" \
+            --supplemental-csv data/supplemental_lineages.csv \
+            --output-json docs/graph-data.json
 
       - name: Create build marker
         run: |
