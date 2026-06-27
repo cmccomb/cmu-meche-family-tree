@@ -526,6 +526,49 @@ a:focus-visible {
   z-index: 4;
 }
 
+.mini-panel.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.mini-drag-handle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #3e444c;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 18px rgba(28, 31, 35, 0.1);
+  cursor: grab;
+  touch-action: none;
+  z-index: 2;
+}
+
+.mini-drag-handle:active {
+  cursor: grabbing;
+}
+
+.mini-drag-handle svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+.mini-drag-handle:hover {
+  border-color: rgba(187, 0, 0, 0.38);
+  color: var(--accent);
+}
+
 #miniMap {
   width: 100%;
   height: 132px;

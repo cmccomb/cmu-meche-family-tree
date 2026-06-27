@@ -7,6 +7,8 @@
   const COLOR_MODES = new Set(["category", "university", "country", "continent"]);
   const ORIENTATIONS = new Set(["vertical", "horizontal"]);
   const DEFAULT_ORIENTATION = "vertical";
+  const MINI_PANEL_STORAGE_KEY = "cmu-meche-family-tree-mini-panel";
+  const MINI_PANEL_MARGIN = 12;
 
   const categoryColors = {
     "cmu-faculty": "#b00",
@@ -117,6 +119,8 @@
     nodeCount: document.getElementById("nodeCount"),
     edgeCount: document.getElementById("edgeCount"),
     facultyCount: document.getElementById("facultyCount"),
+    miniPanel: document.getElementById("miniPanel"),
+    miniPanelHandle: document.getElementById("miniPanelHandle"),
     miniMap: document.getElementById("miniMap"),
     legend: document.getElementById("legend"),
     emptyProfile: document.getElementById("emptyProfile"),
@@ -1577,6 +1581,119 @@
     }
   }
 
+  function readMiniPanelPosition() {
+    try {
+      const raw = window.localStorage.getItem(MINI_PANEL_STORAGE_KEY);
+      if (!raw) return null;
+      const position = JSON.parse(raw);
+      const x = Number(position.x);
+      const y = Number(position.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+      return { x, y };
+    } catch {
+      return null;
+    }
+  }
+
+  function writeMiniPanelPosition(position) {
+    try {
+      window.localStorage.setItem(MINI_PANEL_STORAGE_KEY, JSON.stringify(position));
+    } catch {
+      // Dragging should still work when localStorage is unavailable.
+    }
+  }
+
+  function clearMiniPanelPosition() {
+    try {
+      window.localStorage.removeItem(MINI_PANEL_STORAGE_KEY);
+    } catch {
+      // Nothing to reset if localStorage is unavailable.
+    }
+  }
+
+  function clampMiniPanelPosition(x, y) {
+    const stageRect = els.miniPanel.parentElement.getBoundingClientRect();
+    const panelRect = els.miniPanel.getBoundingClientRect();
+    const maxX = Math.max(MINI_PANEL_MARGIN, stageRect.width - panelRect.width - MINI_PANEL_MARGIN);
+    const maxY = Math.max(MINI_PANEL_MARGIN, stageRect.height - panelRect.height - MINI_PANEL_MARGIN);
+    return {
+      x: clamp(x, MINI_PANEL_MARGIN, maxX),
+      y: clamp(y, MINI_PANEL_MARGIN, maxY),
+    };
+  }
+
+  function placeMiniPanel(x, y, { persist = false } = {}) {
+    if (!els.miniPanel) return;
+    const position = clampMiniPanelPosition(x, y);
+    els.miniPanel.style.left = `${position.x}px`;
+    els.miniPanel.style.top = `${position.y}px`;
+    els.miniPanel.style.right = "auto";
+    els.miniPanel.style.bottom = "auto";
+    if (persist) writeMiniPanelPosition(position);
+  }
+
+  function resetMiniPanelPosition() {
+    if (!els.miniPanel) return;
+    els.miniPanel.style.left = "";
+    els.miniPanel.style.top = "";
+    els.miniPanel.style.right = "";
+    els.miniPanel.style.bottom = "";
+    clearMiniPanelPosition();
+  }
+
+  function restoreMiniPanelPosition() {
+    const position = readMiniPanelPosition();
+    if (!position) return;
+    window.requestAnimationFrame(() => placeMiniPanel(position.x, position.y, { persist: false }));
+  }
+
+  function clampCurrentMiniPanelPosition() {
+    if (!els.miniPanel || !els.miniPanel.style.left || !els.miniPanel.style.top) return;
+    const x = Number.parseFloat(els.miniPanel.style.left);
+    const y = Number.parseFloat(els.miniPanel.style.top);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    placeMiniPanel(x, y, { persist: true });
+  }
+
+  function startMiniPanelDrag(event) {
+    if (!els.miniPanel || !els.miniPanelHandle) return;
+    if (event.button !== undefined && event.button !== 0) return;
+
+    event.preventDefault();
+    const panelRect = els.miniPanel.getBoundingClientRect();
+    const offsetX = event.clientX - panelRect.left;
+    const offsetY = event.clientY - panelRect.top;
+
+    function movePanel(pointerEvent) {
+      const stageRect = els.miniPanel.parentElement.getBoundingClientRect();
+      placeMiniPanel(
+        pointerEvent.clientX - stageRect.left - offsetX,
+        pointerEvent.clientY - stageRect.top - offsetY
+      );
+    }
+
+    function stopDrag() {
+      els.miniPanel.classList.remove("is-dragging");
+      els.miniPanelHandle.removeEventListener("pointermove", movePanel);
+      els.miniPanelHandle.removeEventListener("pointerup", stopDrag);
+      els.miniPanelHandle.removeEventListener("pointercancel", stopDrag);
+      const x = Number.parseFloat(els.miniPanel.style.left);
+      const y = Number.parseFloat(els.miniPanel.style.top);
+      if (Number.isFinite(x) && Number.isFinite(y)) writeMiniPanelPosition({ x, y });
+      try {
+        els.miniPanelHandle.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may already be released by the browser.
+      }
+    }
+
+    els.miniPanel.classList.add("is-dragging");
+    els.miniPanelHandle.setPointerCapture(event.pointerId);
+    els.miniPanelHandle.addEventListener("pointermove", movePanel);
+    els.miniPanelHandle.addEventListener("pointerup", stopDrag);
+    els.miniPanelHandle.addEventListener("pointercancel", stopDrag);
+  }
+
   async function copyShareLink() {
     writeUrlState();
     const label = els.shareButton.querySelector("span");
@@ -1612,6 +1729,9 @@
     els.relayoutLineageButton.addEventListener("click", () => relayoutLineage());
     els.shareButton.addEventListener("click", copyShareLink);
     els.miniMap.addEventListener("click", panFromMiniMap);
+    els.miniPanelHandle.addEventListener("pointerdown", startMiniPanelDrag);
+    els.miniPanelHandle.addEventListener("dblclick", resetMiniPanelPosition);
+    restoreMiniPanelPosition();
 
     els.pathButton.addEventListener("click", () => {
       if (state.selectedId) {
@@ -1630,6 +1750,7 @@
     window.addEventListener("resize", () => {
       if (!state.cy) return;
       state.cy.resize();
+      clampCurrentMiniPanelPosition();
       scheduleMiniMap();
     });
   }
