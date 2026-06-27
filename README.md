@@ -17,7 +17,7 @@ tree from a CSV export and serves it as a browser-based explorer.
 - Writes `graph-data.json` for the static JavaScript app.
 - Exports an ELK layered layout with older ancestors above their descendants,
   all current CMU MechE faculty pinned to the bottom row, and
-  faculty-to-faculty advisor links kept left-to-right.
+  CMU faculty advisor-advisee pairs kept adjacent on that final level.
 - Renders the tree in the browser with Cytoscape.js using those coordinates.
 - Supports search, selected-person profiles, lineage tracing, branch focus,
   focused-lineage relayout, path finding, mini-map navigation, university,
@@ -40,7 +40,6 @@ npm ci
 
 python make_graph.py \
   --csv "https://docs.google.com/spreadsheets/d/.../export?format=csv" \
-  --supplemental-csv data/supplemental_lineages.csv \
   --output-json docs/graph-data.json
 
 cp site/index.html site/app.js site/styles.css site/zoom.html docs/
@@ -52,8 +51,6 @@ Then open `http://localhost:8000`.
 ## GitHub Pages deployment
 
 - Set the repo secret `CSV_URL` to your published sheet CSV URL.
-- Repo-owned historical additions live in `data/supplemental_lineages.csv`
-  and are appended during the build.
 - Workflow in `.github/workflows/build.yml` runs on push, manual dispatch, and
   schedule.
 - It writes `docs/graph-data.json`, copies the static site assets, and deploys

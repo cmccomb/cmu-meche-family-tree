@@ -9,6 +9,16 @@
   const DEFAULT_ORIENTATION = "vertical";
   const MINI_PANEL_STORAGE_KEY = "cmu-meche-family-tree-mini-panel";
   const MINI_PANEL_MARGIN = 12;
+  const CHRONO_TIME_PIXELS_PER_NODE = 24;
+  const CHRONO_MIN_TIME_SPAN = 3600;
+  const CHRONO_MAX_TIME_SPAN = 14000;
+  const CHRONO_MIN_YEAR_GAP = 7.5;
+  const CHRONO_MAX_YEAR_GAP = 20;
+  const CHRONO_BAND_HEIGHT = 82;
+  const CHRONO_BAND_X_GAP = 128;
+  const CHRONO_COLLISION_Y_GAP = 74;
+  const CHRONO_COLLISION_X_GAP = 132;
+  const CHRONO_COLLISION_SHIFT = 138;
   const SVG_NS = "http://www.w3.org/2000/svg";
   const ELK_RELAYOUT_OPTIONS = {
     "elk.algorithm": "layered",
@@ -119,6 +129,8 @@
 
   const els = {
     appShell: document.getElementById("appShell"),
+    topbar: document.querySelector(".topbar"),
+    graphStage: document.querySelector(".graph-stage"),
     cy: document.getElementById("cy"),
     loading: document.getElementById("loadingOverlay"),
     search: document.getElementById("searchInput"),
@@ -179,6 +191,9 @@
     chronology: false,
     lineageRelayoutId: "",
     traceId: "",
+    pathSourceId: "",
+    pathTargetId: "",
+    pathRelayoutRequested: false,
     currentPathIds: [],
     currentPathEdgeIds: [],
     pathRelayoutActive: false,
@@ -248,7 +263,6 @@
   function sourceLabel(source) {
     const label = String(source.label || "").trim();
     if (label && label !== "Source") return label;
-    if (String(source.url || "").includes("data/lineage_reports/")) return "Lineage report";
     return hostnameForUrl(source.url) || "Source";
   }
 
@@ -426,6 +440,9 @@
     state.focusId = params.get("focus") || "";
     state.lineageRelayoutId = params.get("lineage") || "";
     state.traceId = params.get("trace") || "";
+    state.pathSourceId = params.get("pathFrom") || "";
+    state.pathTargetId = params.get("pathTo") || "";
+    state.pathRelayoutRequested = params.get("pathLayout") === "1";
     state.colorMode = COLOR_MODES.has(params.get("color")) ? params.get("color") : "category";
     state.layoutOrientation = ORIENTATIONS.has(params.get("layout")) ? params.get("layout") : DEFAULT_ORIENTATION;
     state.chronology = params.get("chrono") === "1";
@@ -439,6 +456,15 @@
     if (state.focusId) params.set("focus", state.focusId);
     if (state.lineageRelayoutId) params.set("lineage", state.lineageRelayoutId);
     if (state.traceId) params.set("trace", state.traceId);
+    const pathFrom = state.currentPathIds.length >= 2 ? state.currentPathIds[0] : state.pathSourceId;
+    const pathTo = state.currentPathIds.length >= 2
+      ? state.currentPathIds[state.currentPathIds.length - 1]
+      : state.pathTargetId;
+    if (pathFrom && pathTo) {
+      params.set("pathFrom", pathFrom);
+      params.set("pathTo", pathTo);
+      if (state.pathRelayoutActive || state.pathRelayoutRequested) params.set("pathLayout", "1");
+    }
     if (state.colorMode !== "category") params.set("color", state.colorMode);
     if (state.layoutOrientation !== DEFAULT_ORIENTATION) params.set("layout", state.layoutOrientation);
     if (state.chronology) params.set("chrono", "1");
@@ -647,7 +673,7 @@
     });
 
     state.cy.on("tap", "node", (event) => {
-      selectPerson(event.target.id(), { center: false });
+      selectPerson(event.target.id(), { center: false, revealProfile: true });
     });
 
     state.cy.on("tap", (event) => {
@@ -656,10 +682,8 @@
       }
     });
 
-    state.cy.on("pan zoom layoutstop", () => {
-      scheduleMiniMap();
-      scheduleTimeline();
-    });
+    state.cy.on("pan zoom layoutstop", scheduleMiniMap);
+    state.cy.on("layoutstop", scheduleTimeline);
   }
 
   function collectionFromIds(ids) {
@@ -692,6 +716,30 @@
 
   function isHorizontalLayout() {
     return state.layoutOrientation === "horizontal";
+  }
+
+  function isStackedLayout() {
+    return window.matchMedia("(max-width: 920px)").matches;
+  }
+
+  function revealElementOnMobile(element, margin = 10) {
+    if (!element || !isStackedLayout()) return;
+    window.requestAnimationFrame(() => {
+      const topbarHeight = els.topbar ? els.topbar.getBoundingClientRect().height : 0;
+      const targetTop = window.scrollY + element.getBoundingClientRect().top - topbarHeight - margin;
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    });
+  }
+
+  function revealProfileOnMobile() {
+    revealElementOnMobile(els.profileContent.hidden ? els.emptyProfile : els.profileContent);
+  }
+
+  function revealGraphOnMobile() {
+    revealElementOnMobile(els.graphStage);
   }
 
   function orientPosition(position) {
@@ -897,8 +945,8 @@
     const minYear = Math.min(...years);
     const maxYear = Math.max(...years);
     const yearRange = Math.max(1, maxYear - minYear);
-    const targetHeight = clamp(nodes.length * 15, 2200, 9000);
-    const yScale = clamp(targetHeight / yearRange, 4.5, 12);
+    const targetHeight = clamp(nodes.length * CHRONO_TIME_PIXELS_PER_NODE, CHRONO_MIN_TIME_SPAN, CHRONO_MAX_TIME_SPAN);
+    const yScale = clamp(targetHeight / yearRange, CHRONO_MIN_YEAR_GAP, CHRONO_MAX_YEAR_GAP);
     const yearCenter = (minYear + maxYear) / 2;
 
     const baseById = new Map();
@@ -948,7 +996,7 @@
     const bands = new Map();
     nodes.forEach((node) => {
       const position = positions.get(node.id());
-      const key = Math.round(position.y / 68);
+      const key = Math.round(position.y / CHRONO_BAND_HEIGHT);
       if (!bands.has(key)) bands.set(key, []);
       bands.get(key).push({
         id: node.id(),
@@ -957,7 +1005,7 @@
       });
     });
     bands.forEach((items) => {
-      const resolved = resolveHorizontalPositions(items, 150);
+      const resolved = resolveHorizontalPositions(items, CHRONO_BAND_X_GAP);
       resolved.forEach((x, id) => {
         positions.get(id).x = x;
       });
@@ -973,11 +1021,12 @@
       })
       .forEach((node) => {
         const position = positions.get(node.id());
-        const shiftStep = 165;
+        const shiftStep = CHRONO_COLLISION_SHIFT;
         const shifts = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5].map((slot) => slot * shiftStep);
         const shift = shifts.find((candidate) => (
           placed.every((other) => (
-            Math.abs(other.y - position.y) >= 58 || Math.abs(other.x - (position.x + candidate)) >= 146
+            Math.abs(other.y - position.y) >= CHRONO_COLLISION_Y_GAP
+              || Math.abs(other.x - (position.x + candidate)) >= CHRONO_COLLISION_X_GAP
           ))
         )) || 0;
         position.x += shift;
@@ -1004,10 +1053,23 @@
     );
   }
 
-  function fitGraph(eles = visibleElements(), padding = 64) {
+  function capGraphZoom(maxZoom) {
+    const limit = Number(maxZoom);
+    if (!state.cy || !Number.isFinite(limit) || state.cy.zoom() <= limit) return;
+    state.cy.zoom({
+      level: limit,
+      renderedPosition: {
+        x: state.cy.width() / 2,
+        y: state.cy.height() / 2,
+      },
+    });
+  }
+
+  function fitGraph(eles = visibleElements(), padding = 64, { maxZoom = null } = {}) {
     if (!state.cy || eles.length === 0) return;
     if (reducedMotion) {
       state.cy.fit(eles, padding);
+      capGraphZoom(maxZoom);
       scheduleMiniMap();
       scheduleTimeline();
       return;
@@ -1017,6 +1079,14 @@
       duration: 380,
       easing: "ease-out-cubic",
     });
+    if (maxZoom !== null) {
+      window.setTimeout(() => {
+        capGraphZoom(maxZoom);
+        scheduleMiniMap();
+        scheduleTimeline();
+      }, 410);
+    }
+    window.setTimeout(scheduleTimeline, reducedMotion ? 0 : 420);
   }
 
   function runLayout({ fit = true } = {}) {
@@ -1374,11 +1444,12 @@
 
   function setChronologyMode(enabled) {
     state.chronology = Boolean(enabled);
+    const hadPath = state.currentPathIds.length > 0;
     if (state.chronology) {
       state.query = "";
       els.search.value = "";
       els.searchResults.replaceChildren();
-      clearElementHighlights();
+      if (!hadPath) clearElementHighlights();
       applyFilters({ relayout: false });
     }
     if (state.pathRelayoutActive) {
@@ -1391,6 +1462,7 @@
     updateModeLabel();
     scheduleTimeline();
     writeUrlState();
+    if (hasActiveViewState()) revealGraphOnMobile();
   }
 
   function setLayoutOrientation(orientation) {
@@ -1410,6 +1482,7 @@
     updateModeLabel();
     scheduleTimeline();
     writeUrlState();
+    if (hasActiveViewState()) revealGraphOnMobile();
   }
 
   function renderSearchResults(query) {
@@ -1437,13 +1510,13 @@
       button.addEventListener("click", () => {
         els.search.value = person.name;
         applyFilters({ relayout: true });
-        selectPerson(person.id, { center: true });
+        selectPerson(person.id, { center: true, revealProfile: true });
       });
       els.searchResults.append(button);
     });
   }
 
-  function selectPerson(id, { center = true } = {}) {
+  function selectPerson(id, { center = true, revealProfile = false } = {}) {
     const person = model.peopleById.get(id);
     if (!person || !state.cy) return;
     state.selectedId = id;
@@ -1460,6 +1533,7 @@
     } else {
       scheduleTimeline();
     }
+    if (revealProfile) revealProfileOnMobile();
   }
 
   function closeProfilePanel() {
@@ -1549,7 +1623,7 @@
         meta.textContent = compactMeta(person);
         button.append(name, meta);
         button.addEventListener("click", () => {
-          selectPerson(person.id, { center: true });
+          selectPerson(person.id, { center: true, revealProfile: true });
         });
         container.append(button);
       });
@@ -1562,6 +1636,9 @@
   function clearPathState() {
     state.currentPathIds = [];
     state.currentPathEdgeIds = [];
+    state.pathSourceId = "";
+    state.pathTargetId = "";
+    state.pathRelayoutRequested = false;
     state.pathRelayoutActive = false;
     setPathActionVisible();
   }
@@ -1594,6 +1671,7 @@
     fitGraph(lineage.not(".is-hidden"), 94);
     updateModeLabel();
     writeUrlState();
+    revealGraphOnMobile();
   }
 
   function lineageLayoutPositions(nodes) {
@@ -1728,6 +1806,7 @@
     }).run();
     updateModeLabel();
     writeUrlState();
+    revealGraphOnMobile();
   }
 
   function focusBranch(id = state.selectedId) {
@@ -1743,6 +1822,7 @@
     clearElementHighlights();
     applyFilters({ relayout: true });
     if (state.selectedId) selectPerson(state.selectedId, { center: false });
+    revealGraphOnMobile();
   }
 
   function clearAll() {
@@ -1775,6 +1855,7 @@
     state.cy.elements().removeClass("faded lineage path-node path-edge is-hidden");
     if (state.selectedId) state.cy.$id(state.selectedId).addClass("selected");
     applyFilters({ relayout: true });
+    revealGraphOnMobile();
   }
 
   function findShortestPath(sourceId, targetId) {
@@ -1817,11 +1898,16 @@
     edgeIds.forEach((id) => state.cy.$id(id).removeClass("faded").addClass("path-edge"));
     state.currentPathIds = pathIds;
     state.currentPathEdgeIds = edgeIds;
+    state.pathSourceId = pathIds[0] || "";
+    state.pathTargetId = pathIds[pathIds.length - 1] || "";
+    state.pathRelayoutRequested = false;
     state.pathRelayoutActive = false;
     setPathActionVisible();
     const pathEles = collectionFromIds([...pathSet, ...edgeIds]);
     fitGraph(pathEles, 118);
     updateModeLabel(`Path: ${pathIds.length} people`);
+    writeUrlState();
+    revealGraphOnMobile();
   }
 
   function pathLayoutPositions(pathIds) {
@@ -1853,14 +1939,21 @@
       const edge = state.cy.$id(id);
       return edge.length && !edge.hasClass("is-hidden");
     });
+    const relayoutIds = new Set([...visiblePathIds, ...visibleEdgeIds]);
     const pathEles = collectionFromIds([...visiblePathIds, ...visibleEdgeIds]);
     state.pathRelayoutActive = true;
+    state.pathRelayoutRequested = true;
+    state.pathSourceId = visiblePathIds[0] || state.pathSourceId;
+    state.pathTargetId = visiblePathIds[visiblePathIds.length - 1] || state.pathTargetId;
     state.cy.elements().removeClass("lineage");
+    state.cy.elements().forEach((element) => {
+      element.toggleClass("is-hidden", !relayoutIds.has(element.id()));
+    });
     pathEles.nodes().removeClass("faded").addClass("path-node");
     pathEles.edges().removeClass("faded").addClass("path-edge");
 
     state.cy.once("layoutstop", () => {
-      fitGraph(pathEles, 118);
+      fitGraph(pathEles, 220, { maxZoom: 1.25 });
       updateVisibleCount();
       scheduleMiniMap();
       scheduleTimeline();
@@ -1874,6 +1967,8 @@
       animationEasing: "ease-out-cubic",
     }).run();
     updateModeLabel();
+    writeUrlState();
+    revealGraphOnMobile();
   }
 
   function clearAllFiltersWithoutLayout() {
@@ -1903,7 +1998,7 @@
     }
 
     highlightPath(pathIds);
-    selectPerson(targetId, { center: false });
+    selectPerson(targetId, { center: false, revealProfile: false });
     const source = model.peopleById.get(sourceId);
     const target = model.peopleById.get(targetId);
     els.pathStatus.textContent = `${source.name} to ${target.name}: ${pathIds.length - 1} link${pathIds.length === 2 ? "" : "s"}.`;
@@ -1912,6 +2007,27 @@
     } else {
       els.pathDialog.removeAttribute("open");
     }
+  }
+
+  async function restorePathFromUrl() {
+    const sourceId = resolvePersonId(state.pathSourceId);
+    const targetId = resolvePersonId(state.pathTargetId);
+    if (!sourceId || !targetId) return false;
+
+    const shouldRelayout = state.pathRelayoutRequested;
+    const pathIds = findShortestPath(sourceId, targetId);
+    if (!pathIds.length) {
+      clearPathState();
+      writeUrlState();
+      return false;
+    }
+
+    highlightPath(pathIds);
+    if (!state.selectedId || !model.peopleById.has(state.selectedId)) {
+      selectPerson(targetId, { center: false, revealProfile: false });
+    }
+    if (shouldRelayout) await relayoutCurrentPath();
+    return true;
   }
 
   function scheduleFilterApply() {
@@ -2054,7 +2170,6 @@
     if (!els.timelinePanel || !els.timelineAxis) return;
     els.timelineAxis.replaceChildren();
     els.timelinePanel.hidden = true;
-    els.timelinePanel.parentElement.classList.remove("has-horizontal-timeline", "has-vertical-timeline");
   }
 
   function timelineAxisItems() {
@@ -2063,7 +2178,7 @@
     return visibleNodes().toArray()
       .map((node) => {
         const year = numericChronologyYear(node.data("chronologyYear"));
-        const position = node.position();
+        const position = node.renderedPosition ? node.renderedPosition() : node.position();
         const coord = horizontal ? Number(position.x) : Number(position.y);
         if (year === null || !Number.isFinite(coord)) return null;
         return { year, coord };
@@ -2089,19 +2204,22 @@
       return;
     }
 
+    const horizontal = isHorizontalLayout();
+    els.timelinePanel.hidden = false;
+    els.timelinePanel.classList.toggle("is-horizontal", horizontal);
+    els.timelinePanel.classList.toggle("is-vertical", !horizontal);
+
     const items = timelineAxisItems();
     if (!items.length) {
       clearTimeline();
       return;
     }
 
-    const horizontal = isHorizontalLayout();
-    const width = horizontal ? 900 : 96;
-    const height = horizontal ? 82 : 640;
-    const axisStart = horizontal ? 48 : 44;
-    const axisEnd = horizontal ? width - 48 : height - 44;
-    const axisLength = axisEnd - axisStart;
-    const axisCoord = horizontal ? 42 : 42;
+    const panelRect = els.timelinePanel.getBoundingClientRect();
+    const width = Math.max(1, Math.round(panelRect.width));
+    const height = Math.max(1, Math.round(panelRect.height));
+    const axisStart = horizontal ? 28 : 26;
+    const axisEnd = horizontal ? width - 28 : height - 26;
     const years = items.map((item) => item.year);
     const coords = items.map((item) => item.coord);
     const minYear = Math.min(...years);
@@ -2111,139 +2229,61 @@
     const yearSpan = maxYear - minYear;
     const coordSpan = maxCoord - minCoord;
     const axisMidpoint = (axisStart + axisEnd) / 2;
-    const coordToPixel = coordSpan <= 0
-      ? () => axisMidpoint
-      : (coord) => clamp(axisStart + ((coord - minCoord) / coordSpan) * axisLength, axisStart, axisEnd);
     const yearToPixel = yearSpan <= 0
       ? () => axisMidpoint
-      : (year) => coordToPixel(minCoord + ((year - minYear) / yearSpan) * coordSpan);
+      : (year) => clamp(minCoord + ((year - minYear) / yearSpan) * coordSpan, axisStart, axisEnd);
 
-    els.timelinePanel.hidden = false;
-    els.timelinePanel.classList.toggle("is-horizontal", horizontal);
-    els.timelinePanel.classList.toggle("is-vertical", !horizontal);
-    els.timelinePanel.parentElement.classList.toggle("has-horizontal-timeline", horizontal);
-    els.timelinePanel.parentElement.classList.toggle("has-vertical-timeline", !horizontal);
     els.timelineAxis.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    els.timelineAxis.setAttribute("preserveAspectRatio", "none");
     els.timelineAxis.setAttribute(
       "aria-label",
-      horizontal ? "Chronological x-axis timeline" : "Chronological y-axis timeline"
+      horizontal ? "Chronological x-axis grid" : "Chronological y-axis grid"
     );
     els.timelineAxis.replaceChildren();
 
-    const extent = state.cy.extent();
-    const viewMinCoord = horizontal ? Number(extent.x1) : Number(extent.y1);
-    const viewMaxCoord = horizontal ? Number(extent.x2) : Number(extent.y2);
-    if (Number.isFinite(viewMinCoord) && Number.isFinite(viewMaxCoord)) {
-      const viewStart = coordToPixel(Math.min(viewMinCoord, viewMaxCoord));
-      const viewEnd = coordToPixel(Math.max(viewMinCoord, viewMaxCoord));
-      if (horizontal) {
-        els.timelineAxis.append(svgElement("rect", {
-          class: "timeline-window",
-          x: viewStart,
-          y: 13,
-          width: Math.max(2, viewEnd - viewStart),
-          height: 46,
-          rx: 4,
-        }));
-      } else {
-        els.timelineAxis.append(svgElement("rect", {
-          class: "timeline-window",
-          x: 15,
-          y: viewStart,
-          width: 30,
-          height: Math.max(2, viewEnd - viewStart),
-          rx: 4,
-        }));
-      }
-    }
-
-    const marksByYear = new Map();
-    items.forEach((item) => {
-      const key = Math.round(item.year);
-      const mark = marksByYear.get(key) || { count: 0, coordTotal: 0 };
-      mark.count += 1;
-      mark.coordTotal += item.coord;
-      marksByYear.set(key, mark);
-    });
-    marksByYear.forEach((mark) => {
-      const pixel = coordToPixel(mark.coordTotal / mark.count);
-      const length = Math.min(horizontal ? 24 : 18, 4 + Math.sqrt(mark.count) * 3.2);
-      if (horizontal) {
-        els.timelineAxis.append(svgElement("line", {
-          class: "timeline-rug",
-          x1: pixel,
-          x2: pixel,
-          y1: axisCoord - 7,
-          y2: axisCoord - 7 - length,
-        }));
-      } else {
-        els.timelineAxis.append(svgElement("line", {
-          class: "timeline-rug",
-          x1: axisCoord - 7,
-          x2: axisCoord - 7 - length,
-          y1: pixel,
-          y2: pixel,
-        }));
-      }
-    });
-
-    if (horizontal) {
-      els.timelineAxis.append(svgElement("line", {
-        class: "timeline-axis-line",
-        x1: axisStart,
-        x2: axisEnd,
-        y1: axisCoord,
-        y2: axisCoord,
-      }));
-    } else {
-      els.timelineAxis.append(svgElement("line", {
-        class: "timeline-axis-line",
-        x1: axisCoord,
-        x2: axisCoord,
-        y1: axisStart,
-        y2: axisEnd,
-      }));
-    }
-
     const step = niceYearStep(maxYear - minYear, horizontal ? 7 : 8);
-    const tickYears = new Set([Math.round(minYear), Math.round(maxYear)]);
+    const tickYears = new Map();
+    tickYears.set(minYear.toFixed(2), minYear);
+    tickYears.set(maxYear.toFixed(2), maxYear);
     for (let year = Math.ceil(minYear / step) * step; year <= maxYear; year += step) {
-      tickYears.add(year);
+      tickYears.set(year.toFixed(2), year);
     }
 
-    [...tickYears]
+    [...tickYears.values()]
       .filter((year) => year >= minYear && year <= maxYear)
       .sort((a, b) => a - b)
       .forEach((year) => {
         const pixel = yearToPixel(year);
+        const boundary = Math.abs(year - minYear) < 0.001 || Math.abs(year - maxYear) < 0.001;
         if (horizontal) {
           els.timelineAxis.append(svgElement("line", {
-            class: "timeline-tick",
+            class: `timeline-grid-line${boundary ? " is-boundary" : ""}`,
             x1: pixel,
             x2: pixel,
-            y1: axisCoord - 7,
-            y2: axisCoord + 8,
+            y1: 0,
+            y2: height,
           }));
           const label = svgElement("text", {
-            class: "timeline-year",
-            x: pixel,
-            y: 68,
+            class: "timeline-grid-year",
+            x: clamp(pixel, 30, width - 30),
+            y: height - 14,
             "text-anchor": "middle",
           });
           label.textContent = timelineYearLabel(year);
           els.timelineAxis.append(label);
         } else {
           els.timelineAxis.append(svgElement("line", {
-            class: "timeline-tick",
-            x1: axisCoord - 8,
-            x2: axisCoord + 8,
+            class: `timeline-grid-line${boundary ? " is-boundary" : ""}`,
+            x1: 0,
+            x2: width,
             y1: pixel,
             y2: pixel,
           }));
           const label = svgElement("text", {
-            class: "timeline-year",
-            x: 52,
-            y: pixel + 3,
+            class: "timeline-grid-year",
+            x: width - 18,
+            y: clamp(pixel - 4, 16, height - 8),
+            "text-anchor": "end",
           });
           label.textContent = timelineYearLabel(year);
           els.timelineAxis.append(label);
@@ -2490,7 +2530,10 @@
         selectPerson(state.selectedId, { center: true });
       }
 
-      if (state.lineageRelayoutId && model.peopleById.has(state.lineageRelayoutId)) {
+      const restoredPath = await restorePathFromUrl();
+      if (restoredPath) {
+        // The path restoration owns the active graph view.
+      } else if (state.lineageRelayoutId && model.peopleById.has(state.lineageRelayoutId)) {
         await relayoutLineage(state.lineageRelayoutId);
       } else if (state.traceId && model.peopleById.has(state.traceId)) {
         if (!state.selectedId) selectPerson(state.traceId, { center: false });

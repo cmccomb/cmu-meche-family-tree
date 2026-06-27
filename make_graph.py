@@ -127,8 +127,6 @@ SOURCE_COLUMN_LABELS = {
     "other": "Other",
 }
 
-LOCAL_SOURCE_BASE_URL = "https://github.com/cmccomb/cmu-meche-family-tree/blob/main/"
-
 COUNTRY_PATTERNS: List[Tuple[str, str]] = [
     (
         r"\b(mit|harvard|yale|stanford|carnegie mellon|uc berkeley|berkeley|"
@@ -326,8 +324,6 @@ def source_url_from_value(value: str, label: str) -> Optional[str]:
         mgp_id = to_int_or_none(raw)
         if mgp_id is not None:
             return f"https://www.mathgenealogy.org/id.php?id={mgp_id}"
-    if raw.startswith("data/") or raw.startswith("docs/") or raw.endswith(".md"):
-        return f"{LOCAL_SOURCE_BASE_URL}{raw.lstrip('/')}"
     return None
 
 
@@ -682,29 +678,96 @@ def _lineage_ordered_faculty(
     return ordered
 
 
-def _faculty_left_to_right_order(
+def _faculty_peer_component_order(
+    component: Set[str],
+    peer_graph: nx.Graph,
+    original_order: Dict[str, int],
+) -> List[str]:
+    if len(component) <= 1:
+        return sorted(component, key=lambda name: (original_order.get(name, 0), name.casefold()))
+
+    def order_score(order: List[str]) -> Tuple[int, Tuple[int, ...], Tuple[str, ...]]:
+        return (
+            sum(abs(index - original_order.get(name, index)) for index, name in enumerate(order)),
+            tuple(original_order.get(name, 0) for name in order),
+            tuple(name.casefold() for name in order),
+        )
+
+    degrees = {name: peer_graph.degree(name) for name in component}
+    is_path = peer_graph.subgraph(component).number_of_edges() == len(component) - 1 and max(degrees.values()) <= 2
+    if is_path:
+        endpoints = [name for name, degree in degrees.items() if degree <= 1]
+        start = min(endpoints or list(component), key=lambda name: (original_order.get(name, 0), name.casefold()))
+        ordered = [start]
+        previous: Optional[str] = None
+        current = start
+        while len(ordered) < len(component):
+            candidates = [
+                neighbor
+                for neighbor in peer_graph.neighbors(current)
+                if neighbor != previous and neighbor in component and neighbor not in ordered
+            ]
+            if not candidates:
+                break
+            previous, current = current, min(
+                candidates,
+                key=lambda name: (original_order.get(name, 0), name.casefold()),
+            )
+            ordered.append(current)
+        if len(ordered) == len(component):
+            reversed_order = list(reversed(ordered))
+            return min((ordered, reversed_order), key=order_score)
+
+    root = min(component, key=lambda name: (original_order.get(name, 0), name.casefold()))
+    ordered = []
+    seen: Set[str] = set()
+
+    def visit(name: str) -> None:
+        seen.add(name)
+        ordered.append(name)
+        neighbors = [
+            neighbor
+            for neighbor in peer_graph.neighbors(name)
+            if neighbor in component and neighbor not in seen
+        ]
+        for neighbor in sorted(neighbors, key=lambda item: (original_order.get(item, 0), item.casefold())):
+            visit(neighbor)
+
+    visit(root)
+    for name in sorted(component - seen, key=lambda item: (original_order.get(item, 0), item.casefold())):
+        visit(name)
+    return ordered
+
+
+def _faculty_peer_adjacent_order(
     ordered_faculty: List[str],
     edges: Iterable[Tuple[str, str]],
 ) -> List[str]:
-    """Keep faculty advisor links left-to-right when faculty share a row."""
+    """Keep faculty advisor links adjacent when faculty share the sink row."""
     faculty_set = set(ordered_faculty)
-    graph = nx.DiGraph()
-    graph.add_nodes_from(ordered_faculty)
-    graph.add_edges_from(
+    peer_graph = nx.Graph()
+    peer_graph.add_nodes_from(ordered_faculty)
+    peer_graph.add_edges_from(
         (advisor, advisee)
         for advisor, advisee in edges
         if advisor in faculty_set and advisee in faculty_set
     )
-    if not nx.is_directed_acyclic_graph(graph):
+    if not peer_graph.number_of_edges():
         return ordered_faculty
 
     original_order = {name: index for index, name in enumerate(ordered_faculty)}
-    return list(
-        nx.lexicographical_topological_sort(
-            graph,
-            key=lambda name: (original_order.get(name, len(original_order)), name.casefold()),
+    components = []
+    for component in nx.connected_components(peer_graph):
+        component_order = _faculty_peer_component_order(set(component), peer_graph, original_order)
+        components.append(
+            (
+                sum(original_order[name] for name in component_order) / len(component_order),
+                min(original_order[name] for name in component_order),
+                component_order,
+            )
         )
-    )
+    components.sort(key=lambda item: (item[0], item[1], item[2][0].casefold()))
+    return [name for _, _, component_order in components for name in component_order]
 
 
 def _source_generation(attrs: Dict[str, Optional[object]]) -> Optional[int]:
@@ -854,7 +917,7 @@ def _build_anchor_layout(
     max_generation = max(generations.values(), default=0)
     incoming, outgoing = _relation_maps(names, edge_list)
     downstream_faculty = _downstream_faculty_sets(incoming, faculty) if faculty else {name: set() for name in names}
-    ordered_faculty = _faculty_left_to_right_order(
+    ordered_faculty = _faculty_peer_adjacent_order(
         _lineage_ordered_faculty(names, people, incoming, outgoing, downstream_faculty, faculty),
         edge_list,
     )
@@ -1054,7 +1117,7 @@ def _build_elk_layout(
     _center_layout(layout)
     _refresh_rank_and_order(layout)
     _enforce_row_spacing(layout, min_gap=178.0)
-    _enforce_faculty_peer_order(layout, people, edge_list)
+    _enforce_faculty_peer_adjacency(layout, people, edge_list)
     _center_layout(layout)
     _refresh_rank_and_order(layout)
     return layout
@@ -1127,7 +1190,7 @@ def _enforce_row_spacing(layout: Dict[str, Dict[str, object]], min_gap: float) -
             layout[name]["rowOrder"] = index
 
 
-def _enforce_faculty_peer_order(
+def _enforce_faculty_peer_adjacency(
     layout: Dict[str, Dict[str, object]],
     people: Dict[str, Dict[str, Optional[object]]],
     edges: Iterable[Tuple[str, str]],
@@ -1148,40 +1211,8 @@ def _enforce_faculty_peer_order(
         barycenter = sum(targets) / len(targets) if targets else float(layout[name]["x"])
         return barycenter, float(layout[name]["x"]), name.casefold()
 
-    peer_graph = nx.DiGraph()
-    peer_graph.add_nodes_from(faculty)
-    peer_graph.add_edges_from(
-        (advisor, advisee)
-        for advisor, advisee in edge_list
-        if advisor in peer_graph and advisee in peer_graph
-    )
     current_order = sorted(faculty, key=faculty_target_x)
-    if nx.is_directed_acyclic_graph(peer_graph):
-        ordered_faculty = list(current_order)
-        peer_edges = list(peer_graph.edges())
-        for _ in range(max(1, len(peer_edges) * len(faculty))):
-            changed = False
-            for advisor, advisee in peer_edges:
-                if advisor not in ordered_faculty or advisee not in ordered_faculty:
-                    continue
-                if ordered_faculty.index(advisee) == ordered_faculty.index(advisor) + 1:
-                    continue
-                ordered_faculty.remove(advisee)
-                advisor_index = ordered_faculty.index(advisor)
-                ordered_faculty.insert(advisor_index + 1, advisee)
-                changed = True
-            if not changed:
-                break
-        if any(ordered_faculty.index(advisor) >= ordered_faculty.index(advisee) for advisor, advisee in peer_edges):
-            order_index = {name: index for index, name in enumerate(current_order)}
-            ordered_faculty = list(
-                nx.lexicographical_topological_sort(
-                    peer_graph,
-                    key=lambda name: (order_index.get(name, len(order_index)), name.casefold()),
-                )
-            )
-    else:
-        ordered_faculty = current_order
+    ordered_faculty = _faculty_peer_adjacent_order(current_order, edge_list)
 
     x_slots = sorted(float(layout[name]["x"]) for name in faculty)
     bottom_y = max(float(layout[name]["y"]) for name in faculty)
@@ -1210,38 +1241,97 @@ def infer_chronology_years(
     people: Dict[str, Dict[str, Optional[object]]],
     edges: Iterable[Tuple[str, str]],
     unknown_offset: int = 5,
-) -> Dict[str, Optional[int]]:
-    """Infer display years for chronological vertical scaling."""
+) -> Dict[str, Optional[float]]:
+    """Infer hidden years for chronological positioning."""
     names = sorted(people, key=str.casefold)
-    _, outgoing = _relation_maps(names, edges)
-    memo: Dict[str, Optional[int]] = {}
+    incoming, outgoing = _relation_maps(names, edges)
 
-    def infer(name: str, visiting: Set[str]) -> Optional[int]:
-        if name in memo:
-            return memo[name]
-        known = _known_year(people.get(name, {}))
-        if known is not None:
-            memo[name] = known
-            return known
-        if name in visiting:
-            return None
+    def normalize_hidden_year(value: float) -> float:
+        rounded = round(value, 2)
+        return int(rounded) if rounded.is_integer() else rounded
 
-        visiting.add(name)
-        child_years = [
-            child_year
-            for child in outgoing.get(name, [])
-            for child_year in [infer(child, visiting)]
-            if child_year is not None
-        ]
-        visiting.remove(name)
+    known_years = {
+        name: year
+        for name in names
+        for year in [_known_year(people.get(name, {}))]
+        if year is not None
+    }
 
-        inferred = max(child_years) - unknown_offset if child_years else None
-        memo[name] = inferred
-        return inferred
+    link_gaps = [
+        advisee_year - advisor_year
+        for advisor, advisee in edges
+        for advisor_year in [_known_year(people.get(advisor, {}))]
+        for advisee_year in [_known_year(people.get(advisee, {}))]
+        if advisor_year is not None and advisee_year is not None and advisee_year > advisor_year
+    ]
+    average_link_gap = sum(link_gaps) / len(link_gaps) if link_gaps else float(unknown_offset)
 
+    def nearest_anchors(start: str, relations: Dict[str, List[str]]) -> List[Tuple[int, int]]:
+        anchors: List[Tuple[int, int]] = []
+        queue: deque[Tuple[str, int]] = deque([(start, 0)])
+        seen: Set[str] = {start}
+        nearest_distance: Optional[int] = None
+
+        while queue:
+            name, distance = queue.popleft()
+            if nearest_distance is not None and distance >= nearest_distance:
+                continue
+            for linked in relations.get(name, []):
+                if linked in seen:
+                    continue
+                seen.add(linked)
+                linked_distance = distance + 1
+                year = known_years.get(linked)
+                if year is not None:
+                    if nearest_distance is None or linked_distance < nearest_distance:
+                        anchors = []
+                        nearest_distance = linked_distance
+                    if linked_distance == nearest_distance:
+                        anchors.append((year, linked_distance))
+                    continue
+                if nearest_distance is None or linked_distance < nearest_distance:
+                    queue.append((linked, linked_distance))
+        return anchors
+
+    chronology: Dict[str, Optional[float]] = {}
     for name in names:
-        infer(name, set())
-    return memo
+        known = known_years.get(name)
+        if known is not None:
+            chronology[name] = known
+            continue
+
+        upstream = nearest_anchors(name, incoming)
+        downstream = nearest_anchors(name, outgoing)
+        candidates: List[float] = []
+
+        if upstream and downstream:
+            for upstream_year, upstream_distance in upstream:
+                for downstream_year, downstream_distance in downstream:
+                    total_distance = upstream_distance + downstream_distance
+                    if total_distance <= 0:
+                        continue
+                    candidates.append(
+                        upstream_year
+                        + (downstream_year - upstream_year) * upstream_distance / total_distance
+                    )
+        elif upstream:
+            candidates = [
+                upstream_year + upstream_distance * average_link_gap
+                for upstream_year, upstream_distance in upstream
+            ]
+        elif downstream:
+            candidates = [
+                downstream_year - downstream_distance * average_link_gap
+                for downstream_year, downstream_distance in downstream
+            ]
+
+        chronology[name] = (
+            normalize_hidden_year(sum(candidates) / len(candidates))
+            if candidates
+            else None
+        )
+
+    return chronology
 
 
 def build_graph_data(
@@ -1329,7 +1419,7 @@ def build_graph_data(
                 "adviseeName": advisee,
                 "type": "advisor",
                 "facultyPeer": faculty_peer,
-                "orientation": "left-to-right" if faculty_peer else "top-to-bottom",
+                "orientation": "same-level" if faculty_peer else "top-to-bottom",
             }
         )
 
@@ -1390,7 +1480,7 @@ def read_family_tree_csv(csv_path: str) -> pd.DataFrame:
 
 
 def append_supplemental_rows(df: pd.DataFrame, supplemental_csvs: Iterable[str]) -> pd.DataFrame:
-    """Append repo-owned supplemental rows to the primary source dataframe."""
+    """Append optional supplemental rows to the primary source dataframe."""
     frames = [df]
     for supplemental_csv in supplemental_csvs:
         path = Path(supplemental_csv)
@@ -1430,7 +1520,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         dest="supplemental_csvs",
         action="append",
         default=[],
-        help="Optional repo-owned CSV rows to append after the primary CSV. May be supplied more than once.",
+        help="Optional CSV rows to append after the primary CSV. May be supplied more than once.",
     )
     parser.add_argument(
         "--layout-engine",

@@ -160,7 +160,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
                 "title": "PhD",
                 "university": "Example University",
                 "country": "Canada",
-                "sources": "data/lineage_reports/example.md",
+                "sources": "https://example.edu/student-one-lineage",
                 "year": 2024,
             },
             {
@@ -208,7 +208,7 @@ def test_build_graph_data_exports_browser_payload() -> None:
     assert people_by_name["Student One"]["sources"] == [
         {
             "label": "Source",
-            "url": "https://github.com/cmccomb/cmu-meche-family-tree/blob/main/data/lineage_reports/example.md",
+            "url": "https://example.edu/student-one-lineage",
         }
     ]
     assert people_by_name["Prof Advisor"]["layout"]["facultySink"] is True
@@ -318,14 +318,13 @@ def test_layout_places_lineages_on_layered_tree_rows() -> None:
         advisee = people_by_name[edge["adviseeName"]]["layout"]
         if edge["facultyPeer"]:
             assert advisor["y"] == advisee["y"]
-            assert advisor["x"] < advisee["x"]
-            assert edge["orientation"] == "left-to-right"
+            assert edge["orientation"] == "same-level"
         else:
             assert advisor["y"] < advisee["y"]
     assert payload["meta"]["layout"]["name"] == "advisor-elk-layered"
 
 
-def test_faculty_advising_faculty_share_bottom_row_left_to_right() -> None:
+def test_cmu_faculty_advising_faculty_share_bottom_row_and_are_adjacent() -> None:
     df = pd.DataFrame(
         [
             {
@@ -338,9 +337,16 @@ def test_faculty_advising_faculty_share_bottom_row_left_to_right() -> None:
             {
                 "generation": 0,
                 "advisee": "Faculty Advisor",
-                "advisor": "Root Mentor",
+                "advisor": "Root Mentor; Outside Student",
                 "title": "Professor",
                 "year": 2000,
+            },
+            {
+                "generation": "",
+                "advisee": "Outside Student",
+                "advisor": "Root Mentor",
+                "title": "PhD",
+                "year": 1995,
             },
             {
                 "generation": 0,
@@ -361,33 +367,61 @@ def test_faculty_advising_faculty_share_bottom_row_left_to_right() -> None:
     root = people_by_name["Root Mentor"]["layout"]
     faculty_advisor = people_by_name["Faculty Advisor"]["layout"]
     faculty_advisee = people_by_name["Faculty Advisee"]["layout"]
+    outside_student = people_by_name["Outside Student"]["layout"]
     faculty_edge = edge_by_pair[("Faculty Advisor", "Faculty Advisee")]
 
     assert faculty_advisor["facultySink"] is True
     assert faculty_advisee["facultySink"] is True
     assert faculty_advisor["y"] == faculty_advisee["y"]
     assert root["y"] < faculty_advisor["y"]
-    assert faculty_advisor["x"] < faculty_advisee["x"]
+    assert outside_student["facultySink"] is False
+    assert root["y"] < outside_student["y"] < faculty_advisor["y"]
     assert faculty_edge["facultyPeer"] is True
-    assert faculty_edge["orientation"] == "left-to-right"
+    assert faculty_edge["orientation"] == "same-level"
+
+    bottom_faculty = [
+        node
+        for node in payload["nodes"]
+        if node["category"] == "cmu-faculty"
+    ]
+    final_level_y = max(node["layout"]["y"] for node in payload["nodes"])
+    assert faculty_advisor["y"] == final_level_y
+    assert faculty_advisee["y"] == final_level_y
+    ordered_bottom_faculty = sorted(bottom_faculty, key=lambda node: node["layout"]["x"])
+    ordered_names = [node["name"] for node in ordered_bottom_faculty]
+    assert abs(ordered_names.index("Faculty Advisor") - ordered_names.index("Faculty Advisee")) == 1
 
 
-def test_unknown_chronology_year_uses_recent_advisee() -> None:
+def test_anchored_unknown_chronology_years_use_equal_spacing() -> None:
     df = pd.DataFrame(
         [
             {
                 "generation": 0,
-                "advisee": "Recent Student",
-                "advisor": "Unknown Mentor",
+                "advisee": "Known Ancestor",
+                "advisor": "",
                 "title": "PhD",
-                "year": 2020,
+                "year": 1980,
             },
             {
-                "generation": 0,
-                "advisee": "Older Student",
-                "advisor": "Unknown Mentor",
+                "generation": "",
+                "advisee": "Unknown Bridge One",
+                "advisor": "Known Ancestor",
                 "title": "PhD",
-                "year": 2000,
+                "year": "",
+            },
+            {
+                "generation": "",
+                "advisee": "Unknown Bridge Two",
+                "advisor": "Unknown Bridge One",
+                "title": "PhD",
+                "year": "",
+            },
+            {
+                "generation": "",
+                "advisee": "Known Descendant",
+                "advisor": "Unknown Bridge Two",
+                "title": "PhD",
+                "year": 2010,
             },
         ]
     )
@@ -397,8 +431,80 @@ def test_unknown_chronology_year_uses_recent_advisee() -> None:
     payload = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
     people_by_name = {node["name"]: node for node in payload["nodes"]}
 
-    assert people_by_name["Unknown Mentor"]["year"] is None
-    assert people_by_name["Unknown Mentor"]["chronologyYear"] == 2015
+    assert people_by_name["Unknown Bridge One"]["year"] is None
+    assert people_by_name["Unknown Bridge One"]["yearLabel"] == "Unknown year"
+    assert people_by_name["Unknown Bridge One"]["chronologyYear"] == 1990
+    assert people_by_name["Unknown Bridge Two"]["year"] is None
+    assert people_by_name["Unknown Bridge Two"]["yearLabel"] == "Unknown year"
+    assert people_by_name["Unknown Bridge Two"]["chronologyYear"] == 2000
+
+
+def test_unanchored_unknown_chronology_tails_use_average_link_gap() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "generation": "",
+                "advisee": "Known Student",
+                "advisor": "Known Advisor",
+                "title": "PhD",
+                "year": 2000,
+            },
+            {
+                "generation": "",
+                "advisee": "Known Advisor",
+                "advisor": "",
+                "title": "PhD",
+                "year": 1990,
+            },
+            {
+                "generation": 0,
+                "advisee": "Tail Anchor",
+                "advisor": "Unknown Parent",
+                "title": "PhD",
+                "year": 2010,
+            },
+            {
+                "generation": "",
+                "advisee": "Unknown Parent",
+                "advisor": "Unknown Grandparent",
+                "title": "PhD",
+                "year": "",
+            },
+            {
+                "generation": "",
+                "advisee": "Unknown Grandparent",
+                "advisor": "",
+                "title": "PhD",
+                "year": "",
+            },
+            {
+                "generation": "",
+                "advisee": "Unknown Child",
+                "advisor": "Tail Anchor",
+                "title": "PhD",
+                "year": "",
+            },
+            {
+                "generation": "",
+                "advisee": "Unknown Grandchild",
+                "advisor": "Unknown Child",
+                "title": "PhD",
+                "year": "",
+            },
+        ]
+    )
+
+    people, edges, explicit_none, explicit_ill, skipped_rows = build_graph(df)
+    impute_years(people)
+    payload = build_graph_data(people, edges, explicit_none, explicit_ill, skipped_rows)
+    people_by_name = {node["name"]: node for node in payload["nodes"]}
+
+    assert people_by_name["Unknown Parent"]["chronologyYear"] == 2000
+    assert people_by_name["Unknown Grandparent"]["chronologyYear"] == 1990
+    assert people_by_name["Unknown Child"]["chronologyYear"] == 2020
+    assert people_by_name["Unknown Grandchild"]["chronologyYear"] == 2030
+    assert people_by_name["Unknown Child"]["year"] is None
+    assert people_by_name["Unknown Child"]["yearLabel"] == "Unknown year"
 
 
 def test_cli_preserves_literal_none_advisor_token(tmp_path) -> None:
