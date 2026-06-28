@@ -153,6 +153,8 @@
     cy: document.getElementById("cy"),
     loading: document.getElementById("loadingOverlay"),
     search: document.getElementById("searchInput"),
+    searchButton: document.getElementById("searchButton"),
+    searchStatus: document.getElementById("searchStatus"),
     peopleOptions: document.getElementById("peopleOptions"),
     searchResults: document.getElementById("searchResults"),
     colorModeInputs: [...document.querySelectorAll('input[name="colorMode"]')],
@@ -188,6 +190,12 @@
     sourceBlock: document.getElementById("sourceBlock"),
     sourceList: document.getElementById("sourceList"),
     profileCloseButton: document.getElementById("profileCloseButton"),
+    pathContent: document.getElementById("pathContent"),
+    pathSummary: document.getElementById("pathSummary"),
+    pathEndpointList: document.getElementById("pathEndpointList"),
+    pathPanelCloseButton: document.getElementById("pathPanelCloseButton"),
+    pathPanelRelayoutButton: document.getElementById("pathPanelRelayoutButton"),
+    pathPanelClearButton: document.getElementById("pathPanelClearButton"),
     advisorList: document.getElementById("advisorList"),
     studentList: document.getElementById("studentList"),
     traceButton: document.getElementById("traceButton"),
@@ -232,7 +240,7 @@
     colorBucketMaps: { university: new Map(), country: new Map(), continent: new Map() },
   };
 
-  let filterTimer = 0;
+  let searchTimer = 0;
   let miniFrame = 0;
   let timelineFrame = 0;
   let elkEngine = null;
@@ -308,6 +316,39 @@
       person.categoryLabel,
       person.yearLabel,
     ].filter(Boolean).join(" ").toLowerCase();
+  }
+
+  function personTagValues(person) {
+    return [
+      person.category === "alumni" ? "" : person.categoryLabel,
+      person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
+      person.countryLabel && person.countryLabel !== "Unknown country" ? person.countryLabel : "",
+      person.continentLabel && ![OTHER_BUCKET, NULL_BUCKET].includes(person.continentLabel) ? person.continentLabel : "",
+      person.title && !isHiddenRole(person.title) && !isHiddenTitleTag(person.title) && person.title !== person.role ? person.title : "",
+    ].filter(Boolean);
+  }
+
+  function setSearchStatus(message = "") {
+    if (els.searchStatus) els.searchStatus.textContent = message;
+  }
+
+  function clearSearchUi({ clearValue = true } = {}) {
+    window.clearTimeout(searchTimer);
+    if (clearValue) els.search.value = "";
+    els.searchResults.replaceChildren();
+    setSearchStatus("");
+  }
+
+  function matchingSearchPeople(query) {
+    const normalized = normalizeText(query);
+    if (!state.graph || normalized.length < 2) return [];
+    return state.graph.nodes
+      .filter((person) => person.searchText.includes(normalized))
+      .sort((a, b) => {
+        const aStarts = a.name.toLowerCase().startsWith(normalized) ? 0 : 1;
+        const bStarts = b.name.toLowerCase().startsWith(normalized) ? 0 : 1;
+        return aStarts - bStarts || a.name.localeCompare(b.name);
+      });
   }
 
   function edgeKey(a, b) {
@@ -619,11 +660,6 @@
             "text-outline-width": 0,
             "min-zoomed-font-size": 7,
             "overlay-padding": 6,
-            "shadow-blur": 12,
-            "shadow-color": "#000000",
-            "shadow-offset-x": 0,
-            "shadow-offset-y": 3,
-            "shadow-opacity": 0.16,
             "transition-property": "background-color, border-color, opacity, width, height",
             "transition-duration": reducedMotion ? 0 : 160,
           },
@@ -777,7 +813,10 @@
   }
 
   function revealProfileOnMobile() {
-    revealElementOnMobile(els.profileContent.hidden ? els.emptyProfile : els.profileContent);
+    const target = !els.pathContent.hidden
+      ? els.pathContent
+      : (els.profileContent.hidden ? els.emptyProfile : els.profileContent);
+    revealElementOnMobile(target);
   }
 
   function revealGraphOnMobile() {
@@ -1314,8 +1353,6 @@
   function applyFilters({ relayout = true } = {}) {
     if (!state.cy || !state.graph) return;
 
-    state.query = els.search.value.trim();
-
     const query = normalizeText(state.query);
     const queryContext = query.length >= 2 ? queryContextIds(query) : null;
     const focusSet = state.focusId ? lineageIds(state.focusId) : null;
@@ -1601,8 +1638,7 @@
     const hadPath = state.currentPathIds.length > 0;
     if (state.chronology) {
       state.query = "";
-      els.search.value = "";
-      els.searchResults.replaceChildren();
+      clearSearchUi();
       if (!hadPath) clearElementHighlights();
       applyFilters({ relayout: false });
     }
@@ -1641,16 +1677,7 @@
 
   function renderSearchResults(query) {
     els.searchResults.replaceChildren();
-    if (!query || query.length < 2) return;
-
-    const results = state.graph.nodes
-      .filter((person) => person.searchText.includes(query))
-      .sort((a, b) => {
-        const aStarts = a.name.toLowerCase().startsWith(query) ? 0 : 1;
-        const bStarts = b.name.toLowerCase().startsWith(query) ? 0 : 1;
-        return aStarts - bStarts || a.name.localeCompare(b.name);
-      })
-      .slice(0, 7);
+    const results = matchingSearchPeople(query).slice(0, 7);
 
     results.forEach((person) => {
       const button = document.createElement("button");
@@ -1662,23 +1689,60 @@
       meta.textContent = compactMeta(person);
       button.append(name, meta);
       button.addEventListener("click", () => {
-        els.search.value = person.name;
-        applyFilters({ relayout: true });
-        selectPerson(person.id, { center: true, revealProfile: true });
+        runPersonSearch(person.id);
       });
       els.searchResults.append(button);
     });
+  }
+
+  function resetViewForPersonSearch() {
+    state.focusId = "";
+    state.lineageRelayoutId = "";
+    state.traceId = "";
+    state.query = "";
+    clearPathState();
+    state.cy.elements().removeClass("faded lineage path-node path-edge is-hidden");
+    updateVisibleCount();
+    updateModeLabel();
+    renderLegend(state.graph);
+    renderTimeline();
+  }
+
+  function runPersonSearch(preselectedId = "") {
+    const rawValue = preselectedId || els.search.value;
+    let personId = resolvePersonId(rawValue);
+    const matches = matchingSearchPeople(rawValue);
+
+    if (!personId && matches.length === 1) personId = matches[0].id;
+    if (!personId) {
+      renderSearchResults(rawValue);
+      setSearchStatus(matches.length ? "" : "No listed person found.");
+      return;
+    }
+
+    const person = model.peopleById.get(personId);
+    els.search.value = person.name;
+    clearSearchUi({ clearValue: false });
+    resetViewForPersonSearch();
+    selectPerson(personId, { center: true, revealProfile: true });
+  }
+
+  function scheduleSearchResults() {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      setSearchStatus("");
+      renderSearchResults(els.search.value);
+    }, 80);
   }
 
   function selectPerson(id, { center = true, revealProfile = false } = {}) {
     const person = model.peopleById.get(id);
     if (!person || !state.cy) return;
     state.selectedId = id;
-    els.appShell.classList.remove("no-selection");
-    state.cy.resize();
     state.cy.nodes().removeClass("selected");
     state.cy.$id(id).addClass("selected");
     renderProfile(person);
+    syncSidePanel();
     writeUrlState();
 
     if (center) {
@@ -1694,18 +1758,80 @@
     if (!state.cy) return;
     state.selectedId = "";
     state.cy.nodes().removeClass("selected");
-    els.profileContent.hidden = true;
-    els.emptyProfile.hidden = false;
-    els.appShell.classList.add("no-selection");
-    state.cy.resize();
+    syncSidePanel();
     scheduleMiniMap();
     scheduleTimeline();
     writeUrlState();
   }
 
+  function endpointCard(person, label) {
+    const card = document.createElement("section");
+    card.className = "path-endpoint-card";
+
+    const labelElement = document.createElement("span");
+    labelElement.className = "endpoint-label";
+    labelElement.textContent = label;
+
+    const header = document.createElement("div");
+    header.className = "endpoint-card-header";
+    const avatar = document.createElement("span");
+    avatar.className = "profile-avatar";
+    avatar.textContent = initials(person.name);
+    avatar.style.background = categoryColors[person.category] || "#30353b";
+    const copy = document.createElement("div");
+    const name = document.createElement("h3");
+    name.textContent = person.name;
+    const meta = document.createElement("p");
+    meta.textContent = compactMeta(person);
+    copy.append(name, meta);
+    header.append(avatar, copy);
+
+    const tags = document.createElement("div");
+    tags.className = "tag-list";
+    personTagValues(person).slice(0, 3).forEach((value) => {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = value;
+      tags.append(tag);
+    });
+
+    card.append(labelElement, header);
+    if (tags.childElementCount) card.append(tags);
+    return card;
+  }
+
+  function renderPathPanel() {
+    if (!state.currentPathIds.length) return;
+    const source = model.peopleById.get(state.currentPathIds[0]);
+    const target = model.peopleById.get(state.currentPathIds[state.currentPathIds.length - 1]);
+    if (!source || !target) return;
+
+    const links = Math.max(0, state.currentPathIds.length - 1);
+    els.pathSummary.textContent = `${state.currentPathIds.length} people / ${links} link${links === 1 ? "" : "s"}`;
+    els.pathEndpointList.replaceChildren(
+      endpointCard(source, "From"),
+      endpointCard(target, "To")
+    );
+    els.pathPanelRelayoutButton.hidden = state.currentPathIds.length < 2 || state.pathRelayoutActive;
+  }
+
+  function syncSidePanel({ resize = true } = {}) {
+    const showPath = state.currentPathIds.length >= 2;
+    const showProfile = !showPath && Boolean(state.selectedId && model.peopleById.has(state.selectedId));
+
+    if (showPath) renderPathPanel();
+    els.pathContent.hidden = !showPath;
+    els.profileContent.hidden = !showProfile;
+    els.emptyProfile.hidden = showPath || showProfile;
+    els.appShell.classList.toggle("no-selection", !showPath && !showProfile);
+
+    if (state.cy && resize) state.cy.resize();
+  }
+
   function renderProfile(person) {
     els.emptyProfile.hidden = true;
     els.profileContent.hidden = false;
+    els.pathContent.hidden = true;
 
     els.profileAvatar.textContent = initials(person.name);
     els.profileAvatar.style.background = categoryColors[person.category] || "#30353b";
@@ -1713,13 +1839,7 @@
     els.profileMeta.textContent = compactMeta(person);
 
     els.profileTags.replaceChildren();
-    [
-      person.category === "alumni" ? "" : person.categoryLabel,
-      person.universityLabel && person.universityLabel !== "Unknown university" ? person.universityLabel : "",
-      person.countryLabel && person.countryLabel !== "Unknown country" ? person.countryLabel : "",
-      person.continentLabel && ![OTHER_BUCKET, NULL_BUCKET].includes(person.continentLabel) ? person.continentLabel : "",
-      person.title && !isHiddenRole(person.title) && !isHiddenTitleTag(person.title) && person.title !== person.role ? person.title : "",
-    ].filter(Boolean).forEach((value) => {
+    personTagValues(person).forEach((value) => {
       const tag = document.createElement("span");
       tag.className = "tag";
       tag.textContent = value;
@@ -1788,6 +1908,9 @@
 
   function setPathActionVisible() {
     els.relayoutPathButton.hidden = state.currentPathIds.length < 2 || state.pathRelayoutActive;
+    if (els.pathPanelRelayoutButton) {
+      els.pathPanelRelayoutButton.hidden = state.currentPathIds.length < 2 || state.pathRelayoutActive;
+    }
   }
 
   function clearPathState() {
@@ -1798,6 +1921,7 @@
     state.pathRelayoutRequested = false;
     state.pathRelayoutActive = false;
     setPathActionVisible();
+    syncSidePanel({ resize: false });
   }
 
   function clearElementHighlights({ preservePathState = false } = {}) {
@@ -1815,8 +1939,7 @@
     state.focusId = "";
     state.lineageRelayoutId = "";
     state.query = "";
-    els.search.value = "";
-    els.searchResults.replaceChildren();
+    clearSearchUi();
     clearElementHighlights();
     applyFilters({ relayout: false });
     state.traceId = id;
@@ -1929,8 +2052,7 @@
     state.lineageRelayoutId = id;
     state.traceId = "";
     state.query = "";
-    els.search.value = "";
-    els.searchResults.replaceChildren();
+    clearSearchUi();
 
     clearElementHighlights();
     applyFilters({ relayout: false });
@@ -1976,8 +2098,7 @@
     state.focusId = state.focusId === id ? "" : id;
     if (state.focusId) {
       state.query = "";
-      els.search.value = "";
-      els.searchResults.replaceChildren();
+      clearSearchUi();
     }
     clearElementHighlights();
     applyFilters({ relayout: true });
@@ -1990,8 +2111,7 @@
     state.lineageRelayoutId = "";
     state.traceId = "";
     state.query = "";
-    els.search.value = "";
-    els.searchResults.replaceChildren();
+    clearSearchUi();
     clearElementHighlights();
     applyFilters({ relayout: true });
   }
@@ -2005,8 +2125,7 @@
     state.layoutOrientation = DEFAULT_ORIENTATION;
     state.chronology = false;
     renderTimeline();
-    els.search.value = "";
-    els.searchResults.replaceChildren();
+    clearSearchUi();
     els.layoutOrientationInputs.forEach((input) => {
       input.checked = input.value === state.layoutOrientation;
     });
@@ -2045,6 +2164,8 @@
     state.traceId = "";
     clearAllFiltersWithoutLayout();
     clearElementHighlights();
+    state.selectedId = "";
+    state.cy.nodes().removeClass("selected");
     const pathSet = new Set(pathIds);
     state.cy.elements().addClass("faded");
     pathIds.forEach((id) => state.cy.$id(id).removeClass("faded").addClass("path-node"));
@@ -2063,6 +2184,7 @@
     state.pathRelayoutRequested = false;
     state.pathRelayoutActive = false;
     setPathActionVisible();
+    syncSidePanel();
     const pathEles = collectionFromIds([...pathSet, ...edgeIds]);
     fitGraph(pathEles, isStackedLayout() ? 80 : 150, { maxZoom: isStackedLayout() ? 2.2 : 1.6 });
     updateModeLabel(`Path: ${pathIds.length} people`);
@@ -2221,6 +2343,7 @@
     });
     pathEles.nodes().removeClass("faded").addClass("path-node");
     pathEles.edges().removeClass("faded").addClass("path-edge");
+    syncSidePanel();
 
     state.cy.once("layoutstop", () => {
       fitGraph(pathEles, isStackedLayout() ? 92 : 120, { maxZoom: isStackedLayout() ? 2.4 : 1.8 });
@@ -2246,7 +2369,7 @@
     state.lineageRelayoutId = "";
     state.traceId = "";
     state.query = "";
-    els.search.value = "";
+    clearSearchUi();
     state.cy.elements().removeClass("is-hidden");
     updateVisibleCount();
     renderLegend(state.graph);
@@ -2260,6 +2383,10 @@
       els.pathStatus.textContent = "Choose two listed people.";
       return;
     }
+    if (sourceId === targetId) {
+      els.pathStatus.textContent = "Choose two different people.";
+      return;
+    }
 
     const pathIds = findShortestPath(sourceId, targetId);
     if (!pathIds.length) {
@@ -2268,10 +2395,10 @@
     }
 
     highlightPath(pathIds);
-    selectPerson(targetId, { center: false, revealProfile: false });
     const source = model.peopleById.get(sourceId);
     const target = model.peopleById.get(targetId);
-    els.pathStatus.textContent = `${source.name} to ${target.name}: ${pathIds.length - 1} link${pathIds.length === 2 ? "" : "s"}.`;
+    const links = pathIds.length - 1;
+    els.pathStatus.textContent = `${source.name} to ${target.name}: ${links} link${links === 1 ? "" : "s"}.`;
     if (typeof els.pathDialog.close === "function") {
       els.pathDialog.close();
     } else {
@@ -2293,16 +2420,8 @@
     }
 
     highlightPath(pathIds);
-    if (!state.selectedId || !model.peopleById.has(state.selectedId)) {
-      selectPerson(targetId, { center: false, revealProfile: false });
-    }
     if (shouldRelayout) await relayoutCurrentPath();
     return true;
-  }
-
-  function scheduleFilterApply() {
-    window.clearTimeout(filterTimer);
-    filterTimer = window.setTimeout(() => applyFilters({ relayout: true }), 120);
   }
 
   function scheduleMiniMap() {
@@ -2750,7 +2869,17 @@
   }
 
   function attachEvents() {
-    els.search.addEventListener("input", scheduleFilterApply);
+    els.search.addEventListener("input", scheduleSearchResults);
+    els.search.addEventListener("focus", () => renderSearchResults(els.search.value));
+    els.search.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        runPersonSearch();
+        return;
+      }
+      if (event.key === "Escape") clearSearchUi();
+    });
+    els.searchButton.addEventListener("click", () => runPersonSearch());
     els.colorModeInputs.forEach((input) => {
       input.addEventListener("change", () => {
         if (input.checked) setColorMode(input.value);
@@ -2770,6 +2899,9 @@
     els.clearViewButton.addEventListener("click", resetToFullTree);
     els.profileCloseButton.addEventListener("click", closeProfilePanel);
     els.relayoutPathButton.addEventListener("click", relayoutCurrentPath);
+    els.pathPanelCloseButton.addEventListener("click", resetToFullTree);
+    els.pathPanelRelayoutButton.addEventListener("click", relayoutCurrentPath);
+    els.pathPanelClearButton.addEventListener("click", resetToFullTree);
     els.shareButton.addEventListener("click", copyShareLink);
     els.miniMap.addEventListener("click", panFromMiniMap);
     els.miniPanelHandle.addEventListener("pointerdown", startMiniPanelDrag);
