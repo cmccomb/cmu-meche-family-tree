@@ -1,7 +1,7 @@
 # CMU MechE Family Tree
 
 [![Tests](https://github.com/cmccomb/cmu-meche-family-tree/actions/workflows/tests.yml/badge.svg)](https://github.com/cmccomb/cmu-meche-family-tree/actions/workflows/tests.yml)
-[![Coverage](https://codecov.io/gh/cmccomb/cmu-meche-family-tree/branch/main/graph/badge.svg)](https://codecov.io/gh/cmccomb/cmu-meche-family-tree)
+[![Coverage: 90%+](https://img.shields.io/badge/coverage-90%25%2B-brightgreen)](https://github.com/cmccomb/cmu-meche-family-tree/actions/workflows/tests.yml)
 
 This repository builds the CMU Mechanical Engineering advisor-student family
 tree from a CSV export and serves it as a browser-based explorer.
@@ -77,9 +77,11 @@ npm run coverage
 ```
 
 The `Tests` GitHub Actions workflow runs both suites on every push to `main` and
-on pull requests, then publishes the combined Python and JavaScript coverage to
-Codecov. The JavaScript suite includes a full checked-in graph regression that
-requires the temporal layout to remain collision-free.
+on pull requests. CI enforces at least 90% Python coverage plus 95% JavaScript
+statement, line, and function coverage (and 75% branch coverage), so the
+coverage badge records a checked minimum rather than relying on an external
+reporting account. The JavaScript suite includes a full checked-in graph
+regression that requires the temporal layout to remain collision-free.
 
 ## GitHub Pages deployment
 

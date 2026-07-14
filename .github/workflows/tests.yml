@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   test:
@@ -40,11 +39,3 @@ jobs:
 
       - name: Run Python coverage
         run: npm run coverage:python
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v5
-        with:
-          disable_search: true
-          fail_ci_if_error: true
-          files: ./coverage/python/coverage.xml,./coverage/js/lcov.info
-          use_oidc: true

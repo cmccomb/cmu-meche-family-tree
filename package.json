@@ -5,9 +5,9 @@
     "layout:elk": "node scripts/elk_layout.js",
     "test": "npm run test:js && npm run test:python",
     "test:js": "node --test tests/*.test.js",
-    "coverage:js": "c8 --all --include=site/layout-helpers.js --include=site/export-helpers.js --reporter=text --reporter=lcov --reports-dir=coverage/js node --test tests/*.test.js",
+    "coverage:js": "c8 --all --include=site/layout-helpers.js --include=site/export-helpers.js --check-coverage --statements=95 --lines=95 --functions=95 --branches=75 --reporter=text --reporter=lcov --reports-dir=coverage/js node --test tests/*.test.js",
     "test:python": "python -m pytest -q",
-    "coverage:python": "mkdir -p coverage/python && python -m pytest --cov=make_graph --cov-report=term-missing --cov-report=xml:coverage/python/coverage.xml",
+    "coverage:python": "mkdir -p coverage/python && python -m pytest --cov=make_graph --cov-fail-under=90 --cov-report=term-missing --cov-report=xml:coverage/python/coverage.xml",
     "coverage": "npm run coverage:js && npm run coverage:python"
   },
   "dependencies": {
