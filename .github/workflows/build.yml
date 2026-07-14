@@ -76,7 +76,13 @@ jobs:
             -e "s|__BUILD_COMMIT__|${BUILD_COMMIT}|g" \
             -e "s|__BUILD_AT_UTC__|${BUILD_AT_UTC}|g" \
             site/index.html > docs/index.html
-          cp site/app.js site/styles.css site/zoom.html docs/
+          cp \
+            site/app.js \
+            site/export-helpers.js \
+            site/layout-helpers.js \
+            site/styles.css \
+            site/zoom.html \
+            docs/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

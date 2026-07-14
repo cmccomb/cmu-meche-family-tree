@@ -136,6 +136,80 @@ svg {
   flex: 0 0 auto;
 }
 
+.export-menu {
+  position: relative;
+}
+
+.export-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 270px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow);
+  z-index: 30;
+}
+
+.export-heading {
+  margin: 4px 8px 7px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 860;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.export-option {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.export-option:hover,
+.export-option:focus-visible {
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.export-option:disabled {
+  color: var(--subtle);
+  cursor: wait;
+}
+
+.export-option strong {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.export-option span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.export-status {
+  min-height: 1rem;
+  margin: 6px 8px 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
 .top-search {
   position: relative;
   flex: 1 1 440px;

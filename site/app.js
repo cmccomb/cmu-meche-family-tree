@@ -9,22 +9,10 @@
   const DEFAULT_ORIENTATION = "vertical";
   const MINI_PANEL_STORAGE_KEY = "cmu-meche-family-tree-mini-panel";
   const MINI_PANEL_MARGIN = 12;
-  const CHRONO_TIME_PIXELS_PER_NODE = 24;
-  const CHRONO_MIN_TIME_SPAN = 3600;
-  const CHRONO_MAX_TIME_SPAN = 14000;
-  const CHRONO_MIN_YEAR_GAP = 7.5;
-  const CHRONO_MAX_YEAR_GAP = 20;
-  const CHRONO_BAND_HEIGHT = 82;
-  const CHRONO_BAND_X_GAP = 128;
-  const CHRONO_COLLISION_Y_GAP = 74;
-  const CHRONO_COLLISION_X_GAP = 132;
-  const CHRONO_COLLISION_SHIFT = 138;
-  const CHRONO_SWEEP_PASSES = 4;
-  const CHRONO_EDGE_RELAX_PASSES = 3;
-  const CHRONO_NEIGHBOR_WEIGHT = 0.74;
-  const CHRONO_BASE_WEIGHT = 0.22;
-  const CHRONO_COLLISION_PADDING_X = 30;
-  const CHRONO_COLLISION_PADDING_Y = 18;
+  const layoutHelpers = window.FamilyTreeLayout;
+  const exportHelpers = window.FamilyTreeExport;
+  const EXPORT_PADDING = 84;
+  const EXPORT_BACKGROUND = "#25282c";
   const PATH_TEMPORAL_SIDE_SPAN_MIN = 300;
   const PATH_TEMPORAL_SIDE_SPAN_MAX = 560;
   const PATH_TEMPORAL_SIDE_SPAN_PER_NODE = 18;
@@ -165,6 +153,11 @@
     pathButton: document.getElementById("pathButton"),
     resetViewButton: document.getElementById("resetViewButton"),
     shareButton: document.getElementById("shareButton"),
+    exportMenu: document.getElementById("exportMenu"),
+    exportButton: document.getElementById("exportButton"),
+    exportPopover: document.getElementById("exportPopover"),
+    exportOptions: [...document.querySelectorAll("[data-export-format]")],
+    exportStatus: document.getElementById("exportStatus"),
     relayoutPathButton: document.getElementById("relayoutPathButton"),
     visibleCount: document.getElementById("visibleCount"),
     modeLabel: document.getElementById("modeLabel"),
@@ -698,6 +691,16 @@
           },
         },
         {
+          selector: "edge.temporal-edge",
+          style: {
+            width: 1,
+            opacity: 0.38,
+            "arrow-scale": 0.58,
+            "line-color": "#8390a0",
+            "target-arrow-color": "#8390a0",
+          },
+        },
+        {
           selector: ".is-hidden",
           style: { display: "none" },
         },
@@ -879,23 +882,6 @@
       : nodeLayoutPosition(node) || node.position();
   }
 
-  function visibleConnections(nodes, edgeRecords = null) {
-    const nodeIds = new Set(nodes.map((node) => node.id()));
-    const connections = new Map(nodes.map((node) => [node.id(), new Set()]));
-    const records = edgeRecords || visibleElements().edges().toArray().map((edge) => ({
-      source: edge.data("source"),
-      target: edge.data("target"),
-    }));
-    records.forEach((edge) => {
-      const source = edge.source || (edge.data && edge.data("source"));
-      const target = edge.target || (edge.data && edge.data("target"));
-      if (!nodeIds.has(source) || !nodeIds.has(target)) return;
-      connections.get(source).add(target);
-      connections.get(target).add(source);
-    });
-    return connections;
-  }
-
   function nodeSizeForLayout(node) {
     const dataWidth = Number(node.data("boxWidth"));
     const dataHeight = Number(node.data("boxHeight"));
@@ -904,14 +890,6 @@
     return {
       width: Number.isFinite(dataWidth) ? dataWidth : (Number.isFinite(renderedWidth) ? renderedWidth : 150),
       height: Number.isFinite(dataHeight) ? dataHeight : (Number.isFinite(renderedHeight) ? renderedHeight : 56),
-    };
-  }
-
-  function paddedNodeSizeForChronology(node, paddingX = CHRONO_COLLISION_PADDING_X, paddingY = CHRONO_COLLISION_PADDING_Y) {
-    const { width, height } = nodeSizeForLayout(node);
-    return {
-      width: width + paddingX,
-      height: height + paddingY,
     };
   }
 
@@ -1001,233 +979,33 @@
     }
   }
 
-  function resolveHorizontalPositions(items, minGap) {
-    const ordered = [...items].sort((a, b) => a.target - b.target || a.name.localeCompare(b.name));
-    const clusters = ordered.map((item) => ({ items: [item], targetSum: item.target }));
-
-    function center(cluster) {
-      return cluster.targetSum / cluster.items.length;
-    }
-
-    function bounds(cluster) {
-      const halfWidth = minGap * (cluster.items.length - 1) / 2;
-      const clusterCenter = center(cluster);
-      return [clusterCenter - halfWidth, clusterCenter + halfWidth];
-    }
-
-    let index = 0;
-    while (index < clusters.length - 1) {
-      const left = clusters[index];
-      const right = clusters[index + 1];
-      const [, leftRight] = bounds(left);
-      const [rightLeft] = bounds(right);
-      if (leftRight + minGap > rightLeft) {
-        left.items.push(...right.items);
-        left.targetSum += right.targetSum;
-        clusters.splice(index + 1, 1);
-        index = Math.max(0, index - 1);
-      } else {
-        index += 1;
-      }
-    }
-
-    const positions = new Map();
-    clusters.forEach((cluster) => {
-      const start = center(cluster) - minGap * (cluster.items.length - 1) / 2;
-      cluster.items
-        .sort((a, b) => a.target - b.target || a.name.localeCompare(b.name))
-        .forEach((item, itemIndex) => {
-          positions.set(item.id, start + itemIndex * minGap);
-        });
-    });
-    return positions;
-  }
-
-  function average(values) {
-    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
-  }
-
-  function chronologyBands(nodes, positions) {
-    const bands = new Map();
-    nodes.forEach((node) => {
-      const position = positions.get(node.id());
-      if (!position) return;
-      const key = Math.round(position.y / CHRONO_BAND_HEIGHT);
-      if (!bands.has(key)) bands.set(key, { key, items: [] });
-      bands.get(key).items.push({
-        id: node.id(),
-        name: node.data("name") || node.id(),
-        target: position.x,
-      });
-    });
-    return [...bands.values()].sort((a, b) => a.key - b.key);
-  }
-
-  function applyChronologyBandSweep(nodes, positions, baseTargetById, connections) {
-    const bands = chronologyBands(nodes, positions);
-    const bandIndexById = new Map();
-    bands.forEach((band, bandIndex) => {
-      band.items.forEach((item) => bandIndexById.set(item.id, bandIndex));
-    });
-
-    function neighborTarget(id, bandIndex, direction) {
-      const linked = [...(connections.get(id) || [])]
-        .filter((neighborId) => {
-          const neighborBand = bandIndexById.get(neighborId);
-          if (!Number.isFinite(neighborBand)) return false;
-          return direction > 0 ? neighborBand < bandIndex : neighborBand > bandIndex;
-        })
-        .map((neighborId) => positions.get(neighborId)?.x)
-        .filter((x) => Number.isFinite(x));
-      if (linked.length) return average(linked);
-
-      const allLinked = [...(connections.get(id) || [])]
-        .map((neighborId) => positions.get(neighborId)?.x)
-        .filter((x) => Number.isFinite(x));
-      return average(allLinked);
-    }
-
-    for (let pass = 0; pass < CHRONO_SWEEP_PASSES; pass += 1) {
-      [1, -1].forEach((direction) => {
-        const sweepBands = direction > 0 ? bands : [...bands].reverse();
-        sweepBands.forEach((band) => {
-          const bandIndex = bandIndexById.get(band.items[0]?.id);
-          const items = band.items.map((item) => {
-            const baseTarget = baseTargetById.get(item.id);
-            const linkedTarget = neighborTarget(item.id, bandIndex, direction);
-            const ownTarget = positions.get(item.id)?.x ?? baseTarget ?? 0;
-            return {
-              ...item,
-              target: linkedTarget === null
-                ? ownTarget
-                : linkedTarget * CHRONO_NEIGHBOR_WEIGHT + (baseTarget ?? ownTarget) * (1 - CHRONO_NEIGHBOR_WEIGHT),
-            };
-          });
-          const resolved = resolveHorizontalPositions(items, CHRONO_BAND_X_GAP);
-          resolved.forEach((x, id) => {
-            positions.get(id).x = x;
-          });
-        });
-      });
-    }
-  }
-
-  function applyChronologyEdgeRelaxation(nodes, positions, baseTargetById, connections) {
-    for (let pass = 0; pass < CHRONO_EDGE_RELAX_PASSES; pass += 1) {
-      const nextX = new Map();
-      nodes.forEach((node) => {
-        const id = node.id();
-        const current = positions.get(id);
-        const neighborXs = [...(connections.get(id) || [])]
-          .map((neighborId) => positions.get(neighborId))
-          .filter(Boolean)
-          .map((position) => position.x);
-        if (!current || !neighborXs.length) {
-          nextX.set(id, current ? current.x : 0);
-          return;
-        }
-        const neighborAverage = neighborXs.reduce((sum, x) => sum + x, 0) / neighborXs.length;
-        const baseTarget = baseTargetById.get(id);
-        const base = Number.isFinite(baseTarget) ? baseTarget : current.x;
-        nextX.set(id, current.x * 0.26 + neighborAverage * 0.52 + base * CHRONO_BASE_WEIGHT);
-      });
-      nextX.forEach((x, id) => {
-        positions.get(id).x = x;
-      });
-      applyChronologyBandSweep(nodes, positions, baseTargetById, connections);
-    }
-  }
-
-  function resolveChronologyCollisions(nodes, positions) {
-    const placed = [];
-    nodes
-      .slice()
-      .sort((a, b) => {
-        const aPosition = positions.get(a.id());
-        const bPosition = positions.get(b.id());
-        return aPosition.y - bPosition.y || aPosition.x - bPosition.x || a.data("name").localeCompare(b.data("name"));
-      })
-      .forEach((node) => {
-        const id = node.id();
-        const position = positions.get(id);
-        const size = paddedNodeSizeForChronology(node);
-        const shiftStep = Math.max(CHRONO_COLLISION_SHIFT, size.width * 0.72);
-        const shifts = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6].map((slot) => slot * shiftStep);
-        const shift = shifts.find((candidate) => (
-          placed.every((other) => (
-            Math.abs(other.y - position.y) >= Math.max(CHRONO_COLLISION_Y_GAP, (other.height + size.height) / 2)
-              || Math.abs(other.x - (position.x + candidate)) >= Math.max(
-                CHRONO_COLLISION_X_GAP,
-                (other.width + size.width) / 2
-              )
-          ))
-        )) || 0;
-        position.x += shift;
-        placed.push({
-          x: position.x,
-          y: position.y,
-          width: size.width,
-          height: size.height,
-        });
-      });
-  }
-
-  function chronologicalLayoutPositions(nodes, basePositions = null, { edgeRecords = null } = {}) {
-    const withYears = nodes
-      .map((node) => ({ node, year: numericChronologyYear(node.data("chronologyYear")) }))
-      .filter((item) => item.year !== null);
-    if (!withYears.length) {
+  function chronologicalLayoutPositions(nodes, basePositions = null) {
+    if (!layoutHelpers) {
       return basePositions || new Map(nodes.map((node) => [node.id(), nodeLayoutPosition(node) || node.position()]));
     }
-
-    const years = withYears.map((item) => item.year);
-    const minYear = Math.min(...years);
-    const maxYear = Math.max(...years);
-    const yearRange = Math.max(1, maxYear - minYear);
-    const targetHeight = clamp(nodes.length * CHRONO_TIME_PIXELS_PER_NODE, CHRONO_MIN_TIME_SPAN, CHRONO_MAX_TIME_SPAN);
-    const yScale = clamp(targetHeight / yearRange, CHRONO_MIN_YEAR_GAP, CHRONO_MAX_YEAR_GAP);
-    const yearCenter = (minYear + maxYear) / 2;
-
-    const baseById = new Map();
-    nodes.forEach((node) => {
-      baseById.set(node.id(), layoutPositionFromBase(node, basePositions));
+    const layoutNodes = nodes.map((node) => {
+      const base = layoutPositionFromBase(node, basePositions);
+      const size = nodeSizeForLayout(node);
+      return {
+        id: node.id(),
+        name: node.data("name") || node.id(),
+        year: numericChronologyYear(node.data("chronologyYear")),
+        x: base.x,
+        y: base.y,
+        width: size.width,
+        height: size.height,
+      };
     });
-
-    const baseXs = [...baseById.values()].map((position) => position.x);
-    const minBaseX = Math.min(...baseXs);
-    const maxBaseX = Math.max(...baseXs);
-    const baseCenterX = (minBaseX + maxBaseX) / 2;
-    const baseWidth = Math.max(1, maxBaseX - minBaseX);
-    const targetWidth = clamp(nodes.length * 20, nodes.length < 240 ? 1800 : 4200, nodes.length < 240 ? 5600 : 7600);
-    const xScale = Math.min(1, targetWidth / baseWidth);
-    const connections = visibleConnections(nodes, edgeRecords);
-
-    const positions = new Map();
-    const baseTargetById = new Map();
-    nodes.forEach((node) => {
-      const base = baseById.get(node.id());
-      const year = numericChronologyYear(node.data("chronologyYear"));
-      const x = (base.x - baseCenterX) * xScale;
-      baseTargetById.set(node.id(), x);
-      positions.set(node.id(), {
-        x,
-        y: year === null ? base.y : (year - yearCenter) * yScale,
-      });
+    return layoutHelpers.createTemporalLayout(layoutNodes, {
+      orientation: state.layoutOrientation,
     });
-
-    applyChronologyEdgeRelaxation(nodes, positions, baseTargetById, connections);
-    applyChronologyBandSweep(nodes, positions, baseTargetById, connections);
-    resolveChronologyCollisions(nodes, positions);
-
-    return positions;
   }
 
   function preparedLayoutPositions(nodes) {
     const nodeArray = nodes.toArray();
     const basePositions = state.lineageRelayoutId ? lineageLayoutPositions(nodeArray) : null;
-    const edgeRecords = state.chronology ? visibleEdgeRecordsForNodes(nodeArray) : null;
     const positions = state.chronology
-      ? chronologicalLayoutPositions(nodeArray, basePositions, { edgeRecords })
+      ? chronologicalLayoutPositions(nodeArray, basePositions)
       : basePositions;
     return orientPositions(positions);
   }
@@ -1633,8 +1411,14 @@
     applyColorMode();
   }
 
+  function syncTemporalEdgeStyle() {
+    if (!state.cy) return;
+    state.cy.edges().toggleClass("temporal-edge", state.chronology);
+  }
+
   function setChronologyMode(enabled) {
     state.chronology = Boolean(enabled);
+    syncTemporalEdgeStyle();
     const hadPath = state.currentPathIds.length > 0;
     if (state.chronology) {
       state.query = "";
@@ -2064,7 +1848,7 @@
     if (runId !== relayoutRun || state.lineageRelayoutId !== id) return;
     const basePositions = elkPositions || lineageLayoutPositions(nodes);
     const rawPositions = state.chronology
-      ? chronologicalLayoutPositions(nodes, basePositions, { edgeRecords })
+      ? chronologicalLayoutPositions(nodes, basePositions)
       : basePositions;
     const positions = orientPositions(rawPositions);
     state.cy.elements().removeClass("faded lineage path-node path-edge");
@@ -2124,6 +1908,7 @@
     state.query = "";
     state.layoutOrientation = DEFAULT_ORIENTATION;
     state.chronology = false;
+    syncTemporalEdgeStyle();
     renderTimeline();
     clearSearchUi();
     els.layoutOrientationInputs.forEach((input) => {
@@ -2321,10 +2106,10 @@
     if (runId !== relayoutRun || !samePath) return;
     const basePositions = elkPositions || pathLayoutPositions(visiblePathIds);
     const temporalPositions = state.chronology
-      ? chronologicalLayoutPositions(pathNodes, chronologyBaseForPath(pathNodes, visiblePathIds, elkPositions || basePositions), { edgeRecords })
+      ? chronologicalLayoutPositions(pathNodes, chronologyBaseForPath(pathNodes, visiblePathIds, elkPositions || basePositions))
       : pathTemporalLayoutPositions(pathNodes, { scaled: false });
     const rawPositions = temporalPositions
-      || (state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions, { edgeRecords }) : basePositions);
+      || (state.chronology ? chronologicalLayoutPositions(pathNodes, basePositions) : basePositions);
     const positions = orientPositions(compactStackedPathPositions(rawPositions));
     const visibleEdgeIds = state.currentPathEdgeIds.filter((id) => {
       const edge = state.cy.$id(id);
@@ -2720,6 +2505,358 @@
       });
   }
 
+  function splitExportName(name, maxLength = 22) {
+    const text = String(name || "").trim();
+    if (text.length <= maxLength || !text.includes(" ")) return [text];
+    const words = text.split(/\s+/);
+    let bestIndex = 1;
+    let bestDifference = Number.POSITIVE_INFINITY;
+    for (let index = 1; index < words.length; index += 1) {
+      const left = words.slice(0, index).join(" ");
+      const right = words.slice(index).join(" ");
+      const difference = Math.abs(left.length - right.length);
+      if (difference < bestDifference) {
+        bestDifference = difference;
+        bestIndex = index;
+      }
+    }
+    return [words.slice(0, bestIndex).join(" "), words.slice(bestIndex).join(" ")];
+  }
+
+  function nodeBoundaryPoint(from, to, width, height) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    if (Math.abs(dx) < 1e-9 && Math.abs(dy) < 1e-9) return { ...from };
+    const scale = 1 / Math.max(
+      Math.abs(dx) / Math.max(1, width / 2),
+      Math.abs(dy) / Math.max(1, height / 2)
+    );
+    return {
+      x: from.x + dx * scale,
+      y: from.y + dy * scale,
+    };
+  }
+
+  function appendExportTimeline(svg, nodes, bounds) {
+    if (!state.chronology || nodes.length < 2) return;
+    const horizontal = isHorizontalLayout();
+    const items = nodes
+      .map((node) => {
+        const year = numericChronologyYear(node.data("chronologyYear"));
+        const position = node.position();
+        if (year === null) return null;
+        return { year, coord: horizontal ? position.x : position.y };
+      })
+      .filter(Boolean);
+    if (items.length < 2) return;
+
+    const years = items.map((item) => item.year);
+    const coords = items.map((item) => item.coord);
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const minCoord = Math.min(...coords);
+    const maxCoord = Math.max(...coords);
+    const yearSpan = maxYear - minYear;
+    if (yearSpan <= 0) return;
+    const yearToCoord = (year) => minCoord + ((year - minYear) / yearSpan) * (maxCoord - minCoord);
+    const pixelsPerYear = Math.abs((maxCoord - minCoord) / yearSpan);
+    const group = svgElement("g", { "aria-label": "Chronological grid" });
+    timelineTickYears(minYear, maxYear, pixelsPerYear).forEach(({ year, kind }) => {
+      const coord = yearToCoord(year);
+      const line = horizontal
+        ? svgElement("line", {
+            x1: coord,
+            x2: coord,
+            y1: bounds.y1,
+            y2: bounds.y2,
+          })
+        : svgElement("line", {
+            x1: bounds.x1,
+            x2: bounds.x2,
+            y1: coord,
+            y2: coord,
+          });
+      line.setAttribute("stroke", kind === "century" ? "#ffd166" : "#eef2f7");
+      line.setAttribute("stroke-opacity", kind === "century" ? "0.38" : "0.14");
+      line.setAttribute("stroke-width", kind === "century" ? "1.4" : "1");
+      if (kind === "decade") line.setAttribute("stroke-dasharray", "3 7");
+      group.append(line);
+
+      const label = svgElement("text", {
+        x: horizontal ? coord : bounds.x1 + 16,
+        y: horizontal ? bounds.y1 + 18 : coord,
+        fill: kind === "century" ? "#fff0b8" : "#cbd5e1",
+        "font-family": "Inter, Arial, sans-serif",
+        "font-size": kind === "century" ? 11 : 9,
+        "font-weight": "bold",
+        "text-anchor": horizontal ? "middle" : "start",
+        "dominant-baseline": horizontal ? "auto" : "central",
+      });
+      label.textContent = timelineYearLabel(year);
+      group.append(label);
+    });
+    svg.append(group);
+  }
+
+  function buildExportSvg() {
+    if (!state.cy) throw new Error("The graph is not ready to export.");
+    const elements = visibleElements();
+    const nodes = visibleNodes().toArray();
+    if (!nodes.length) throw new Error("There are no visible people to export.");
+    const edges = elements.edges().toArray();
+    const graphBounds = elements.boundingBox({ includeLabels: true, includeOverlays: false });
+    const bounds = {
+      x1: graphBounds.x1 - EXPORT_PADDING,
+      y1: graphBounds.y1 - EXPORT_PADDING,
+      x2: graphBounds.x2 + EXPORT_PADDING,
+      y2: graphBounds.y2 + EXPORT_PADDING,
+    };
+    const width = Math.max(1, bounds.x2 - bounds.x1);
+    const height = Math.max(1, bounds.y2 - bounds.y1);
+    const svg = svgElement("svg", {
+      xmlns: SVG_NS,
+      width,
+      height,
+      viewBox: `${bounds.x1} ${bounds.y1} ${width} ${height}`,
+      role: "img",
+      "aria-label": "CMU MechE Family Tree export",
+    });
+    const title = svgElement("title");
+    title.textContent = "CMU MechE Family Tree";
+    svg.append(title);
+    svg.append(svgElement("rect", {
+      x: bounds.x1,
+      y: bounds.y1,
+      width,
+      height,
+      fill: EXPORT_BACKGROUND,
+    }));
+
+    appendExportTimeline(svg, nodes, bounds);
+
+    const definitions = svgElement("defs");
+    const marker = svgElement("marker", {
+      id: "advisor-arrow",
+      viewBox: "0 0 10 10",
+      refX: 9,
+      refY: 5,
+      markerWidth: 6,
+      markerHeight: 6,
+      orient: "auto-start-reverse",
+      markerUnits: "strokeWidth",
+    });
+    marker.append(svgElement("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#96a3b3" }));
+    definitions.append(marker);
+    svg.append(definitions);
+
+    const nodesById = new Map(nodes.map((node) => [node.id(), node]));
+    const edgeGroup = svgElement("g", {
+      fill: "none",
+      "stroke-linecap": "round",
+    });
+    edges.forEach((edge) => {
+      const source = nodesById.get(edge.data("source"));
+      const target = nodesById.get(edge.data("target"));
+      if (!source || !target) return;
+      const sourcePosition = source.position();
+      const targetPosition = target.position();
+      const sourceSize = nodeSizeForLayout(source);
+      const targetSize = nodeSizeForLayout(target);
+      const start = nodeBoundaryPoint(sourcePosition, targetPosition, sourceSize.width, sourceSize.height);
+      const end = nodeBoundaryPoint(targetPosition, sourcePosition, targetSize.width, targetSize.height);
+      const highlighted = edge.hasClass("lineage") || edge.hasClass("path-edge");
+      edgeGroup.append(svgElement("line", {
+        x1: start.x,
+        y1: start.y,
+        x2: end.x,
+        y2: end.y,
+        stroke: highlighted ? "#ffd166" : "#96a3b3",
+        "stroke-width": highlighted ? 3 : (state.chronology ? 1 : 1.25),
+        "stroke-opacity": edge.hasClass("faded") ? 0.1 : (highlighted ? 0.95 : (state.chronology ? 0.42 : 0.72)),
+        "marker-end": "url(#advisor-arrow)",
+      }));
+    });
+    svg.append(edgeGroup);
+
+    const nodeGroup = svgElement("g");
+    nodes.forEach((node) => {
+      const position = node.position();
+      const { width: nodeWidth, height: nodeHeight } = nodeSizeForLayout(node);
+      const highlighted = node.hasClass("selected") || node.hasClass("lineage") || node.hasClass("path-node");
+      const group = svgElement("g", {
+        opacity: node.hasClass("faded") ? 0.16 : 1,
+      });
+      group.append(svgElement("rect", {
+        x: position.x - nodeWidth / 2,
+        y: position.y - nodeHeight / 2,
+        width: nodeWidth,
+        height: nodeHeight,
+        rx: 9,
+        fill: node.data("fillColor") || "#ffffff",
+        stroke: highlighted ? "#ffd166" : (node.data("borderColor") || "#6f7b8a"),
+        "stroke-width": highlighted ? 3.5 : 2.5,
+      }));
+      const nameLines = splitExportName(node.data("name"));
+      const yearLabel = String(node.data("yearLabel") || "").trim();
+      const lines = yearLabel ? [...nameLines, yearLabel] : nameLines;
+      const lineHeight = lines.length > 2 ? 10 : 11;
+      const text = svgElement("text", {
+        x: position.x,
+        y: position.y - ((lines.length - 1) * lineHeight) / 2 + 3,
+        fill: node.data("labelColor") || "#1c1f23",
+        "font-family": "Inter, Arial, sans-serif",
+        "font-size": lines.length > 2 ? 8.7 : 9.5,
+        "font-weight": "bold",
+        "text-anchor": "middle",
+      });
+      lines.forEach((line, index) => {
+        const span = svgElement("tspan", {
+          x: position.x,
+          dy: index === 0 ? 0 : lineHeight,
+        });
+        span.textContent = line;
+        text.append(span);
+      });
+      group.append(text);
+      nodeGroup.append(group);
+    });
+    svg.append(nodeGroup);
+
+    const heading = svgElement("text", {
+      x: bounds.x1 + 20,
+      y: bounds.y1 + 30,
+      fill: "#ffffff",
+      "font-family": "Inter, Arial, sans-serif",
+      "font-size": 20,
+      "font-weight": "bold",
+    });
+    heading.textContent = "CMU MechE Family Tree";
+    svg.append(heading);
+    const descriptor = activeViewDescriptor();
+    const subtitle = svgElement("text", {
+      x: bounds.x1 + 20,
+      y: bounds.y1 + 50,
+      fill: "#cbd5e1",
+      "font-family": "Inter, Arial, sans-serif",
+      "font-size": 10,
+      "font-weight": "normal",
+    });
+    subtitle.textContent = `${formatNumber(nodes.length)} people · ${formatNumber(edges.length)} links · ${descriptor ? descriptor.title : "Full tree"}`;
+    svg.append(subtitle);
+
+    return { svg, width, height };
+  }
+
+  function serializeExportSvg(svg) {
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(svg)}`;
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function svgImage(markup) {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([markup], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const image = new Image();
+      image.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(image);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Unable to render the SVG for PNG export."));
+      };
+      image.src = url;
+    });
+  }
+
+  function canvasPngBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Unable to create the PNG image."));
+      }, "image/png");
+    });
+  }
+
+  async function downloadGraphExport(format) {
+    if (!exportHelpers) throw new Error("Export helpers failed to load.");
+    const normalizedFormat = String(format || "").toLowerCase();
+    const { svg, width, height } = buildExportSvg();
+    const filename = exportHelpers.exportFileName(normalizedFormat);
+    if (normalizedFormat === "svg") {
+      downloadBlob(
+        new Blob([serializeExportSvg(svg)], { type: "image/svg+xml;charset=utf-8" }),
+        filename
+      );
+      return "Vector SVG downloaded.";
+    }
+    if (normalizedFormat === "png") {
+      const dimensions = exportHelpers.rasterDimensions(width, height);
+      const image = await svgImage(serializeExportSvg(svg));
+      const canvas = document.createElement("canvas");
+      canvas.width = dimensions.width;
+      canvas.height = dimensions.height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("PNG rendering is not supported by this browser.");
+      context.fillStyle = EXPORT_BACKGROUND;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      downloadBlob(await canvasPngBlob(canvas), filename);
+      return `High-resolution PNG downloaded (${dimensions.width} × ${dimensions.height}).`;
+    }
+    if (normalizedFormat === "pdf") {
+      const JsPdf = window.jspdf && window.jspdf.jsPDF;
+      if (!JsPdf) throw new Error("PDF support failed to load.");
+      const page = exportHelpers.pdfPageDimensions(width, height);
+      const pdf = new JsPdf({
+        orientation: page.orientation,
+        unit: "pt",
+        format: [page.width, page.height],
+        compress: true,
+      });
+      if (typeof pdf.svg !== "function") throw new Error("Vector PDF support failed to load.");
+      await pdf.svg(svg, { x: 0, y: 0, width: page.width, height: page.height });
+      downloadBlob(pdf.output("blob"), filename);
+      return "Vector PDF downloaded.";
+    }
+    throw new Error(`Unsupported export format: ${normalizedFormat || "unknown"}.`);
+  }
+
+  function setExportMenuOpen(open, { focusFirst = false } = {}) {
+    if (!els.exportPopover || !els.exportButton) return;
+    const expanded = Boolean(open);
+    els.exportPopover.hidden = !expanded;
+    els.exportButton.setAttribute("aria-expanded", String(expanded));
+    if (expanded && focusFirst) els.exportOptions[0]?.focus();
+  }
+
+  async function runGraphExport(format) {
+    const label = els.exportButton.querySelector("span");
+    const previousLabel = label ? label.textContent : "Export";
+    els.exportOptions.forEach((option) => { option.disabled = true; });
+    if (label) label.textContent = "Working";
+    els.exportStatus.textContent = `Preparing ${String(format).toUpperCase()}…`;
+    try {
+      els.exportStatus.textContent = await downloadGraphExport(format);
+    } catch (error) {
+      els.exportStatus.textContent = error.message || "Export failed.";
+      console.error(error);
+    } finally {
+      els.exportOptions.forEach((option) => { option.disabled = false; });
+      if (label) label.textContent = previousLabel;
+    }
+  }
+
   function panFromMiniMap(event) {
     if (!model.miniTransform || !state.cy) return;
     const rect = els.miniMap.getBoundingClientRect();
@@ -2903,6 +3040,17 @@
     els.pathPanelRelayoutButton.addEventListener("click", relayoutCurrentPath);
     els.pathPanelClearButton.addEventListener("click", resetToFullTree);
     els.shareButton.addEventListener("click", copyShareLink);
+    els.exportButton.addEventListener("click", () => {
+      setExportMenuOpen(els.exportPopover.hidden, { focusFirst: false });
+    });
+    els.exportOptions.forEach((option) => {
+      option.addEventListener("click", () => runGraphExport(option.dataset.exportFormat));
+    });
+    document.addEventListener("click", (event) => {
+      if (!els.exportPopover.hidden && !els.exportMenu.contains(event.target)) {
+        setExportMenuOpen(false);
+      }
+    });
     els.miniMap.addEventListener("click", panFromMiniMap);
     els.miniPanelHandle.addEventListener("pointerdown", startMiniPanelDrag);
     els.miniPanelHandle.addEventListener("dblclick", resetMiniPanelPosition);
@@ -2931,6 +3079,11 @@
     });
 
     window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.exportPopover.hidden) {
+        setExportMenuOpen(false);
+        els.exportButton.focus();
+        return;
+      }
       if (event.key !== "Escape" || els.pathDialog.open) return;
       if (hasActiveViewState()) {
         resetToFullTree();
@@ -2954,6 +3107,10 @@
       showError(new Error("Cytoscape failed to load."));
       return;
     }
+    if (!layoutHelpers || !exportHelpers) {
+      showError(new Error("Graph helpers failed to load."));
+      return;
+    }
 
     try {
       const response = await fetch(DATA_URL, { cache: "no-cache" });
@@ -2964,6 +3121,7 @@
       buildModel(graph);
       populateControls(graph);
       createCy(graph);
+      syncTemporalEdgeStyle();
       attachEvents();
       applyFilters({ relayout: false });
 
